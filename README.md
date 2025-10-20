@@ -9,4 +9,9 @@
 
 ## Utilització del codi
 
+```sh
+$ python3 main.py 
+Hello, World!
+```
+
 ## DOI de Zenodo
