@@ -1,0 +1,11 @@
+{
+    "cSpell.language": "ca,en",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.defaultColorDecorators": "never",
+        "editor.wordBasedSuggestions": "off"
+    }
+}
