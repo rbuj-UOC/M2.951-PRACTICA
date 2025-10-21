@@ -12,6 +12,7 @@ class MeteoScraper:
         """
         self.base_url = "https://www.meteo.cat"
         self.list_url = self.base_url + "/observacions/llistat-xema"
+        self.data_url = self.base_url + "/observacions/xema/dades"
         self.data = []
 
     def __navigate_to_station_list_page(
@@ -29,6 +30,24 @@ class MeteoScraper:
             driver.get(self.list_url)
         except TimeoutException:
             raise Exception("Station list page did not load in time")
+        # Wait for a short delay
+        time.sleep(delay)
+
+    def __navigate_to_station_data_page(
+        self, driver: webdriver.Chrome, timeout: int, delay: int
+    ) -> None:
+        """
+        Navigate to the station data page.
+        Args:
+            driver: The selenium webdriver instance.
+            timeout: The maximum time to wait for the page to load.
+            delay: The time to wait after page load.
+        """
+        driver.set_page_load_timeout(timeout)
+        try:
+            driver.get(self.data_url)
+        except TimeoutException:
+            raise Exception("Station data page did not load in time")
         # Wait for a short delay
         time.sleep(delay)
 
@@ -136,6 +155,8 @@ class MeteoScraper:
             print(f"\tFound {len(station_info)} stations.")
             # Get tomorrow's date
             tomorrow = datetime.now() + timedelta(days=1)
+            # Navigate to station data page
+            self.__navigate_to_station_data_page(driver, timeout=10, delay=2)
             # Get station data for each station
             for station in station_info:
                 # Get station name, code, start date, and end date
