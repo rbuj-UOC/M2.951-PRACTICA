@@ -1,4 +1,4 @@
-# Obtencio de dades metrològiques
+# Obtenció de dades metrològiques
 
 ## Integrants del grup
 
