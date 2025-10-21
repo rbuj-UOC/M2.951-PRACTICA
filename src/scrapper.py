@@ -1,6 +1,7 @@
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 
 class MeteoScraper:
@@ -27,8 +28,8 @@ class MeteoScraper:
             reject_button.click()
             # Wait for two seconds
             time.sleep(2)
-        except Exception as e:
-            print(f"ERROR: Could not reject cookies: {e}")
+        except NoSuchElementException:
+            raise Exception("Could not reject cookies. Element not found.")
 
     def __get_station_list(self, driver) -> tuple[list[str], list[str]]:
         """
@@ -39,35 +40,46 @@ class MeteoScraper:
             A tuple containing the table headings and the station data.
         """
         # Navigate to the list URL
-        driver.get(self.list_url)
-        # Wait five seconds
-        time.sleep(5)
+        driver.set_page_load_timeout(10)
+        try:
+            driver.get(self.list_url)
+        except TimeoutException:
+            raise Exception("Station list page did not load in time")
         # Reject cookies
         self.__reject_cookies(driver)
         # Get station table
-        table = driver.find_element(By.ID, "llistaEstacions")
+        try:
+            table = driver.find_element(By.ID, "llistaEstacions")
+        except NoSuchElementException:
+            raise Exception("Station list table not found")
         # Get table headings, excluding the last one (status)
-        table_headings = [
-            element.text for element in table.find_elements(By.XPATH, ".//th")[:-1]
-        ]
+        try:
+            table_headings = [
+                element.text for element in table.find_elements(By.XPATH, ".//th")[:-1]
+            ]
+        except Exception:
+            raise Exception("Error occurred while getting table headings")
         # Add link heading
         table_headings.append("Enllaç")
         # Get table data and filter out non-operational stations
         table_data = []
-        for row in table.find_elements(By.XPATH, "./tbody/tr"):
-            # Get all cells in the row
-            cells = [element for element in row.find_elements(By.XPATH, "./td")]
-            # Filter out non-operational stations
-            if cells[-1].text != "Operativa":
-                continue
-            # Get station data, excluding the last one (status)
-            station_data = [cell.text for cell in cells[:-1]]
-            # Get station link
-            station_data.append(
-                cells[2].find_element(By.TAG_NAME, "a").get_attribute("href")
-            )
-            # Append station data to table data
-            table_data.append(station_data)
+        try:
+            for row in table.find_elements(By.XPATH, "./tbody/tr"):
+                # Get all cells in the row
+                cells = [element for element in row.find_elements(By.XPATH, "./td")]
+                # Filter out non-operational stations
+                if cells[-1].text != "Operativa":
+                    continue
+                # Get station data, excluding the last one (status)
+                station_data = [cell.text for cell in cells[:-1]]
+                # Get station link
+                station_data.append(
+                    cells[2].find_element(By.TAG_NAME, "a").get_attribute("href")
+                )
+                # Append station data to table data
+                table_data.append(station_data)
+        except Exception as e:
+            raise Exception(f"Error occurred while getting table row: {e}")
         return table_headings, table_data
 
     def scrape(self) -> None:
@@ -90,7 +102,7 @@ class MeteoScraper:
             # Quit the driver
             driver.quit()
         except Exception as e:
-            print(f"Error occurred while scraping: {e}")
+            raise Exception(f"Error occurred while scraping: {e}")
 
     def data2csv(self, filename: str) -> None:
         """
