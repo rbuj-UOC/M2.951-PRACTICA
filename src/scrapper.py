@@ -9,24 +9,34 @@ class MeteoScraper:
         self.list_url = self.base_url + "/observacions/llistat-xema"
         self.data = []
 
-    def __get_station_list(self, driver) -> tuple[list[str], list[list]]:
+    def __get_station_list(self, driver) -> tuple[list[str], list[str]]:
         # Navigate to the list URL
         driver.get(self.list_url)
-        # wait five seconds
+        # Wait five seconds
         time.sleep(5)
         # Get station table
         table = driver.find_element(By.ID, "llistaEstacions")
-        # Get table headings
+        # Get table headings, excluding the last one (status)
         table_headings = [
-            element.text for element in table.find_elements(By.XPATH, ".//th")
+            element.text for element in table.find_elements(By.XPATH, ".//th")[:-1]
         ]
+        # Add link heading
+        table_headings.append("Enllaç")
         # Get table data and filter out non-operational stations
         table_values = []
         for row in table.find_elements(By.XPATH, "./tbody/tr"):
+            # Get all cells in the row
             cells = [element for element in row.find_elements(By.XPATH, "./td")]
+            # Filter out non-operational stations
             if cells[-1].text != "Operativa":
                 continue
-            table_values.append(cells)
+            # Get station data, excluding the last one (status)
+            station_data = [cell.text for cell in cells[:-1]]
+            # Get station link
+            station_data.append(
+                cells[2].find_element(By.TAG_NAME, "a").get_attribute("href")
+            )
+            table_values.append(station_data)
         return table_headings, table_values
 
     def scrape(self):
@@ -34,10 +44,15 @@ class MeteoScraper:
         print("\tScraping data...")
         try:
             driver = webdriver.Chrome()
-            # get the station list
-            table_headings, table_values = self.__get_station_list(driver)
-            print(f"\tFound {len(table_values)} operational stations.")
-            # quit the driver
+            # Get the station list
+            station_headings, station_info = self.__get_station_list(driver)
+            print(f"\tFound {len(station_info)} operational stations.")
+            # Print the headings
+            print("\tHeadings:", station_headings)
+            # Print the first five stations
+            for station in station_info[:5]:
+                print(f"\tStation: {station}")
+            # Quit the driver
             driver.quit()
         except Exception as e:
             print(f"Error occurred while scraping: {e}")
