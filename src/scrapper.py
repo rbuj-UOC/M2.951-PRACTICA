@@ -23,7 +23,7 @@ class MeteoScraper:
         # Add link heading
         table_headings.append("Enllaç")
         # Get table data and filter out non-operational stations
-        table_values = []
+        table_data = []
         for row in table.find_elements(By.XPATH, "./tbody/tr"):
             # Get all cells in the row
             cells = [element for element in row.find_elements(By.XPATH, "./td")]
@@ -36,13 +36,15 @@ class MeteoScraper:
             station_data.append(
                 cells[2].find_element(By.TAG_NAME, "a").get_attribute("href")
             )
-            table_values.append(station_data)
-        return table_headings, table_values
+            # Append station data to table data
+            table_data.append(station_data)
+        return table_headings, table_data
 
     def scrape(self):
         # Implementation of the scrape method
         print("\tScraping data...")
         try:
+            # Initialize the webdriver
             driver = webdriver.Chrome()
             # Get the station list
             station_headings, station_info = self.__get_station_list(driver)
