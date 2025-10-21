@@ -11,6 +11,10 @@ def main() -> None:
         "-o", "--output", help="Output CSV file", type=str, default="dataset.csv"
     )
     args = parser.parse_args()
+    if args.days <= 0:
+        print("Error: Number of days must be greater than 0.")
+        parser.print_help()
+        return
     scraper = MeteoScraper()
     try:
         scraper.scrape(num_days=args.days)
