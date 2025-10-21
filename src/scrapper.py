@@ -133,18 +133,23 @@ class MeteoScraper:
             driver = webdriver.Chrome()
             # Get the station list
             station_headings, station_info = self.__get_station_lists(driver)
-            print(f"\tFound {len(station_info)} operational stations.")
-            today = datetime.now()
+            print(f"\tFound {len(station_info)} stations.")
+            # Get tomorrow's date
+            tomorrow = datetime.now() + timedelta(days=1)
             # Get station data for each station
             for station in station_info:
-                station_name = station[-2]
+                # Get station name, code, start date, and end date
                 station_code = station[-1]
-                # convert text "day.month.year" to date
-                start_date = datetime.strptime(station[6], "%d.%m.%Y")
-                if station[7] != "":
-                    end_date = datetime.strptime(station[7], "%d.%m.%Y")
+                station_name = station[-2]
+                station_status = station[-3]
+                if station_status == "Operativa":
+                    end_date = tomorrow
+                elif station_status == "Desmantellada":
+                    end_date = datetime.strptime(station[-4], "%d.%m.%Y")
                 else:
-                    end_date = today
+                    raise Exception(f"Unknown station status: {station_status}")
+                start_date = datetime.strptime(station[-5], "%d.%m.%Y")
+                # Print station name and code
                 print(f'\tScraping data for station: "{station_name}" [{station_code}]')
                 for day in self.__get_day_list(num_days):
                     # if day is greater than end_date or less than start_date, skip
