@@ -70,6 +70,13 @@ class MeteoScraper:
             raise Exception("Could not reject cookies. Element not found.")
 
     def __get_station_list_table(self, driver: webdriver.Chrome):
+        """
+        Get the station list table from the page.
+        Args:
+            driver: The selenium webdriver instance.
+        Returns:
+            The selenium web element representing the station table.
+        """
         try:
             return driver.find_element(By.ID, "llistaEstacions")
         except NoSuchElementException:
