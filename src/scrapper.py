@@ -185,7 +185,7 @@ class MeteoScraper:
                     if day > end_date or day < start_date:
                         continue
                     print(f"\t\tDate: {day.strftime('%d.%m.%Y')}")
-                    # ToDo: Implement data scraping for each station and day
+                    pass  # Implement data scraping for each station and day
             # Quit the driver
             driver.quit()
         except Exception as e:
@@ -195,6 +195,5 @@ class MeteoScraper:
         """
         Save the scraped data to a CSV file.
         """
-        # Implementation of the data2csv method
         print(f"Saving data to {output_file}...")
-        pass
+        pass  # Implementation of the data2csv method
