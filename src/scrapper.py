@@ -72,7 +72,8 @@ class MeteoScraper:
                 element.text for element in table.find_elements(By.XPATH, ".//th")[:-1]
             ]
             # Add link heading
-            table_headings.append("Enllaç")
+            table_headings.append("Estació")
+            table_headings.append("Codi")
         except Exception:
             raise Exception("Error occurred while getting table headings")
         # Get table data
@@ -86,10 +87,12 @@ class MeteoScraper:
                     continue
                 # Get station data, excluding the last one (status)
                 station_data = [cell.text for cell in cells[:-1]]
-                # Get station link
-                station_data.append(
-                    cells[2].find_element(By.TAG_NAME, "a").get_attribute("href")
-                )
+                # Get station name and code from third cell
+                station_full_name = station_data[2].strip()
+                station_name = station_full_name[0:-5]
+                station_code = station_full_name[-3:-1]
+                station_data.append(station_name)
+                station_data.append(station_code)
                 # Append station data to table data
                 table_data.append(station_data)
         except Exception as e:
@@ -140,13 +143,9 @@ class MeteoScraper:
             print(f"\tFound {len(station_info)} operational stations.")
             # Get station data for each station
             for station in station_info:
-                station_link = station[-1].strip()
-                station_full_name = station[2].strip()
-                station_name = station_full_name[0:-5]
-                station_code = station_link[-2:]
-                print(
-                    f'\tScraping data for station: "{station_name}" [{station_code}] ({station_link})'
-                )
+                station_name = station[-2]
+                station_code = station[-1]
+                print(f'\tScraping data for station: "{station_name}" [{station_code}]')
                 for day in self.__get_day_list(num_days):
                     print(f"\t\tDate: {day}")
                     # ToDo: Implement data scraping for each station and day
