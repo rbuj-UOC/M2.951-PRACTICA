@@ -179,6 +179,7 @@ class MeteoScraper:
                 start_date = datetime.strptime(station[-5], "%d.%m.%Y")
                 # Print station name and code
                 print(f'\tScraping data for station: "{station_name}" [{station_code}]')
+                # Get station data for each day
                 for day in self.__get_day_list(num_days):
                     # if day is greater than end_date or less than start_date, skip
                     if day > end_date or day < start_date:
