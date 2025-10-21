@@ -12,6 +12,24 @@ class MeteoScraper:
         self.list_url = self.base_url + "/observacions/llistat-xema"
         self.data = []
 
+    def __reject_cookies(self, driver: webdriver.Chrome) -> None:
+        """
+        Reject cookies on the website.
+        Args:
+            driver: The selenium webdriver instance.
+        """
+        try:
+            # Find and click the reject cookies button
+            reject_button = driver.find_element(
+                By.XPATH,
+                "//div[@id='missatge_cookie']//button[@id='rebutjar']",
+            )
+            reject_button.click()
+            # Wait for two seconds
+            time.sleep(2)
+        except Exception as e:
+            print(f"ERROR: Could not reject cookies: {e}")
+
     def __get_station_list(self, driver) -> tuple[list[str], list[str]]:
         """
         Get the list of meteorological stations from the website.
@@ -24,6 +42,8 @@ class MeteoScraper:
         driver.get(self.list_url)
         # Wait five seconds
         time.sleep(5)
+        # Reject cookies
+        self.__reject_cookies(driver)
         # Get station table
         table = driver.find_element(By.ID, "llistaEstacions")
         # Get table headings, excluding the last one (status)
@@ -50,7 +70,7 @@ class MeteoScraper:
             table_data.append(station_data)
         return table_headings, table_data
 
-    def scrape(self):
+    def scrape(self) -> None:
         """
         Scrape meteorological data from the website.
         """
@@ -72,7 +92,7 @@ class MeteoScraper:
         except Exception as e:
             print(f"Error occurred while scraping: {e}")
 
-    def data2csv(self, filename):
+    def data2csv(self, filename: str) -> None:
         """
         Save the scraped data to a CSV file.
         """
