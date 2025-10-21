@@ -5,11 +5,21 @@ from selenium.webdriver.common.by import By
 
 class MeteoScraper:
     def __init__(self):
+        """
+        Initialize the MeteoScraper with base URL and data storage.
+        """
         self.base_url = "https://www.meteo.cat"
         self.list_url = self.base_url + "/observacions/llistat-xema"
         self.data = []
 
     def __get_station_list(self, driver) -> tuple[list[str], list[str]]:
+        """
+        Get the list of meteorological stations from the website.
+        Args:
+            driver: The selenium webdriver instance.
+        Returns:
+            A tuple containing the table headings and the station data.
+        """
         # Navigate to the list URL
         driver.get(self.list_url)
         # Wait five seconds
@@ -41,6 +51,9 @@ class MeteoScraper:
         return table_headings, table_data
 
     def scrape(self):
+        """
+        Scrape meteorological data from the website.
+        """
         # Implementation of the scrape method
         print("\tScraping data...")
         try:
@@ -60,6 +73,9 @@ class MeteoScraper:
             print(f"Error occurred while scraping: {e}")
 
     def data2csv(self, filename):
+        """
+        Save the scraped data to a CSV file.
+        """
         # Implementation of the data2csv method
         print(f"Saving data to {filename}...")
         pass
