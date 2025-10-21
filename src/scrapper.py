@@ -13,11 +13,30 @@ class MeteoScraper:
         self.list_url = self.base_url + "/observacions/llistat-xema"
         self.data = []
 
-    def __reject_cookies(self, driver: webdriver.Chrome) -> None:
+    def __navigate_to_station_list_page(
+        self, driver: webdriver.Chrome, timeout: int, delay: int
+    ) -> None:
+        """
+        Navigate to the station list page.
+        Args:
+            driver: The selenium webdriver instance.
+            timeout: The maximum time to wait for the page to load.
+            delay: The time to wait after page load.
+        """
+        driver.set_page_load_timeout(timeout)
+        try:
+            driver.get(self.list_url)
+        except TimeoutException:
+            raise Exception("Station list page did not load in time")
+        # Wait for a short delay
+        time.sleep(delay)
+
+    def __reject_cookies(self, driver: webdriver.Chrome, delay: int) -> None:
         """
         Reject cookies on the website.
         Args:
             driver: The selenium webdriver instance.
+            delay: The time to wait after rejecting cookies.
         """
         try:
             # Find and click the reject cookies button
@@ -26,42 +45,36 @@ class MeteoScraper:
                 "//div[@id='missatge_cookie']//button[@id='rebutjar']",
             )
             reject_button.click()
-            # Wait for two seconds
-            time.sleep(2)
+            time.sleep(delay)
         except NoSuchElementException:
             raise Exception("Could not reject cookies. Element not found.")
 
-    def __get_station_list(self, driver) -> tuple[list[str], list[str]]:
+    def __get_station_list_table(self, driver: webdriver.Chrome):
+        try:
+            return driver.find_element(By.ID, "llistaEstacions")
+        except NoSuchElementException:
+            raise Exception("Station list table not found")
+
+    def __get_headings_and_data_from_station_list_table(
+        self, table
+    ) -> tuple[list[str], list[str]]:
         """
-        Get the list of meteorological stations from the website.
+        Get the headings and data from the station table.
         Args:
-            driver: The selenium webdriver instance.
+            table: The selenium web element representing the station table.
         Returns:
             A tuple containing the table headings and the station data.
         """
-        # Navigate to the list URL
-        driver.set_page_load_timeout(10)
-        try:
-            driver.get(self.list_url)
-        except TimeoutException:
-            raise Exception("Station list page did not load in time")
-        # Reject cookies
-        self.__reject_cookies(driver)
-        # Get station table
-        try:
-            table = driver.find_element(By.ID, "llistaEstacions")
-        except NoSuchElementException:
-            raise Exception("Station list table not found")
-        # Get table headings, excluding the last one (status)
+        # Get table headings, excluding the last heading (status)
         try:
             table_headings = [
                 element.text for element in table.find_elements(By.XPATH, ".//th")[:-1]
             ]
+            # Add link heading
+            table_headings.append("Enllaç")
         except Exception:
             raise Exception("Error occurred while getting table headings")
-        # Add link heading
-        table_headings.append("Enllaç")
-        # Get table data and filter out non-operational stations
+        # Get table data
         table_data = []
         try:
             for row in table.find_elements(By.XPATH, "./tbody/tr"):
@@ -82,6 +95,23 @@ class MeteoScraper:
             raise Exception(f"Error occurred while getting table row: {e}")
         return table_headings, table_data
 
+    def __get_station_lists(self, driver) -> tuple[list[str], list[str]]:
+        """
+        Get the list of meteorological stations from the website.
+        Args:
+            driver: The selenium webdriver instance.
+        Returns:
+            A tuple containing the table headings and the station data.
+        """
+        # Navigate to the list URL
+        self.__navigate_to_station_list_page(driver, timeout=10, delay=2)
+        # Reject cookies
+        self.__reject_cookies(driver, delay=2)
+        # Get station list table
+        table = self.__get_station_list_table(driver)
+        # Return headings and data from station list table
+        return self.__get_headings_and_data_from_station_list_table(table)
+
     def scrape(self) -> None:
         """
         Scrape meteorological data from the website.
@@ -92,7 +122,7 @@ class MeteoScraper:
             # Initialize the webdriver
             driver = webdriver.Chrome()
             # Get the station list
-            station_headings, station_info = self.__get_station_list(driver)
+            station_headings, station_info = self.__get_station_lists(driver)
             print(f"\tFound {len(station_info)} operational stations.")
             # Print the headings
             print("\tHeadings:", station_headings)
