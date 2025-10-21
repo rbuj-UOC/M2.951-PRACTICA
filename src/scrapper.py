@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -112,7 +113,20 @@ class MeteoScraper:
         # Return headings and data from station list table
         return self.__get_headings_and_data_from_station_list_table(table)
 
-    def scrape(self) -> None:
+    def __get_day_list(self, num_days: int) -> list[str]:
+        """
+        Get the list of days for which to scrape data.
+        Args:
+            num_days: The number of days to scrape.
+        Returns:
+            A list of dates as strings.
+        """
+        today = datetime.now()
+        return [
+            (today - timedelta(days=i)).strftime("%d.%m.%Y") for i in range(num_days)
+        ]
+
+    def scrape(self, num_days: int) -> None:
         """
         Scrape meteorological data from the website.
         """
@@ -124,20 +138,27 @@ class MeteoScraper:
             # Get the station list
             station_headings, station_info = self.__get_station_lists(driver)
             print(f"\tFound {len(station_info)} operational stations.")
-            # Print the headings
-            print("\tHeadings:", station_headings)
-            # Print the first five stations
-            for station in station_info[:5]:
-                print(f"\tStation: {station}")
+            # Get station data for each station
+            for station in station_info:
+                station_link = station[-1].strip()
+                station_full_name = station[2].strip()
+                station_name = station_full_name[0:-5]
+                station_code = station_link[-2:]
+                print(
+                    f'\tScraping data for station: "{station_name}" [{station_code}] ({station_link})'
+                )
+                for day in self.__get_day_list(num_days):
+                    print(f"\t\tDate: {day}")
+                    # ToDo: Implement data scraping for each station and day
             # Quit the driver
             driver.quit()
         except Exception as e:
             raise Exception(f"Error occurred while scraping: {e}")
 
-    def data2csv(self, filename: str) -> None:
+    def data2csv(self, output_file: str) -> None:
         """
         Save the scraped data to a CSV file.
         """
         # Implementation of the data2csv method
-        print(f"Saving data to {filename}...")
+        print(f"Saving data to {output_file}...")
         pass
