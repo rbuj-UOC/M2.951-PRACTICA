@@ -81,20 +81,15 @@ class MeteoScraper:
         try:
             for row in table.find_elements(By.XPATH, "./tbody/tr"):
                 # Get all cells in the row
-                cells = [element for element in row.find_elements(By.XPATH, "./td")]
-                # Filter out non-operational stations
-                if cells[-1].text != "Operativa":
-                    continue
-                # Get station data, excluding the last one (status)
-                station_data = [cell.text for cell in cells[:-1]]
+                cells = [cell.text for cell in row.find_elements(By.XPATH, "./td")]
                 # Get station name and code from third cell
-                station_full_name = station_data[2].strip()
+                station_full_name = cells[2].strip()
                 station_name = station_full_name[0:-5]
                 station_code = station_full_name[-3:-1]
-                station_data.append(station_name)
-                station_data.append(station_code)
+                cells.append(station_name)
+                cells.append(station_code)
                 # Append station data to table data
-                table_data.append(station_data)
+                table_data.append(cells)
         except Exception as e:
             raise Exception(f"Error occurred while getting table row: {e}")
         return table_headings, table_data
@@ -116,7 +111,7 @@ class MeteoScraper:
         # Return headings and data from station list table
         return self.__get_headings_and_data_from_station_list_table(table)
 
-    def __get_day_list(self, num_days: int) -> list[str]:
+    def __get_day_list(self, num_days: int) -> list[datetime]:
         """
         Get the list of days for which to scrape data.
         Args:
@@ -125,9 +120,7 @@ class MeteoScraper:
             A list of dates as strings.
         """
         today = datetime.now()
-        return [
-            (today - timedelta(days=i)).strftime("%d.%m.%Y") for i in range(num_days)
-        ]
+        return [today - timedelta(days=i) for i in range(num_days)]
 
     def scrape(self, num_days: int) -> None:
         """
@@ -141,13 +134,23 @@ class MeteoScraper:
             # Get the station list
             station_headings, station_info = self.__get_station_lists(driver)
             print(f"\tFound {len(station_info)} operational stations.")
+            today = datetime.now()
             # Get station data for each station
             for station in station_info:
                 station_name = station[-2]
                 station_code = station[-1]
+                # convert text "day.month.year" to date
+                start_date = datetime.strptime(station[6], "%d.%m.%Y")
+                if station[7] != "":
+                    end_date = datetime.strptime(station[7], "%d.%m.%Y")
+                else:
+                    end_date = today
                 print(f'\tScraping data for station: "{station_name}" [{station_code}]')
                 for day in self.__get_day_list(num_days):
-                    print(f"\t\tDate: {day}")
+                    # if day is greater than end_date or less than start_date, skip
+                    if day > end_date or day < start_date:
+                        continue
+                    print(f"\t\tDate: {day.strftime('%d.%m.%Y')}")
                     # ToDo: Implement data scraping for each station and day
             # Quit the driver
             driver.quit()
