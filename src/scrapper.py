@@ -1,5 +1,6 @@
 import time
 import pandas as pd
+from os import makedirs, path
 from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -14,7 +15,28 @@ class MeteoScraper:
         self.base_url = "https://www.meteo.cat"
         self.list_url = self.base_url + "/observacions/llistat-xema"
         self.data_url = self.base_url + "/observacions/xema/dades"
+        # Dataset folder path: ../dataset
+        self.dataset_folder = path.join(path.dirname(path.dirname(__file__)), "dataset")
         self.data = []
+
+    def __dataframe_to_csv(self, df: pd.DataFrame, output_file: str) -> None:
+        """
+        Save a DataFrame to a CSV file in dataset folder.
+        Args:
+            df: The DataFrame to save.
+            output_file: The output CSV file name.
+        """
+        try:
+            # Create the dataset folder if not exists
+            makedirs(self.dataset_folder, exist_ok=True)
+            # Build the full file path
+            file_path = path.join(self.dataset_folder, output_file)
+            # Save the DataFrame to CSV in dataset folder, overwriting if it exists
+            df.to_csv(file_path, index=False, mode="w")
+            # Print success message
+            print(f"\tDataFrame saved to {file_path}")
+        except Exception as e:
+            raise Exception(f"Error occurred while saving DataFrame to CSV: {e}")
 
     def __get_day_list(self, num_days: int) -> list[datetime]:
         """
@@ -98,6 +120,8 @@ class MeteoScraper:
             station_list = pd.DataFrame(data, columns=headings)
             # Print number of stations found
             print(f"\tFound {len(station_list)} stations.")
+            # save station list to csv
+            self.__dataframe_to_csv(station_list, "station_list.csv")
             # Return as DataFrame
             return station_list
         except Exception as e:
