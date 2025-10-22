@@ -1,4 +1,5 @@
 import time
+import pandas as pd
 from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -69,42 +70,29 @@ class MeteoScraper:
         except NoSuchElementException:
             raise Exception("Could not reject cookies. Element not found.")
 
-    def __get_station_list_table(self, driver: webdriver.Chrome):
+    def __get_station_list(self, driver: webdriver.Chrome) -> pd.DataFrame:
         """
-        Get the station list table from the page.
+        Get the list of meteorological stations from the website.
         Args:
             driver: The selenium webdriver instance.
         Returns:
-            The selenium web element representing the station table.
+            A DataFrame containing the station list.
         """
+        # Navigate to the list URL
+        self.__navigate_to_station_list_page(driver, timeout=10, delay=2)
+        # Reject cookies
+        self.__reject_cookies(driver, delay=2)
+        # Get station list table from the page
         try:
-            return driver.find_element(By.ID, "llistaEstacions")
-        except NoSuchElementException:
-            raise Exception("Station list table not found")
-
-    def __get_headings_and_data_from_station_list_table(
-        self, table
-    ) -> tuple[list[str], list[str]]:
-        """
-        Get the headings and data from the station table.
-        Args:
-            table: The selenium web element representing the station table.
-        Returns:
-            A tuple containing the table headings and the station data.
-        """
-        # Get table headings, excluding the last heading (status)
-        try:
-            table_headings = [
-                element.text for element in table.find_elements(By.XPATH, ".//th")[:-1]
+            table = driver.find_element(By.ID, "llistaEstacions")
+            # Get df columns
+            headings = [
+                element.text for element in table.find_elements(By.XPATH, ".//th")
             ]
-            # Add link heading
-            table_headings.append("Estació")
-            table_headings.append("Codi")
-        except Exception:
-            raise Exception("Error occurred while getting table headings")
-        # Get table data
-        table_data = []
-        try:
+            headings.append("Estació")
+            headings.append("Codi")
+            # Get df data
+            data = []
             for row in table.find_elements(By.XPATH, "./tbody/tr"):
                 # Get all cells in the row
                 cells = [cell.text for cell in row.find_elements(By.XPATH, "./td")]
@@ -115,27 +103,11 @@ class MeteoScraper:
                 cells.append(station_name)
                 cells.append(station_code)
                 # Append station data to table data
-                table_data.append(cells)
+                data.append(cells)
+            # Return as DataFrame
+            return pd.DataFrame(data, columns=headings)
         except Exception as e:
-            raise Exception(f"Error occurred while getting table row: {e}")
-        return table_headings, table_data
-
-    def __get_station_lists(self, driver) -> tuple[list[str], list[str]]:
-        """
-        Get the list of meteorological stations from the website.
-        Args:
-            driver: The selenium webdriver instance.
-        Returns:
-            A tuple containing the table headings and the station data.
-        """
-        # Navigate to the list URL
-        self.__navigate_to_station_list_page(driver, timeout=10, delay=2)
-        # Reject cookies
-        self.__reject_cookies(driver, delay=2)
-        # Get station list table
-        table = self.__get_station_list_table(driver)
-        # Return headings and data from station list table
-        return self.__get_headings_and_data_from_station_list_table(table)
+            raise Exception(f"Error occurred while getting station list: {e}")
 
     def __get_day_list(self, num_days: int) -> list[datetime]:
         """
@@ -158,25 +130,25 @@ class MeteoScraper:
             # Initialize the webdriver
             driver = webdriver.Chrome()
             # Get the station list
-            station_headings, station_info = self.__get_station_lists(driver)
-            print(f"\tFound {len(station_info)} stations.")
+            station_list = self.__get_station_list(driver)
+            print(f"\tFound {len(station_list)} stations.")
             # Get tomorrow's date
             tomorrow = datetime.now() + timedelta(days=1)
             # Navigate to station data page
             self.__navigate_to_station_data_page(driver, timeout=10, delay=2)
             # Get station data for each station
-            for station in station_info:
+            for i, station in station_list.iterrows():
                 # Get station name, code, start date, and end date
-                station_code = station[-1]
-                station_name = station[-2]
-                station_status = station[-3]
+                station_code = station["Codi"]
+                station_name = station["Estació"]
+                station_status = station["Estat actual"]
                 if station_status == "Operativa":
                     end_date = tomorrow
                 elif station_status == "Desmantellada":
-                    end_date = datetime.strptime(station[-4], "%d.%m.%Y")
+                    end_date = datetime.strptime(station["Data baixa"], "%d.%m.%Y")
                 else:
                     raise Exception(f"Unknown station status: {station_status}")
-                start_date = datetime.strptime(station[-5], "%d.%m.%Y")
+                start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
                 # Print station name and code
                 print(f'\tScraping data for station: "{station_name}" [{station_code}]')
                 # Get station data for each day
