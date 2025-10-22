@@ -70,6 +70,46 @@ class MeteoScraper:
         except NoSuchElementException:
             raise Exception("Could not reject cookies. Element not found.")
 
+    def __get_station_data(
+        self, driver: webdriver.Chrome, station_list: pd.DataFrame, num_days: int
+    ) -> None:
+        """
+        Get the meteorological data for each station.
+        Args:
+            driver: The selenium webdriver instance.
+            station_list: The list of stations as a DataFrame.
+            num_days: The number of days to scrape data for.
+        """
+        try:
+            # Get tomorrow's date
+            tomorrow = datetime.now() + timedelta(days=1)
+            # Navigate to station data page
+            self.__navigate_to_station_data_page(driver, timeout=10, delay=2)
+            # Get station data for each station
+            for i, station in station_list.iterrows():
+                # Get station name, code, start date, and end date
+                station_code = station["Codi"]
+                station_name = station["Estació"]
+                station_status = station["Estat actual"]
+                if station_status == "Operativa":
+                    end_date = tomorrow
+                elif station_status == "Desmantellada":
+                    end_date = datetime.strptime(station["Data baixa"], "%d.%m.%Y")
+                else:
+                    raise Exception(f"Unknown station status: {station_status}")
+                start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
+                # Print station name and code
+                print(f'\tScraping data for station: "{station_name}" [{station_code}]')
+                # Get station data for each day
+                for day in self.__get_day_list(num_days):
+                    # if day is greater than end_date or less than start_date, skip
+                    if day > end_date or day < start_date:
+                        continue
+                    print(f"\t\tDate: {day.strftime('%d.%m.%Y')}")
+                    pass  # Implement data scraping for each station and day
+        except Exception as e:
+            raise Exception(f"Error occurred while getting station data: {e}")
+
     def __get_station_list(self, driver: webdriver.Chrome) -> pd.DataFrame:
         """
         Get the list of meteorological stations from the website.
@@ -104,8 +144,12 @@ class MeteoScraper:
                 cells.append(station_code)
                 # Append station data to table data
                 data.append(cells)
+            # Create DataFrame
+            station_list = pd.DataFrame(data, columns=headings)
+            # Print number of stations found
+            print(f"\tFound {len(station_list)} stations.")
             # Return as DataFrame
-            return pd.DataFrame(data, columns=headings)
+            return station_list
         except Exception as e:
             raise Exception(f"Error occurred while getting station list: {e}")
 
@@ -131,33 +175,8 @@ class MeteoScraper:
             driver = webdriver.Chrome()
             # Get the station list
             station_list = self.__get_station_list(driver)
-            print(f"\tFound {len(station_list)} stations.")
-            # Get tomorrow's date
-            tomorrow = datetime.now() + timedelta(days=1)
-            # Navigate to station data page
-            self.__navigate_to_station_data_page(driver, timeout=10, delay=2)
-            # Get station data for each station
-            for i, station in station_list.iterrows():
-                # Get station name, code, start date, and end date
-                station_code = station["Codi"]
-                station_name = station["Estació"]
-                station_status = station["Estat actual"]
-                if station_status == "Operativa":
-                    end_date = tomorrow
-                elif station_status == "Desmantellada":
-                    end_date = datetime.strptime(station["Data baixa"], "%d.%m.%Y")
-                else:
-                    raise Exception(f"Unknown station status: {station_status}")
-                start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
-                # Print station name and code
-                print(f'\tScraping data for station: "{station_name}" [{station_code}]')
-                # Get station data for each day
-                for day in self.__get_day_list(num_days):
-                    # if day is greater than end_date or less than start_date, skip
-                    if day > end_date or day < start_date:
-                        continue
-                    print(f"\t\tDate: {day.strftime('%d.%m.%Y')}")
-                    pass  # Implement data scraping for each station and day
+            # Get the station data
+            self.__get_station_data(driver, station_list, num_days)
             # Quit the driver
             driver.quit()
         except Exception as e:
