@@ -16,59 +16,16 @@ class MeteoScraper:
         self.data_url = self.base_url + "/observacions/xema/dades"
         self.data = []
 
-    def __navigate_to_station_list_page(
-        self, driver: webdriver.Chrome, timeout: int, delay: int
-    ) -> None:
+    def __get_day_list(self, num_days: int) -> list[datetime]:
         """
-        Navigate to the station list page.
+        Get the list of days for which to scrape data.
         Args:
-            driver: The selenium webdriver instance.
-            timeout: The maximum time to wait for the page to load.
-            delay: The time to wait after page load.
+            num_days: The number of days to scrape.
+        Returns:
+            A list of dates as strings.
         """
-        driver.set_page_load_timeout(timeout)
-        try:
-            driver.get(self.list_url)
-        except TimeoutException:
-            raise Exception("Station list page did not load in time")
-        # Wait for a short delay
-        time.sleep(delay)
-
-    def __navigate_to_station_data_page(
-        self, driver: webdriver.Chrome, timeout: int, delay: int
-    ) -> None:
-        """
-        Navigate to the station data page.
-        Args:
-            driver: The selenium webdriver instance.
-            timeout: The maximum time to wait for the page to load.
-            delay: The time to wait after page load.
-        """
-        driver.set_page_load_timeout(timeout)
-        try:
-            driver.get(self.data_url)
-        except TimeoutException:
-            raise Exception("Station data page did not load in time")
-        # Wait for a short delay
-        time.sleep(delay)
-
-    def __reject_cookies(self, driver: webdriver.Chrome, delay: int) -> None:
-        """
-        Reject cookies on the website.
-        Args:
-            driver: The selenium webdriver instance.
-            delay: The time to wait after rejecting cookies.
-        """
-        try:
-            # Find and click the reject cookies button
-            reject_button = driver.find_element(
-                By.XPATH,
-                "//div[@id='missatge_cookie']//button[@id='rebutjar']",
-            )
-            reject_button.click()
-            time.sleep(delay)
-        except NoSuchElementException:
-            raise Exception("Could not reject cookies. Element not found.")
+        today = datetime.now()
+        return [today - timedelta(days=i) for i in range(num_days)]
 
     def __get_station_data(
         self, driver: webdriver.Chrome, station_list: pd.DataFrame, num_days: int
@@ -153,16 +110,66 @@ class MeteoScraper:
         except Exception as e:
             raise Exception(f"Error occurred while getting station list: {e}")
 
-    def __get_day_list(self, num_days: int) -> list[datetime]:
+    def __navigate_to_station_data_page(
+        self, driver: webdriver.Chrome, timeout: int, delay: int
+    ) -> None:
         """
-        Get the list of days for which to scrape data.
+        Navigate to the station data page.
         Args:
-            num_days: The number of days to scrape.
-        Returns:
-            A list of dates as strings.
+            driver: The selenium webdriver instance.
+            timeout: The maximum time to wait for the page to load.
+            delay: The time to wait after page load.
         """
-        today = datetime.now()
-        return [today - timedelta(days=i) for i in range(num_days)]
+        driver.set_page_load_timeout(timeout)
+        try:
+            driver.get(self.data_url)
+        except TimeoutException:
+            raise Exception("Station data page did not load in time")
+        # Wait for a short delay
+        time.sleep(delay)
+
+    def __navigate_to_station_list_page(
+        self, driver: webdriver.Chrome, timeout: int, delay: int
+    ) -> None:
+        """
+        Navigate to the station list page.
+        Args:
+            driver: The selenium webdriver instance.
+            timeout: The maximum time to wait for the page to load.
+            delay: The time to wait after page load.
+        """
+        driver.set_page_load_timeout(timeout)
+        try:
+            driver.get(self.list_url)
+        except TimeoutException:
+            raise Exception("Station list page did not load in time")
+        # Wait for a short delay
+        time.sleep(delay)
+
+    def __reject_cookies(self, driver: webdriver.Chrome, delay: int) -> None:
+        """
+        Reject cookies on the website.
+        Args:
+            driver: The selenium webdriver instance.
+            delay: The time to wait after rejecting cookies.
+        """
+        try:
+            # Find and click the reject cookies button
+            reject_button = driver.find_element(
+                By.XPATH,
+                "//div[@id='missatge_cookie']//button[@id='rebutjar']",
+            )
+            reject_button.click()
+            time.sleep(delay)
+        except NoSuchElementException:
+            raise Exception("Could not reject cookies. Element not found.")
+
+    def data2csv(self, output_file: str) -> None:
+        """
+        Save the scraped data to a CSV file.
+        """
+        print(f"Saving data to {output_file}...")
+        pass  # Implementation of the data2csv method
 
     def scrape(self, num_days: int) -> None:
         """
@@ -181,10 +188,3 @@ class MeteoScraper:
             driver.quit()
         except Exception as e:
             raise Exception(f"Error occurred while scraping: {e}")
-
-    def data2csv(self, output_file: str) -> None:
-        """
-        Save the scraped data to a CSV file.
-        """
-        print(f"Saving data to {output_file}...")
-        pass  # Implementation of the data2csv method
