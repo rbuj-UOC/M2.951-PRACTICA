@@ -45,8 +45,9 @@ class MeteoScraper:
             # Get station data for each station
             for i, station in station_list.iterrows():
                 # Get station name, code, start date, and end date
-                station_code = station["Codi"]
-                station_name = station["Estació"]
+                station_full_name = station["Estació [Codi]"]
+                station_code = station_full_name[-3:-1]
+                station_name = station_full_name[0:-5]
                 station_status = station["Estat actual"]
                 if station_status == "Operativa":
                     end_date = tomorrow
@@ -86,19 +87,11 @@ class MeteoScraper:
             headings = [
                 element.text for element in table.find_elements(By.XPATH, ".//th")
             ]
-            headings.append("Estació")
-            headings.append("Codi")
             # Get df data
             data = []
             for row in table.find_elements(By.XPATH, "./tbody/tr"):
                 # Get all cells in the row
                 cells = [cell.text for cell in row.find_elements(By.XPATH, "./td")]
-                # Get station name and code from third cell
-                station_full_name = cells[2].strip()
-                station_name = station_full_name[0:-5]
-                station_code = station_full_name[-3:-1]
-                cells.append(station_name)
-                cells.append(station_code)
                 # Append station data to table data
                 data.append(cells)
             # Create DataFrame
