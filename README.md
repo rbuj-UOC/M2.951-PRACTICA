@@ -31,7 +31,7 @@ source .venv/bin/activate
 ### Instal·lació dels requisits
 
 ```sh
-python -m pip install -r requirements.txt
+(.venv) $ python3 -m pip install -r requirements.txt
 ```
 
 ### Execució del codi
