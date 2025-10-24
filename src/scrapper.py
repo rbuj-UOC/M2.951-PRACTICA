@@ -4,6 +4,7 @@ from os import makedirs, path
 from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 
@@ -50,18 +51,23 @@ class MeteoScraper:
         return [today - timedelta(days=i) for i in range(num_days)]
 
     def __get_station_data(
-        self, driver: webdriver.Chrome, station_list: pd.DataFrame, num_days: int
-    ) -> None:
+        self,
+        driver: webdriver.Chrome,
+        station_list: pd.DataFrame,
+        num_days: int,
+        delay: int = 2,
+    ) -> list[str]:
         """
         Get the meteorological data for each station.
         Args:
             driver: The selenium webdriver instance.
             station_list: The list of stations as a DataFrame.
             num_days: The number of days to scrape data for.
+        Returns:
+            A list of file names where the data is saved.
         """
         try:
-            # Get tomorrow's date
-            tomorrow = datetime.now() + timedelta(days=1)
+            file_list = []
             # Navigate to station data page
             self.__navigate_to_station_data_page(driver, timeout=10, delay=2)
             # Get station data for each station
@@ -72,12 +78,22 @@ class MeteoScraper:
                 station_name = station_full_name[0:-5]
                 station_status = station["Estat actual"]
                 if station_status == "Operativa":
-                    end_date = tomorrow
+                    end_date = datetime.now() + timedelta(days=1)  # tomorrow
                 elif station_status == "Desmantellada":
                     end_date = datetime.strptime(station["Data baixa"], "%d.%m.%Y")
                 else:
                     raise Exception(f"Unknown station status: {station_status}")
                 start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
+                # Enter station name in form input field
+                form_element = driver.find_element(By.ID, "seleccio-estacions")
+                name_element = form_element.find_element(By.ID, "nom")
+                name_element.clear()
+                name_element.send_keys(station_name)
+                time.sleep(delay)
+                # Select the station from the autocomplete dropdown
+                name_element.send_keys(Keys.DOWN)
+                name_element.send_keys(Keys.RETURN)
+                time.sleep(delay)
                 # Print station name and code
                 print(f'\tScraping data for station: "{station_name}" [{station_code}]')
                 # Get station data for each day
@@ -85,8 +101,46 @@ class MeteoScraper:
                     # if day is greater than end_date or less than start_date, skip
                     if day > end_date or day < start_date:
                         continue
-                    print(f"\t\tDate: {day.strftime('%d.%m.%Y')}")
-                    pass  # Implement data scraping for each station and day
+                    # Select date in form input field
+                    form_element = driver.find_element(By.ID, "seleccio-estacions")
+                    date_element = form_element.find_element(By.ID, "datepicker")
+                    date_element.clear()
+                    date_element.send_keys(day.strftime("%d.%m.%Y"))
+                    time.sleep(delay)
+                    # Submit the form
+                    submit_button = form_element.find_element(
+                        By.ID, "cercaEstacioButton"
+                    )
+                    submit_button.click()
+                    time.sleep(delay)
+                    # click on tab "Dades per període"
+                    tabs_element = driver.find_element(By.ID, "tabs")
+                    tab_element = tabs_element.find_element(By.ID, "ui-id-6")
+                    tab_element.click()
+                    time.sleep(delay)
+                    # Get station data table from the page
+                    table_element = driver.find_element(
+                        By.XPATH, "//table[@class='tblperiode']"
+                    )
+                    # Get table data
+                    table_data = []
+                    for row in table_element.find_elements(By.XPATH, "./tbody/tr"):
+                        # Get all cells in the row
+                        cells = [
+                            cell.text
+                            for cell in row.find_elements(By.XPATH, "./td | ./th")
+                        ]
+                        # Append station data to table data
+                        table_data.append(cells)
+                    # Replace new lines with spaces in first row of table_data
+                    table_data[0] = [cell.replace("\n", " ") for cell in table_data[0]]
+                    # Create DataFrame
+                    station_list = pd.DataFrame(table_data[1:], columns=table_data[0])
+                    # save station list to csv
+                    file_name = f"{station_code}_{day.strftime('%Y-%m-%d')}.csv"
+                    self.__dataframe_to_csv(station_list, file_name)
+                    file_list.append(file_name)
+            return file_list
         except Exception as e:
             raise Exception(f"Error occurred while getting station data: {e}")
 
@@ -200,7 +254,9 @@ class MeteoScraper:
             # Get the station list
             station_list = self.__get_station_list(driver)
             # Get the station data
-            self.__get_station_data(driver, station_list, num_days)
+            file_list = self.__get_station_data(driver, station_list, num_days)
+            # Implement final dataset
+            pass
             # Quit the driver
             driver.quit()
         except Exception as e:
