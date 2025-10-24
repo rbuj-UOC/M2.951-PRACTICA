@@ -2,6 +2,29 @@ import argparse
 from scrapper import MeteoScraper
 
 
+# Helper function to get the current list of files in the dataset folder.
+# Only for demonstration purposes; in a real scenario, this would be handled by the scraper.
+def get_current_file_list(output_file: str) -> list[str]:
+    """
+    Get the current list of files in the dataset folder, excluding the station list CSV.
+    Args:
+        output_file: The output CSV file name.
+    Returns:
+        A list of file names.
+    """
+    # Placeholder function to get the current list of files
+    from os import listdir
+    from os.path import dirname, isfile, join
+
+    dataset_folder = join(dirname(dirname(__file__)), "dataset")
+    file_list = [f for f in listdir(dataset_folder) if isfile(join(dataset_folder, f))]
+    file_list.remove("station_list.csv")
+    # Remove output_file from the list
+    if output_file in file_list:
+        file_list.remove(output_file)
+    return file_list
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Meteo.cat scraper")
     parser.add_argument(
@@ -17,8 +40,9 @@ def main() -> None:
         return
     scraper = MeteoScraper()
     try:
-        scraper.scrape(num_days=args.days)
-        scraper.data2csv(output_file=args.output)
+        file_list = scraper.scrape(num_days=args.days)
+        # file_list = get_current_file_list(output_file=args.output)
+        scraper.final_csv(file_list=file_list, output_file=args.output)
     except Exception as e:
         print(f"Error occurred: {e}")
 
