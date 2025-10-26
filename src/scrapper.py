@@ -321,6 +321,9 @@ class MeteoScraper:
         try:
             # Initialize the webdriver
             driver = webdriver.Chrome()
+            # Check user agent
+            agent = driver.execute_script("return navigator.userAgent")
+            print(f"User agent: {agent}")
             # Get the station list
             station_list = self.__get_station_list(driver)
             # Get the station data
