@@ -9,7 +9,7 @@
 
 - `dataset/`: carpeta amb els fitxers de dades.
    - `station_list.csv`: fitxer csv amb la llista de les estacions.
-- `src/`: carpeta amb els fitxers de codi font.
+- `source/`: carpeta amb els fitxers de codi font.
   - `main.py`: punt d'entrada al programa. Inicia el procés de scraping.
   - `scraper.py`: conté la implementació de la classe MeteoScraper amb els mètodes que generen el conjunt de dades a partir de les [dades](https://www.meteo.cat/observacions/xema/dades) recollides de les [estacions](https://www.meteo.cat//observacions/llistat-xema).
 - `requirements.txt`: fitxer ams els requisits.
@@ -37,7 +37,7 @@ source .venv/bin/activate
 ### Execució del codi
 
 ```sh
-(.venv) $ python3 src/main.py
+(.venv) $ python3 source/main.py
 Scraping data...
 Saving data to dataset.csv...
 ```
