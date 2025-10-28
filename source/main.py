@@ -2,6 +2,7 @@
 Main script to run the Meteo.cat scraper and merge data files.
 """
 
+from datetime import datetime
 from os import listdir
 from os.path import dirname, isfile, join
 import argparse
@@ -29,6 +30,9 @@ def get_current_file_list(output_file: str) -> list[str]:
 
 
 def main() -> None:
+    """
+    Main function to run the Meteo.cat scraper and merge data files.
+    """
     parser = argparse.ArgumentParser(description="Meteo.cat scraper")
     parser.add_argument(
         "-d", "--days", help="Number of days to scrape", type=int, default=7
@@ -48,6 +52,13 @@ def main() -> None:
         help="Do not merge the data files into a single CSV",
         action="store_true",
     )
+    parser.add_argument(
+        "-b",
+        "--begin-date",
+        help="The start date for data scraping (format: DD.MM.YYYY)",
+        type=str,
+        default=datetime.now().strftime("%d.%m.%Y"),
+    )
     args = parser.parse_args()
     if args.days <= 0:
         print("Error: Number of days must be greater than 0.")
@@ -60,7 +71,7 @@ def main() -> None:
             print("Skipping download of data files.")
             file_list = get_current_file_list(output_file=args.output)
         else:
-            file_list = scraper.scrape(num_days=args.days)
+            file_list = scraper.scrape(num_days=args.days, begin_date=args.begin_date)
         if args.skip_merge:
             print("Skipping merging of data files.")
             return

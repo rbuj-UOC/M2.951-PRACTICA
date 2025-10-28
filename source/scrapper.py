@@ -62,22 +62,24 @@ class MeteoScraper:
         except Exception as e:
             raise Exception(f"Error occurred while saving DataFrame to CSV: {e}")
 
-    def __get_day_list(self, num_days: int) -> list[datetime]:
+    def __get_day_list(self, num_days: int, begin_date: str) -> list[datetime]:
         """
         Get the list of days for which to scrape data.
         Args:
             num_days: The number of days to scrape.
+            begin_date: The start date for data scraping (format: DD.MM.YYYY).
         Returns:
             A list of dates as strings.
         """
-        today = datetime.now()
-        return [today - timedelta(days=i) for i in range(num_days)]
+        begin_date_dt = datetime.strptime(begin_date, "%d.%m.%Y")
+        return [begin_date_dt - timedelta(days=i) for i in range(num_days)]
 
     def __get_station_data(
         self,
         driver: webdriver.Chrome,
         station_list: pd.DataFrame,
         num_days: int,
+        begin_date: str,
         delay: int = 2,
     ) -> list[str]:
         """
@@ -86,6 +88,8 @@ class MeteoScraper:
             driver: The selenium webdriver instance.
             station_list: The list of stations as a DataFrame.
             num_days: The number of days to scrape data for.
+            begin_date: The start date for data scraping (format: DD.MM.YYYY).
+            delay: The time to wait after each action.
         Returns:
             A list of file names where the data is saved.
         """
@@ -123,7 +127,7 @@ class MeteoScraper:
                         f'\tScraping data for station: "{station_name}" [{station_code}]'
                     )
                     # Get station data for each day
-                    for day in self.__get_day_list(num_days):
+                    for day in self.__get_day_list(num_days, begin_date):
                         try:
                             # if day is greater than end_date or less than start_date, skip
                             if day > end_date or day < start_date:
@@ -312,11 +316,12 @@ class MeteoScraper:
         # Save to CSV
         self.__dataframe_to_csv(final_df, output_file)
 
-    def scrape(self, num_days: int) -> list[str]:
+    def scrape(self, num_days: int, begin_date: str) -> list[str]:
         """
         Scrape meteorological data from the website.
         Args:
             num_days: The number of days to scrape data for.
+            begin_date: The start date for data scraping (format: DD.MM.YYYY).
         Returns:
             A list of file names where the data is saved.
         """
@@ -331,7 +336,9 @@ class MeteoScraper:
             # Get the station list
             station_list = self.__get_station_list(driver)
             # Get the station data
-            file_list = self.__get_station_data(driver, station_list, num_days)
+            file_list = self.__get_station_data(
+                driver, station_list, num_days, begin_date
+            )
             # Quit the driver
             driver.quit()
             # return the list of files
