@@ -1,5 +1,9 @@
-import pandas as pd
+"""
+Simple analysis script for weather data.
+"""
+
 from os import path
+import pandas as pd
 
 # ------------------------
 # I. DATA LOADING

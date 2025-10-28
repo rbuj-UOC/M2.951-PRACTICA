@@ -6,7 +6,11 @@
         "editor.formatOnType": true,
         "diffEditor.ignoreTrimWhitespace": false,
         "editor.defaultColorDecorators": "never",
-        "editor.wordBasedSuggestions": "off"
+        "editor.wordBasedSuggestions": "off",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true,
+            "source.fixAll": true
+        }
     },
     "cSpell.words": [
         "Meteo",

@@ -1,3 +1,9 @@
+"""
+Main script to run the Meteo.cat scraper and merge data files.
+"""
+
+from os import listdir
+from os.path import dirname, isfile, join
 import argparse
 from scrapper import MeteoScraper
 
@@ -13,9 +19,6 @@ def get_current_file_list(output_file: str) -> list[str]:
         A list of file names.
     """
     # Placeholder function to get the current list of files
-    from os import listdir
-    from os.path import dirname, isfile, join
-
     dataset_folder = join(dirname(dirname(__file__)), "dataset")
     file_list = [f for f in listdir(dataset_folder) if isfile(join(dataset_folder, f))]
     file_list.remove("station_list.csv")

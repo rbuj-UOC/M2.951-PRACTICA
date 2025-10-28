@@ -1,7 +1,11 @@
-import time
-import pandas as pd
+"""
+Meteo.cat scraper module.
+"""
+
 from os import makedirs, path
+import time
 from datetime import datetime, timedelta
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
