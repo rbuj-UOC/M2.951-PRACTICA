@@ -80,7 +80,7 @@ class MeteoScraper:
         station_list: pd.DataFrame,
         num_days: int,
         begin_date: str,
-        delay: int = 2,
+        delay: float = 0.1,
     ) -> list[str]:
         """
         Get the meteorological data for each station.
@@ -96,7 +96,7 @@ class MeteoScraper:
         try:
             file_list = []
             # Navigate to station data page
-            self.__navigate_to_station_data_page(driver, timeout=10, delay=2)
+            self.__navigate_to_station_data_page(driver, timeout=10)
             for i, station in station_list.iterrows():
                 try:
                     # Get station data for each station
@@ -108,7 +108,7 @@ class MeteoScraper:
                     if station_status == "Operativa":
                         end_date = datetime.now() + timedelta(days=1)  # tomorrow
                     elif station_status == "Desmantellada":
-                        end_date = datetime.strptime(station["Data baixa"], "%d.%m.%Y")
+                        continue  # skip dismantled stations
                     else:
                         raise Exception(f"Unknown station status: {station_status}")
                     start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
@@ -202,9 +202,9 @@ class MeteoScraper:
             A DataFrame containing the station list.
         """
         # Navigate to the list URL
-        self.__navigate_to_station_list_page(driver, timeout=10, delay=2)
+        self.__navigate_to_station_list_page(driver, timeout=10)
         # Reject cookies
-        self.__reject_cookies(driver, delay=2)
+        self.__reject_cookies(driver)
         # Get station list table from the page
         try:
             table = driver.find_element(By.ID, "llistaEstacions")
@@ -231,7 +231,7 @@ class MeteoScraper:
             raise Exception(f"Error occurred while getting station list: {e}")
 
     def __navigate_to_station_data_page(
-        self, driver: webdriver.Chrome, timeout: int, delay: int
+        self, driver: webdriver.Chrome, timeout: int, delay: float = 0.1
     ) -> None:
         """
         Navigate to the station data page.
@@ -249,7 +249,7 @@ class MeteoScraper:
         time.sleep(delay)
 
     def __navigate_to_station_list_page(
-        self, driver: webdriver.Chrome, timeout: int, delay: int
+        self, driver: webdriver.Chrome, timeout: int, delay: float = 0.1
     ) -> None:
         """
         Navigate to the station list page.
@@ -266,7 +266,7 @@ class MeteoScraper:
         # Wait for a short delay
         time.sleep(delay)
 
-    def __reject_cookies(self, driver: webdriver.Chrome, delay: int) -> None:
+    def __reject_cookies(self, driver: webdriver.Chrome, delay: float = 0.1) -> None:
         """
         Reject cookies on the website.
         Args:
