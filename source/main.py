@@ -21,12 +21,17 @@ def get_current_file_list(output_file: str) -> list[str]:
     """
     # Placeholder function to get the current list of files
     dataset_folder = join(dirname(dirname(__file__)), "dataset")
-    file_list = [f for f in listdir(dataset_folder) if isfile(join(dataset_folder, f))]
-    file_list.remove("station_list.csv")
+    # Get all csv files in dataset_folder
+    csv_files = [
+        file_name
+        for file_name in listdir(dataset_folder)
+        if isfile(join(dataset_folder, file_name)) and file_name.endswith(".csv")
+    ]
+    csv_files.remove("station_list.csv")
     # Remove output_file from the list
-    if output_file in file_list:
-        file_list.remove(output_file)
-    return file_list
+    if output_file in csv_files:
+        csv_files.remove(output_file)
+    return csv_files
 
 
 def main() -> None:
