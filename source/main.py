@@ -33,6 +33,18 @@ def main() -> None:
     parser.add_argument(
         "-o", "--output", help="Output CSV file", type=str, default="dataset.csv"
     )
+    parser.add_argument(
+        "-w",
+        "--skip-download",
+        help="Skip the downloading of data files",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-m",
+        "--skip-merge",
+        help="Do not merge the data files into a single CSV",
+        action="store_true",
+    )
     args = parser.parse_args()
     if args.days <= 0:
         print("Error: Number of days must be greater than 0.")
@@ -40,8 +52,15 @@ def main() -> None:
         return
     scraper = MeteoScraper()
     try:
-        file_list = scraper.scrape(num_days=args.days)
-        # file_list = get_current_file_list(output_file=args.output)
+        file_list = []
+        if args.skip_download:
+            print("Skipping download of data files.")
+            file_list = get_current_file_list(output_file=args.output)
+        else:
+            file_list = scraper.scrape(num_days=args.days)
+        if args.skip_merge:
+            print("Skipping merging of data files.")
+            return
         scraper.final_csv(file_list=file_list, output_file=args.output)
     except Exception as e:
         print(f"Error occurred: {e}")
