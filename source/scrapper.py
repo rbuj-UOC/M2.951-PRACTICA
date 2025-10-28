@@ -80,7 +80,7 @@ class MeteoScraper:
         station_list: pd.DataFrame,
         num_days: int,
         begin_date: str,
-        delay: float = 0.1,
+        delay: float = 2.0,
     ) -> list[str]:
         """
         Get the meteorological data for each station.
@@ -106,7 +106,11 @@ class MeteoScraper:
                     station_name = station_full_name[0:-5]
                     station_status = station["Estat actual"]
                     if station_status == "Operativa":
-                        end_date = datetime.now() + timedelta(days=1)  # tomorrow
+                        end_date = datetime.strptime(
+                            begin_date, "%d.%m.%Y"
+                        ) + timedelta(
+                            days=1
+                        )  # tomorrow
                     elif station_status == "Desmantellada":
                         continue  # skip dismantled stations
                     else:
