@@ -7,12 +7,20 @@
 
 ## Estructura del repositori
 
-- `dataset/`: carpeta amb els fitxers de dades.
-   - `station_list.csv`: fitxer csv amb la llista de les estacions.
-- `source/`: carpeta amb els fitxers de codi font.
-  - `main.py`: punt d'entrada al programa. Inicia el procés de scraping.
-  - `scraper.py`: conté la implementació de la classe MeteoScraper amb els mètodes que generen el conjunt de dades a partir de les [dades](https://www.meteo.cat/observacions/xema/dades) recollides de les [estacions](https://www.meteo.cat//observacions/llistat-xema).
-- `requirements.txt`: fitxer ams els requisits.
+- `.vscode/`: carpeta amb la configuració de Visual Studio Code.
+  - `extensions.json`: llista d’extensions recomanades.
+  - `settings.json`: preferències personalitzades de l’entorn de desenvolupament.
+- `dataset/`: carpeta que conté els fitxers de dades.
+  - `station_list.csv`: fitxer CSV amb la llista d’estacions meteorològiques.
+  - `[CODI]_[DIA].csv`: fitxer CSV amb les mesures per a l'estació, identificada amb el codi de dos dígits [CODI], amb dades del dia [DIA] en format `dd.mm.yyyy`.
+- `source/`: carpeta amb el codi font del projecte.
+  - `main.py`: punt d’entrada del programa. Inicia el procés de web scraping.
+  - `scraper.py`: implementa la classe `MeteoScraper`, que genera el conjunt de dades a partir de les [dades observades](https://www.meteo.cat/observacions/xema/dades) i les [estacions disponibles](https://www.meteo.cat//observacions/llistat-xema).
+  - `simple_analysis.py`: primer anàlisi del conjunt de dades recollit.
+- `.gitignore`: especifica els fitxers i directoris que Git ha d’ignorar en els commits.
+- `LICENSE`: fitxer amb la llicència amb la que es publica el codi.
+- `boost.sh`: script per executar el procés de scraping en paral·lel.
+- `requirements.txt`: fitxer amb les dependències del projecte.
 
 ## Utilització del codi
 
