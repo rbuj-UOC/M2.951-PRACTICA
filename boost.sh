@@ -1,6 +1,6 @@
 #!/bin/bash
 ## nombre maxim de processos en paral·lel
-NPROCS=10
+NPROCS=6
 
 for i in {1..365}
 do
@@ -10,6 +10,8 @@ do
    while [ $(jobs -r | wc -l) -ge ${NPROCS} ]; do
        wait -n
    done
+   ## Espera un moment abans de llançar el següent procés
+   sleep 1
 done
 
 wait
