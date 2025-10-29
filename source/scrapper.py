@@ -2,7 +2,8 @@
 Meteo.cat scraper module.
 """
 
-from os import makedirs, path
+from os import listdir, makedirs, path
+import re
 import time
 from datetime import datetime, timedelta
 import pandas as pd
@@ -392,6 +393,31 @@ class MeteoScraper:
         final_df = pd.merge(stations_df, measurements_df, on="code", how="inner")
         # Save to CSV
         self.__dataframe_to_csv(final_df, output_file)
+
+    def get_file_list(self, output_file: str = "dataset.csv") -> list[str]:
+        """
+        Get the list of CSV files in the dataset folder witch should be merged.
+        Args:
+            output_file: The output CSV file name.
+        Returns:
+            A list of file names.
+        """
+        # Get all csv files in dataset_folder
+        pattern = r"^[A-Z]{2}_\d{4}-\d{2}-\d{2}\.csv$"
+        csv_files = [
+            file_name
+            for file_name in listdir(self.dataset_folder)
+            if path.isfile(self.__get_file_path(file_name))
+            and file_name.endswith(".csv")
+            and re.match(pattern, file_name)
+        ]
+        # Remove station_list.csv from the list
+        if "station_list.csv" in csv_files:
+            csv_files.remove("station_list.csv")
+        # Remove output_file from the list
+        if output_file in csv_files:
+            csv_files.remove(output_file)
+        return csv_files
 
     def scrape(self, num_days: int, begin_date: str) -> list[str]:
         """
