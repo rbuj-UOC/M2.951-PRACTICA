@@ -371,23 +371,53 @@ class MeteoScraper:
         """
         print(f"Saving data to {output_file}...")
         frames = []
-        for file_name in file_list:
-            try:
-                df = self.__csv_to_dataframe(file_name)
-                # Get station code from file name
-                df["code"] = file_name.split("_")[0]
-                # Get date from file name
-                date_str = file_name.split("_")[1].replace(".csv", "")
-                date_datetime = datetime.strptime(date_str, "%Y-%m-%d")
-                df["date"] = date_datetime.strftime("%d.%m.%Y")
-                # Append to frames list
-                frames.append(df)
-            except Exception as e:
-                print(f"Error occurred while loading {file_name}: {e}")
-        # Concatenate all DataFrames
+        # Get all station codes from file names and load data into DataFrames
+        station_codes = set([file_name.split("_")[0] for file_name in file_list])
+        # Build dataset for each station, append to frames list, and save to csv
+        for station_code in station_codes:
+            print(f"\tProcessing station: {station_code}")
+            station_files = [
+                file_name
+                for file_name in file_list
+                if file_name.startswith(station_code)
+            ]
+            station_frames = []
+            for file_name in station_files:
+                try:
+                    df = self.__csv_to_dataframe(file_name)
+                    # Get date from file name
+                    date_str = file_name.split("_")[1].replace(".csv", "")
+                    date_datetime = datetime.strptime(date_str, "%Y-%m-%d")
+                    # Add date column to dataframe
+                    df["date"] = date_datetime.strftime("%d.%m.%Y")
+                    # Move date column to first position
+                    cols = df.columns.tolist()
+                    cols = [cols[-1]] + cols[:-1]
+                    df = df[cols]
+                    # Append to station frames list
+                    station_frames.append(df)
+                except Exception as e:
+                    print(f"Error occurred while loading {file_name}: {e}")
+                    continue
+            # Concatenate all DataFrames
+            station_df = pd.concat(station_frames, ignore_index=True, sort=False)
+            # Convert "date" column to datetime
+            station_df["date"] = pd.to_datetime(station_df["date"], format="%d.%m.%Y")
+            # Sort by date and time
+            station_df = station_df.sort_values(by=["date", "Període TU"])
+            # Convert "date" column back to string
+            station_df["date"] = station_df["date"].dt.strftime("%d.%m.%Y")
+            # Save station data to csv
+            self.__dataframe_to_csv(station_df, f"{station_code}_merged.csv")
+            # Set station code column
+            station_df["code"] = station_code
+            # Append to frames list
+            frames.append(station_df)
+        # Concatenate all merged dataframes
         measurements_df = pd.concat(frames, ignore_index=True, sort=False)
         # Get all stations
         stations_df = self.__csv_to_dataframe("station_list.csv")
+        # Add "code" column to stations_df
         stations_df["code"] = stations_df["Estació [Codi]"].apply(lambda x: x[-3:-1])
         # Merge measurements with stations on "code"
         final_df = pd.merge(stations_df, measurements_df, on="code", how="inner")
@@ -403,7 +433,7 @@ class MeteoScraper:
             A list of file names.
         """
         # Get all csv files in dataset_folder
-        pattern = r"^[A-Z]{2}_\d{4}-\d{2}-\d{2}\.csv$"
+        pattern = r"^[A-Z|0-9]{2}_\d{4}-\d{2}-\d{2}\.csv$"
         csv_files = [
             file_name
             for file_name in listdir(self.dataset_folder)
