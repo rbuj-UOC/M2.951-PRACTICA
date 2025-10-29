@@ -32,8 +32,8 @@ class MeteoScraper:
             A DataFrame containing the CSV data.
         """
         try:
-            # Build the full file path
-            file_path = path.join(self.dataset_folder, input_file)
+            # Get file path
+            file_path = self.__get_file_path(input_file)
             # Load the CSV into a DataFrame
             df = pd.read_csv(file_path)
             # Print success message
@@ -53,14 +53,25 @@ class MeteoScraper:
         try:
             # Create the dataset folder if not exists
             makedirs(self.dataset_folder, exist_ok=True)
-            # Build the full file path
-            file_path = path.join(self.dataset_folder, output_file)
+            # Get the file path for the output file
+            file_path = self.__get_file_path(output_file)
             # Save the DataFrame to CSV in dataset folder, overwriting if it exists
             df.to_csv(file_path, index=False, mode="w")
             # Print success message
             print(f"\tDataFrame saved to {file_path}")
         except Exception as e:
             raise Exception(f"Error occurred while saving DataFrame to CSV: {e}")
+
+    def __exists_dataset(self, file_name: str) -> bool:
+        """
+        Check if a dataset file exists in the dataset folder.
+        Args:
+            file_name: The file name to check.
+        Returns:
+            True if the file exists, False otherwise.
+        """
+        file_path = self.__get_file_path(file_name)
+        return path.exists(file_path)
 
     def __get_day_list(self, num_days: int, begin_date: str) -> list[datetime]:
         """
@@ -73,6 +84,16 @@ class MeteoScraper:
         """
         begin_date_dt = datetime.strptime(begin_date, "%d.%m.%Y")
         return [begin_date_dt - timedelta(days=i) for i in range(num_days)]
+
+    def __get_file_path(self, file_name: str) -> str:
+        """
+        Get the full file path for a dataset file.
+        Args:
+            file_name: The file name.
+        Returns:
+            The full file path.
+        """
+        return path.join(self.dataset_folder, file_name)
 
     def __get_station_data(
         self,
@@ -126,7 +147,14 @@ class MeteoScraper:
                     )
                     # Get station data for each day
                     for day in self.__get_day_list(num_days, begin_date):
-                        # if day is greater than end_date or less than start_date, skip
+                        # Check if the dataset already exists for the given station and date
+                        file_name = f"{station_code}_{day.strftime('%Y-%m-%d')}.csv"
+                        if self.__exists_dataset(file_name):
+                            print(
+                                f"Dataset for {station_name} on {day.strftime('%d.%m.%Y')} already exists. Skipping..."
+                            )
+                            continue
+                        # If day is greater than end_date or less than start_date, skip
                         if day > end_date or day < start_date:
                             continue
                         # Retry logic for each day
@@ -181,9 +209,6 @@ class MeteoScraper:
                                 # Create DataFrame
                                 df = pd.DataFrame(table_data[1:], columns=table_data[0])
                                 # save station list to csv
-                                file_name = (
-                                    f"{station_code}_{day.strftime('%Y-%m-%d')}.csv"
-                                )
                                 self.__dataframe_to_csv(df, file_name)
                                 file_list.append(file_name)
                             except Exception as e:
