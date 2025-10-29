@@ -81,6 +81,7 @@ class MeteoScraper:
         num_days: int,
         begin_date: str,
         delay: float = 2.0,
+        max_retries: int = 5,
     ) -> list[str]:
         """
         Get the meteorological data for each station.
@@ -90,13 +91,14 @@ class MeteoScraper:
             num_days: The number of days to scrape data for.
             begin_date: The start date for data scraping (format: DD.MM.YYYY).
             delay: The time to wait after each action.
+            max_retries: The maximum number of retries for each station/day.
         Returns:
             A list of file names where the data is saved.
         """
         try:
             file_list = []
             # Navigate to station data page
-            self.__navigate_to_station_data_page(driver, timeout=10)
+            self.__navigate_to_station_data_page(driver)
             for i, station in station_list.iterrows():
                 try:
                     # Get station data for each station
@@ -116,81 +118,91 @@ class MeteoScraper:
                     else:
                         raise Exception(f"Unknown station status: {station_status}")
                     start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
-                    # Enter station name in form input field
-                    form_element = driver.find_element(By.ID, "seleccio-estacions")
-                    name_element = form_element.find_element(By.ID, "nom")
-                    name_element.clear()
-                    name_element.send_keys(station_name)
-                    time.sleep(delay)
-                    # Select the station from the autocomplete dropdown
-                    name_element.send_keys(Keys.DOWN)
-                    name_element.send_keys(Keys.RETURN)
-                    time.sleep(delay)
+                    # Select station the station from the autocomplete dropdown
+                    self.__select_station(driver, station_name)
                     # Print station name and code
                     print(
                         f'\tScraping data for station: "{station_name}" [{station_code}]'
                     )
                     # Get station data for each day
                     for day in self.__get_day_list(num_days, begin_date):
-                        try:
-                            # if day is greater than end_date or less than start_date, skip
-                            if day > end_date or day < start_date:
-                                continue
-                            # Select date in form input field
-                            form_element = driver.find_element(
-                                By.ID, "seleccio-estacions"
-                            )
-                            date_element = form_element.find_element(
-                                By.ID, "datepicker"
-                            )
-                            date_element.clear()
-                            date_element.send_keys(day.strftime("%d.%m.%Y"))
-                            time.sleep(delay)
-                            # Submit the form
-                            submit_button = form_element.find_element(
-                                By.ID, "cercaEstacioButton"
-                            )
-                            submit_button.click()
-                            time.sleep(delay)
-                            # click on tab "Dades per període"
-                            tabs_element = driver.find_element(By.ID, "tabs")
-                            tab_element = tabs_element.find_element(By.ID, "ui-id-6")
-                            tab_element.click()
-                            time.sleep(delay)
-                            # Get station data table from the page
-                            table_element = driver.find_element(
-                                By.XPATH, "//table[@class='tblperiode']"
-                            )
-                            # Get table data
-                            table_data = []
-                            for row in table_element.find_elements(
-                                By.XPATH, "./tbody/tr"
-                            ):
-                                # Get all cells in the row
-                                cells = [
-                                    cell.text
-                                    for cell in row.find_elements(
-                                        By.XPATH, "./td | ./th"
-                                    )
+                        # if day is greater than end_date or less than start_date, skip
+                        if day > end_date or day < start_date:
+                            continue
+                        # Retry logic for each day
+                        retries = 0
+                        while retries < max_retries:
+                            try:
+                                # Select date in form input field
+                                form_element = driver.find_element(
+                                    By.ID, "seleccio-estacions"
+                                )
+                                date_element = form_element.find_element(
+                                    By.ID, "datepicker"
+                                )
+                                date_element.clear()
+                                date_element.send_keys(day.strftime("%d.%m.%Y"))
+                                time.sleep(delay)
+                                # Submit the form
+                                submit_button = form_element.find_element(
+                                    By.ID, "cercaEstacioButton"
+                                )
+                                submit_button.click()
+                                time.sleep(delay)
+                                # click on tab "Dades per període"
+                                tabs_element = driver.find_element(By.ID, "tabs")
+                                tab_element = tabs_element.find_element(
+                                    By.ID, "ui-id-6"
+                                )
+                                tab_element.click()
+                                time.sleep(delay)
+                                # Get station data table from the page
+                                table_element = driver.find_element(
+                                    By.XPATH, "//table[@class='tblperiode']"
+                                )
+                                # Get table data
+                                table_data = []
+                                for row in table_element.find_elements(
+                                    By.XPATH, "./tbody/tr"
+                                ):
+                                    # Get all cells in the row
+                                    cells = [
+                                        cell.text
+                                        for cell in row.find_elements(
+                                            By.XPATH, "./td | ./th"
+                                        )
+                                    ]
+                                    # Append station data to table data
+                                    table_data.append(cells)
+                                # Replace new lines with spaces in first row of table_data
+                                table_data[0] = [
+                                    cell.replace("\n", " ") for cell in table_data[0]
                                 ]
-                                # Append station data to table data
-                                table_data.append(cells)
-                            # Replace new lines with spaces in first row of table_data
-                            table_data[0] = [
-                                cell.replace("\n", " ") for cell in table_data[0]
-                            ]
-                            # Create DataFrame
-                            station_list = pd.DataFrame(
-                                table_data[1:], columns=table_data[0]
-                            )
-                            # save station list to csv
-                            file_name = f"{station_code}_{day.strftime('%Y-%m-%d')}.csv"
-                            self.__dataframe_to_csv(station_list, file_name)
-                            file_list.append(file_name)
-                        except Exception as e:
-                            print(
-                                f"Error occurred while scraping data for {{station_name}}: {day.strftime('%d.%m.%Y')}: {e}"
-                            )
+                                # Create DataFrame
+                                df = pd.DataFrame(table_data[1:], columns=table_data[0])
+                                # save station list to csv
+                                file_name = (
+                                    f"{station_code}_{day.strftime('%Y-%m-%d')}.csv"
+                                )
+                                self.__dataframe_to_csv(df, file_name)
+                                file_list.append(file_name)
+                            except Exception as e:
+                                print(
+                                    f"Error occurred while scraping data for {station_name}: {day.strftime('%d.%m.%Y')}: {e}"
+                                )
+                                print(f"Retrying {retries + 1}/{max_retries}...")
+                                try:
+                                    # Navigate to station data page
+                                    self.__navigate_to_station_data_page(driver)
+                                    # Select station the station from the autocomplete dropdown
+                                    self.__select_station(driver, station_name)
+                                except Exception as e:
+                                    print(
+                                        f"Error occurred while re-navigating to station data page for {station_name}: {e}"
+                                    )
+                            else:
+                                break
+                            retries += 1
                 except Exception as e:
                     print(f"Error occurred while scraping station {station_name}: {e}")
             return file_list
@@ -235,7 +247,11 @@ class MeteoScraper:
             raise Exception(f"Error occurred while getting station list: {e}")
 
     def __navigate_to_station_data_page(
-        self, driver: webdriver.Chrome, timeout: int, delay: float = 0.1
+        self,
+        driver: webdriver.Chrome,
+        timeout: int = 10,
+        delay: float = 0.1,
+        max_retries: int = 5,
     ) -> None:
         """
         Navigate to the station data page.
@@ -243,12 +259,20 @@ class MeteoScraper:
             driver: The selenium webdriver instance.
             timeout: The maximum time to wait for the page to load.
             delay: The time to wait after page load.
+            max_retries: The maximum number of retries for loading the page.
         """
         driver.set_page_load_timeout(timeout)
-        try:
-            driver.get(self.data_url)
-        except TimeoutException:
-            raise Exception("Station data page did not load in time")
+        retries = 0
+        while retries < max_retries:
+            try:
+                driver.get(self.data_url)
+            except TimeoutException:
+                print(f"Retrying... ({retries + 1}/{max_retries})")
+            else:
+                break
+            retries += 1
+        if retries == max_retries:
+            raise Exception("Failed to load station data page after multiple retries")
         # Wait for a short delay
         time.sleep(delay)
 
@@ -287,6 +311,30 @@ class MeteoScraper:
             time.sleep(delay)
         except NoSuchElementException:
             raise Exception("Could not reject cookies. Element not found.")
+
+    def __select_station(
+        self, driver: webdriver.Chrome, station_name: str, delay: float = 2.0
+    ) -> None:
+        """
+        Select a station from the autocomplete dropdown.
+        Args:
+            driver: The selenium webdriver instance.
+            station_name: The name of the station to select.
+            delay: The time to wait after selecting the station.
+        """
+        try:
+            # Enter station name in form input field
+            form_element = driver.find_element(By.ID, "seleccio-estacions")
+            name_element = form_element.find_element(By.ID, "nom")
+            name_element.clear()
+            name_element.send_keys(station_name)
+            time.sleep(delay)
+            # Select the station from the autocomplete dropdown
+            name_element.send_keys(Keys.DOWN)
+            name_element.send_keys(Keys.RETURN)
+            time.sleep(delay)
+        except:
+            raise Exception(f"Could not select station {station_name}.")
 
     def final_csv(self, file_list: list[str], output_file: str) -> None:
         """
