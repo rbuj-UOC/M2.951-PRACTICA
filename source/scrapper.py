@@ -73,7 +73,11 @@ class MeteoScraper:
         Returns:
             True if the file exists, False otherwise.
         """
+        # Create the dataset folder if not exists
+        makedirs(self.dataset_folder, exist_ok=True)
+        # Get the full file path
         file_path = self.__get_file_path(file_name)
+        # Check if the file exists
         return path.exists(file_path)
 
     def __get_day_list(self, num_days: int, begin_date: str) -> list[datetime]:
@@ -477,6 +481,9 @@ class MeteoScraper:
         Returns:
             A list of file names.
         """
+        # Check if dataset folder exists
+        if not path.exists(self.dataset_folder):
+            raise Exception("dataset folder does not exist.")
         # Get all csv files in dataset_folder
         pattern = r"^[A-Z|0-9]{2}_\d{4}-\d{2}-\d{2}\.csv$"
         csv_files = [
