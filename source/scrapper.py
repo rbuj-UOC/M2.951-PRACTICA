@@ -10,6 +10,8 @@ import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 
@@ -103,6 +105,7 @@ class MeteoScraper:
         num_days: int,
         begin_date: str,
         delay: float = 2.0,
+        timeout: float = 10.0,
         max_retries: int = 5,
     ) -> list[str]:
         """
@@ -113,6 +116,7 @@ class MeteoScraper:
             num_days: The number of days to scrape data for.
             begin_date: The start date for data scraping (format: DD.MM.YYYY).
             delay: The time to wait after each action.
+            timeout: The maximum time to wait for each action.
             max_retries: The maximum number of retries for each station/day.
         Returns:
             A list of file names where the data is saved.
@@ -178,14 +182,28 @@ class MeteoScraper:
                                 )
                                 submit_button.click()
                                 time.sleep(delay)
+                                # Wait until the station data appears in the breadcrumbs
+                                WebDriverWait(driver, timeout=timeout).until(
+                                    EC.text_to_be_present_in_element(
+                                        (
+                                            By.XPATH,
+                                            "//nav[@class='breadcrumbs']/ul/li[last()]",
+                                        ),
+                                        station_name,
+                                    )
+                                )
                                 # click on tab "Dades per període"
                                 tabs_element = driver.find_element(By.ID, "tabs")
                                 tab_element = tabs_element.find_element(
                                     By.ID, "ui-id-6"
                                 )
                                 tab_element.click()
-                                time.sleep(delay)
                                 # Get station data table from the page
+                                WebDriverWait(driver, timeout=timeout).until(
+                                    EC.presence_of_element_located(
+                                        (By.XPATH, "//table[@class='tblperiode']")
+                                    )
+                                )
                                 table_element = driver.find_element(
                                     By.XPATH, "//table[@class='tblperiode']"
                                 )
@@ -235,20 +253,27 @@ class MeteoScraper:
         except Exception as e:
             print(f"Error occurred while getting station data: {e}")
 
-    def __get_station_list(self, driver: webdriver.Chrome) -> pd.DataFrame:
+    def __get_station_list(
+        self, driver: webdriver.Chrome, timeout: float = 10.0
+    ) -> pd.DataFrame:
         """
         Get the list of meteorological stations from the website.
         Args:
             driver: The selenium webdriver instance.
+            timeout: The maximum time to wait for each action.
         Returns:
             A DataFrame containing the station list.
         """
-        # Navigate to the list URL
-        self.__navigate_to_station_list_page(driver, timeout=10)
-        # Reject cookies
-        self.__reject_cookies(driver)
-        # Get station list table from the page
         try:
+            # Navigate to the list URL
+            self.__navigate_to_station_list_page(driver)
+            # Reject cookies
+            self.__reject_cookies(driver)
+            # wait until the station list table is present
+            WebDriverWait(driver, timeout=timeout).until(
+                EC.presence_of_element_located((By.ID, "llistaEstacions"))
+            )
+            # Get station list table from the page
             table = driver.find_element(By.ID, "llistaEstacions")
             # Get df columns
             headings = [
@@ -275,7 +300,7 @@ class MeteoScraper:
     def __navigate_to_station_data_page(
         self,
         driver: webdriver.Chrome,
-        timeout: int = 10,
+        timeout: float = 10.0,
         delay: float = 0.1,
         max_retries: int = 5,
     ) -> None:
@@ -283,7 +308,7 @@ class MeteoScraper:
         Navigate to the station data page.
         Args:
             driver: The selenium webdriver instance.
-            timeout: The maximum time to wait for the page to load.
+            timeout: The maximum time to wait for each action.
             delay: The time to wait after page load.
             max_retries: The maximum number of retries for loading the page.
         """
@@ -303,13 +328,13 @@ class MeteoScraper:
         time.sleep(delay)
 
     def __navigate_to_station_list_page(
-        self, driver: webdriver.Chrome, timeout: int, delay: float = 0.1
+        self, driver: webdriver.Chrome, timeout: float = 10.0, delay: float = 0.1
     ) -> None:
         """
         Navigate to the station list page.
         Args:
             driver: The selenium webdriver instance.
-            timeout: The maximum time to wait for the page to load.
+            timeout: The maximum time to wait for each action.
             delay: The time to wait after page load.
         """
         driver.set_page_load_timeout(timeout)
@@ -320,26 +345,40 @@ class MeteoScraper:
         # Wait for a short delay
         time.sleep(delay)
 
-    def __reject_cookies(self, driver: webdriver.Chrome, delay: float = 0.1) -> None:
+    def __reject_cookies(
+        self, driver: webdriver.Chrome, timeout: float = 10.0, delay: float = 0.1
+    ) -> None:
         """
         Reject cookies on the website.
         Args:
             driver: The selenium webdriver instance.
+            timeout: The maximum time to wait for the element to be present.
             delay: The time to wait after rejecting cookies.
         """
         try:
+            # Wait for the reject cookies button to be present
+            WebDriverWait(driver, timeout=timeout).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//div[@id='missatge_cookie']//button[@id='rebutjar']")
+                )
+            )
             # Find and click the reject cookies button
             reject_button = driver.find_element(
                 By.XPATH,
                 "//div[@id='missatge_cookie']//button[@id='rebutjar']",
             )
             reject_button.click()
+            # Wait for a short delay
             time.sleep(delay)
         except NoSuchElementException:
-            raise Exception("Could not reject cookies. Element not found.")
+            print("Could not reject cookies. Element not found.")
 
     def __select_station(
-        self, driver: webdriver.Chrome, station_name: str, delay: float = 2.0
+        self,
+        driver: webdriver.Chrome,
+        station_name: str,
+        timeout: float = 10.0,
+        delay: float = 0.1,
     ) -> None:
         """
         Select a station from the autocomplete dropdown.
@@ -354,13 +393,19 @@ class MeteoScraper:
             name_element = form_element.find_element(By.ID, "nom")
             name_element.clear()
             name_element.send_keys(station_name)
-            time.sleep(delay)
+            # Wait until the 1st autocomplete suggestions contains the station name
+            WebDriverWait(driver, timeout=timeout).until(
+                EC.text_to_be_present_in_element(
+                    (By.XPATH, "//ul[@id='ui-id-1']/li[1]"), station_name
+                )
+            )
             # Select the station from the autocomplete dropdown
             name_element.send_keys(Keys.DOWN)
             name_element.send_keys(Keys.RETURN)
+            # Wait for a short delay
             time.sleep(delay)
-        except:
-            raise Exception(f"Could not select station {station_name}.")
+        except Exception as e:
+            raise Exception(f"Could not select station {station_name}. Error: {e}")
 
     def final_csv(self, file_list: list[str], output_file: str) -> None:
         """
