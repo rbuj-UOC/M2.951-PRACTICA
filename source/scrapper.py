@@ -72,10 +72,13 @@ class MeteoScraper:
             output_file: The output CSV file name.
         """
         try:
-            # Create the dataset folder if not exists
-            makedirs(self.dataset_folder, exist_ok=True)
-            # Get the file path for the output file
-            file_path = self.__get_file_path(output_file)
+            file_path = ""
+            if output_file.startswith(".") or output_file.startswith("/"):
+                # If the file name is a relative or absolute path, use it directly
+                file_path = output_file
+            else:
+                # Otherwise, construct the default file path
+                file_path = self.__get_file_path(output_file)
             # Save the DataFrame to CSV in dataset folder, overwriting if it exists
             df.to_csv(file_path, index=False, mode="w")
             # Print success message
