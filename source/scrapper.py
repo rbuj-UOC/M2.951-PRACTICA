@@ -72,6 +72,8 @@ class MeteoScraper:
             output_file: The output CSV file name.
         """
         try:
+            # Create the dataset folder if not exists
+            makedirs(self.dataset_folder, exist_ok=True)
             # Check if output_file ends with "".csv"
             if not output_file.endswith(".csv"):
                 raise MeteoScraperError("Output file must have a .csv extension.")
