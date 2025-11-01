@@ -52,6 +52,10 @@ def main() -> None:
         parser.print_help()
         return
 
+    # Validate output argument
+    if not args.output.endswith(".csv"):
+        raise MeteoScraperError("Output file must have a .csv extension.")
+
     # Initialize scraper
     scraper = MeteoScraper()
     try:

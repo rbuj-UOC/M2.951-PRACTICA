@@ -72,6 +72,10 @@ class MeteoScraper:
             output_file: The output CSV file name.
         """
         try:
+            # Check if output_file ends with "".csv"
+            if not output_file.endswith(".csv"):
+                raise MeteoScraperError("Output file must have a .csv extension.")
+            # Determine the file path
             file_path = ""
             if output_file.startswith(".") or output_file.startswith("/"):
                 # If the file name is a relative or absolute path, use it directly
