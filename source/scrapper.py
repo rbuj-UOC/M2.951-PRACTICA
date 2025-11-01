@@ -15,6 +15,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 
+# define a custom exception for scraper errors
+class MeteoScraperError(Exception):
+    """Custom exception for scraper errors.
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class MeteoScraper:
     """
     A class to scrape weather data from Meteo.cat.
@@ -48,7 +60,9 @@ class MeteoScraper:
             # Return the DataFrame
             return df
         except Exception as e:
-            raise Exception(f"Error occurred while loading CSV to DataFrame: {e}")
+            raise MeteoScraperError(
+                "Error occurred while loading CSV to DataFrame"
+            ) from e
 
     def __dataframe_to_csv(self, df: pd.DataFrame, output_file: str) -> None:
         """
@@ -67,7 +81,9 @@ class MeteoScraper:
             # Print success message
             print(f"\tDataFrame saved to {file_path}")
         except Exception as e:
-            raise Exception(f"Error occurred while saving DataFrame to CSV: {e}")
+            raise MeteoScraperError(
+                "Error occurred while saving DataFrame to CSV."
+            ) from e
 
     def __enter_date(
         self,
@@ -149,7 +165,9 @@ class MeteoScraper:
                         elif station_status == "Desmantellada":
                             continue  # skip dismantled stations
                         else:
-                            raise Exception(f"Unknown station status: {station_status}")
+                            raise MeteoScraperError(
+                                f"Unknown station status: {station_status}"
+                            )
                         # Determine start_date
                         start_date = datetime.strptime(station["Data alta"], "%d.%m.%Y")
                         # If day is greater than end_date or less than start_date, skip
@@ -159,7 +177,8 @@ class MeteoScraper:
                         file_name = f"{station_code}_{day.strftime('%Y-%m-%d')}.csv"
                         if self.__exists_dataset(file_name):
                             print(
-                                f"Dataset for {station_name} on {day.strftime('%d.%m.%Y')} already exists. Skipping..."
+                                f"Dataset for {station_name} on {day.strftime('%d.%m.%Y')} "
+                                + "already exists. Skipping..."
                             )
                             continue
                         # Get station data for the given day and station
@@ -207,7 +226,8 @@ class MeteoScraper:
         """
         # Print station name and code
         print(
-            f'\tScraping data for station: "{station_name}" [{station_code}] on {day.strftime("%d.%m.%Y")}'
+            f'Scraping data for station: "{station_name}" [{station_code}] '
+            + f'on {day.strftime("%d.%m.%Y")}'
         )
         # Retry logic for each day
         retries = 0
@@ -266,7 +286,8 @@ class MeteoScraper:
                 self.__dataframe_to_csv(df, file_name)
             except Exception as e:
                 print(
-                    f"Error occurred while scraping data for {station_name}: {day.strftime('%d.%m.%Y')}: {e}"
+                    f"Error occurred while scraping data for {station_name}: "
+                    f"{day.strftime('%d.%m.%Y')}: {e}"
                 )
                 print(f"Retrying {retries + 1}/{max_retries}...")
                 try:
@@ -342,7 +363,7 @@ class MeteoScraper:
             # Return as DataFrame
             return station_list
         except Exception as e:
-            raise Exception(f"Error occurred while getting station list: {e}")
+            raise MeteoScraperError("Error occurred while getting station list.") from e
 
     def __navigate_to_station_data_page(
         self,
@@ -370,7 +391,9 @@ class MeteoScraper:
                 break
             retries += 1
         if retries == max_retries:
-            raise Exception("Failed to load station data page after multiple retries")
+            raise MeteoScraperError(
+                "Failed to load station data page after multiple retries"
+            )
         # Wait for a short delay
         time.sleep(delay)
 
@@ -387,8 +410,8 @@ class MeteoScraper:
         driver.set_page_load_timeout(timeout)
         try:
             driver.get(self.list_url)
-        except TimeoutException:
-            raise Exception("Station list page did not load in time")
+        except TimeoutException as e:
+            raise MeteoScraperError("Station list page did not load in time") from e
         # Wait for a short delay
         time.sleep(delay)
 
@@ -452,7 +475,7 @@ class MeteoScraper:
             # Wait for a short delay
             time.sleep(delay)
         except Exception as e:
-            raise Exception(f"Could not select station {station_name}. Error: {e}")
+            raise MeteoScraperError(f"Could not select station {station_name}.") from e
 
     def final_csv(self, file_list: list[str], output_file: str) -> None:
         """
@@ -526,7 +549,7 @@ class MeteoScraper:
         """
         # Check if dataset folder exists
         if not path.exists(self.dataset_folder):
-            raise Exception("dataset folder does not exist.")
+            raise MeteoScraperError("dataset folder does not exist.")
         # Get all csv files in dataset_folder
         pattern = r"^[A-Z|0-9]{2}_\d{4}-\d{2}-\d{2}\.csv$"
         csv_files = [
@@ -572,4 +595,4 @@ class MeteoScraper:
             # return the list of files
             return file_list
         except Exception as e:
-            raise Exception(f"Error occurred while scraping: {e}")
+            raise MeteoScraperError("Error occurred while scraping.") from e

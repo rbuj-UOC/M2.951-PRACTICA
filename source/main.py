@@ -4,7 +4,7 @@ Main script to run the Meteo.cat scraper and merge data files.
 
 from datetime import datetime
 import argparse
-from scrapper import MeteoScraper
+from scrapper import MeteoScraper, MeteoScraperError
 
 
 def main() -> None:
@@ -54,7 +54,7 @@ def main() -> None:
             print("Skipping merging of data files.")
             return
         scraper.final_csv(file_list=file_list, output_file=args.output)
-    except Exception as e:
+    except MeteoScraperError as e:
         print(f"Error occurred: {e}")
 
 
