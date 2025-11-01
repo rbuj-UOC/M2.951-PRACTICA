@@ -11,6 +11,7 @@ def main() -> None:
     """
     Main function to run the Meteo.cat scraper and merge data files.
     """
+    # Set up argument parser
     parser = argparse.ArgumentParser(description="Meteo.cat scraper")
     parser.add_argument(
         "-b",
@@ -41,23 +42,33 @@ def main() -> None:
         type=str,
         default="dataset.csv",
     )
+
+    # Parse arguments
     args = parser.parse_args()
+
+    # Validate days argument
     if args.days <= 0:
         print("Error: Number of days must be greater than 0.")
         parser.print_help()
         return
+
+    # Initialize scraper
     scraper = MeteoScraper()
     try:
+        # Download data files unless skipping is specified
         file_list = []
         if args.skip_download:
             print("Skipping download of data files.")
             file_list = scraper.get_file_list(args.output)
         else:
             file_list = scraper.scrape(num_days=args.days, begin_date=args.begin_date)
+
+        # Merge data files unless skipping is specified
         if args.skip_merge:
             print("Skipping merging of data files.")
             return
         scraper.final_csv(file_list=file_list, output_file=args.output)
+
     except MeteoScraperError as e:
         print(f"Error occurred: {e}")
 
