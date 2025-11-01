@@ -3,6 +3,7 @@ Simple analysis script for weather data.
 """
 
 from os import path
+import argparse
 import pandas as pd
 
 # ------------------------
@@ -24,16 +25,34 @@ def main() -> None:
        the corresponding station and region.
     Finally, it prints all the calculated results.
     """
+    parser = argparse.ArgumentParser(description="Meteo.cat data analysis")
+    parser.add_argument(
+        "-i",
+        "--input",
+        help="Input CSV file name (default: dataset.csv)",
+        type=str,
+        default="dataset.csv",
+    )
+    args = parser.parse_args()
     df = None
     try:
-        dataset_path = path.join(
-            path.dirname(path.dirname(__file__)), "dataset", "dataset.csv"
-        )
+        # Determine the path for the given file name
+        file_name = args.input
+        # Construct the dataset path
+        dataset_path = ""
+        if file_name.startswith(".") or file_name.startswith("/"):
+            # If the file name is a relative or absolute path, use it directly
+            dataset_path = file_name
+        else:
+            # Otherwise, construct the default file path
+            dataset_path = path.join(
+                path.dirname(path.dirname(__file__)), "dataset", file_name
+            )
         # Load the data from the CSV file
         df = pd.read_csv(dataset_path)
         print("Data loaded successfully.")
     except FileNotFoundError:
-        print("Error: The file 'dataset.csv' was not found.")
+        print(f"Error: The file '{file_name}' was not found.")
 
     if df is None:
         return  # Stop execution if data loading failed
