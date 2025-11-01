@@ -13,10 +13,14 @@ def main() -> None:
     """
     parser = argparse.ArgumentParser(description="Meteo.cat scraper")
     parser.add_argument(
-        "-d", "--days", help="Number of days to scrape", type=int, default=7
+        "-b",
+        "--begin-date",
+        help="The start date for data scraping (format: DD.MM.YYYY)",
+        type=str,
+        default=datetime.now().strftime("%d.%m.%Y"),
     )
     parser.add_argument(
-        "-o", "--output", help="Output CSV file", type=str, default="dataset.csv"
+        "-d", "--days", help="Number of days to scrape", type=int, default=7
     )
     parser.add_argument(
         "-w",
@@ -31,11 +35,11 @@ def main() -> None:
         action="store_true",
     )
     parser.add_argument(
-        "-b",
-        "--begin-date",
-        help="The start date for data scraping (format: DD.MM.YYYY)",
+        "-o",
+        "--output",
+        help="Output CSV file",
         type=str,
-        default=datetime.now().strftime("%d.%m.%Y"),
+        default="dataset.csv",
     )
     args = parser.parse_args()
     if args.days <= 0:
