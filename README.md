@@ -50,4 +50,25 @@ Scraping data...
 Saving data to dataset.csv...
 ```
 
+Per consultar els arguments opcionals de l'aplicació:
+
+```sh
+$ python3 source/main.py -h
+usage: main.py [-h] [-b BEGIN_DATE] [-d DAYS] [-w] [-m] [-o OUTPUT]
+
+Meteo.cat scraper
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -b BEGIN_DATE, --begin-date BEGIN_DATE
+                        The start date for data scraping (format: DD.MM.YYYY)
+  -d DAYS, --days DAYS  Number of days to scrape
+  -w, --skip-download   Skip the downloading of data files
+  -m, --skip-merge      Do not merge the data files into a single CSV
+  -o OUTPUT, --output OUTPUT
+                        Output CSV file
+```
+
 ## DOI de Zenodo
+
+Bolivar, N. i Buj, R. (2025) «Dades recollides per la xarxa d'estacions meteorològiques automàtiques del servei meteorològic de Catalunya de l'últim any». Zenodo. doi:[10.5281/zenodo.17505763](https://doi.org/10.5281/zenodo.17505763)
