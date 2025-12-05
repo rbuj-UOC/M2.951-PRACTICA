@@ -20,6 +20,7 @@
 - `.gitignore`: especifica els fitxers i directoris que Git ha d’ignorar en els commits.
 - `LICENSE`: fitxer amb la llicència amb la que es publica el codi.
 - `boost.sh`: script per executar el procés de scraping en paral·lel.
+- `compress.sh`: script per comprimir el directori de treball.
 - `requirements.txt`: fitxer amb les dependències del projecte.
 
 ## Utilització del codi
