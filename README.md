@@ -27,11 +27,25 @@ commits.
 - `compress.sh`: script per comprimir el directori de treball, el dataset o els registres.
 - `dataset.tar.xz`: arxiu del dataset sense cap preprocessament, que s'ha
 obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
+- `init.sh`: script per preparar l'entorn virtual amb venv i instal·lar les
+dependències.
 - `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
 `boost.sh`.
 - `requirements.txt`: fitxer amb les dependències del projecte.
 
 ## Utilització del codi
+
+Per tal de crear l'entorn virtual podeu executar directament l'script `init.sh`
+o bé seguir els següents passos:
+
+1. Crear un entorn virtual amb venv
+2. Activar l'entorn virtual
+3. Instal·lar els requisits
+
+Per tal d'executar el codi s'jan de seguir els següents passos:
+
+1. Activar l'entorn virtual, si aquest no ha estat activat anteriorment
+2. Executar l'script source/main.py
 
 ### Creació d'un entorn virtual amb venv
 
