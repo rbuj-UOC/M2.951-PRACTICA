@@ -1,5 +1,12 @@
 {
     "cSpell.language": "ca,en",
+    "[json]": {
+        "editor.formatOnSave": true
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.formatOnSave": true
+    },
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true,
@@ -12,7 +19,12 @@
             "source.fixAll": "explicit"
         }
     },
-    "editor.rulers": [80],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.markdownlint": "always"
+    },
+    "editor.rulers": [
+        80
+    ],
     "cSpell.words": [
         "Meteo",
         "xema"
