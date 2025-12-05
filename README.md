@@ -12,15 +12,23 @@
   - `settings.json`: preferències personalitzades de l’entorn de desenvolupament.
 - `dataset/`: carpeta que conté els fitxers de dades.
   - `station_list.csv`: fitxer CSV amb la llista d’estacions meteorològiques.
-  - `[CODI]_[DIA].csv`: fitxer CSV amb les mesures per a l'estació, identificada amb el codi de dos dígits [CODI], amb dades del dia [DIA] en format `dd.mm.yyyy`.
+  - `[CODI]_[DIA].csv`: fitxer CSV amb les mesures per a l'estació, identificada
+  amb el codi de dos dígits [CODI], amb dades del dia [DIA] en format `dd.mm.yyyy`.
 - `source/`: carpeta amb el codi font del projecte.
   - `main.py`: punt d’entrada del programa. Inicia el procés de web scraping.
-  - `scraper.py`: implementa la classe `MeteoScraper`, que genera el conjunt de dades a partir de les [dades observades](https://www.meteo.cat/observacions/xema/dades) i les [estacions disponibles](https://www.meteo.cat//observacions/llistat-xema).
+  - `scraper.py`: implementa la classe `MeteoScraper`, que genera el conjunt de
+  dades a partir de les [dades observades](https://www.meteo.cat/observacions/xema/dades)
+  i les [estacions disponibles](https://www.meteo.cat//observacions/llistat-xema).
   - `simple_analysis.py`: primer anàlisi del conjunt de dades recollit.
-- `.gitignore`: especifica els fitxers i directoris que Git ha d’ignorar en els commits.
+- `.gitignore`: especifica els fitxers i directoris que Git ha d’ignorar en els
+commits.
 - `LICENSE`: fitxer amb la llicència amb la que es publica el codi.
 - `boost.sh`: script per executar el procés de scraping en paral·lel.
-- `compress.sh`: script per comprimir el directori de treball.
+- `compress.sh`: script per comprimir el directori de treball, el dataset o els registres.
+- `dataset.tar.xz`: arxiu del dataset sense cap preprocessament, que s'ha
+obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
+- `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
+`boost.sh`.
 - `requirements.txt`: fitxer amb les dependències del projecte.
 
 ## Utilització del codi
