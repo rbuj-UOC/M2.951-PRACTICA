@@ -22,11 +22,16 @@
   - `simple_analysis.py`: primer anàlisi del conjunt de dades recollit.
 - `.gitignore`: especifica els fitxers i directoris que Git ha d’ignorar en els
 commits.
+- `.editorconfig`: fitxer de configuració per a editors de text compatibles
+amb EditorConfig com ara Visual Studio Code.
 - `LICENSE`: fitxer amb la llicència amb la que es publica el codi.
+- `README.md`: fitxer amb la documentació general del projecte.
 - `boost.sh`: script per executar el procés de scraping en paral·lel.
 - `compress.sh`: script per comprimir el directori de treball, el dataset o els registres.
 - `dataset.tar.xz`: arxiu del dataset sense cap preprocessament, que s'ha
 obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
+- `environment.yml`: fitxer per crear un entorn virtual amb conda i instal·lar
+les dependències.
 - `init.sh`: script per preparar l'entorn virtual amb venv i instal·lar les
 dependències.
 - `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
@@ -46,57 +51,177 @@ dependències.
   - os: per a la interacció amb el sistema operatiu
   - re: per a l'ús d'expressions regulars
   - time: per a funcions relacionades amb el temps
-- Visual Studio Code (opcional)
+- Visual Studio Code: [baixar](https://code.visualstudio.com/) (opcional)
   - `shfmt` és necessari per donar format als scripts, en entorns macos es pot
-  instal·lar amb l'ordre (opcional)
+  instal·lar amb l'ordre: [baixar](https://github.com/mvdan/sh/releases) (opcional)
 
 ```sh
 brew install shfmt
 ```
 
-> [!TIP]
-> Per a instal·lar les biblioteques de Python es pot utilitzar el fitxer
-> `requirements.txt` amb l'ordre:
-
-```sh
-python3 -m pip install -r requirements.txt
-```
-
 ## Utilització del codi
 
-Per tal de crear l'entorn virtual podeu executar directament l'script `init.sh`
-o bé seguir els següents passos:
+L'avantatge d'utilitzar un entorn virtual és que permet aïllar les
+dependències del projecte de les del sistema operatiu, evitant conflictes
+entre diferents projectes i versions de biblioteques.
 
-1. Crear un entorn virtual amb venv
-2. Activar l'entorn virtual
-3. Instal·lar els requisits
+Per utilitzar el codi, primer cal preparar l'entorn virtual i instal·lar les
+dependències. Es pot utilitzar venv o conda per crear l'entorn virtual.
 
-Per tal d'executar el codi s'jan de seguir els següents passos:
+Un cop creat i activat l'entorn virtual, ja es pot executar el codi.
 
-1. Activar l'entorn virtual, si aquest no ha estat activat anteriorment
-2. Executar l'script source/main.py
+> [!TIP]
+> Podeu utilitzar l'script `init.sh` per automatitzar la creació de l'entorn
+> virtual amb venv i la instal·lació de les dependències.
 
-### Creació d'un entorn virtual amb venv
+> [!NOTE]
+> Podeu utilitzar l'extensió de Visual Studio Code
+> [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+> per gestionar entorns virtuals i executar codi Python dins de l'editor.
+> Per crear un entorn virtual amb venv o conda, accediu a la paleta d'ordres
+> (`Ctrl+Shift+P` o `Cmd+Shift+P` a macOS) i escriviu "Python: Create Environment".
+
+> [!IMPORTANT]
+> Si voleu canviar l'intèrpret de Python utilitzat per Visual Studio Code,
+> podeu fer-ho des de la paleta d'ordres (`Ctrl+Shift+P` o `Cmd+Shift+P` a macOS)
+> escrivint "Python: Select Interpreter" i seleccionant l'intèrpret de l'entorn
+> virtual que heu creat. Cal tenir en compte que l'intèrpret se seleccionarà
+> automàticament amb l'entorn virtual quant aquest s'hagi creat amb l'extensió
+> comentada en la nota anterior.
+
+### Entorn virtual amb venv
+
+#### Creació de l'entorn virtual amb venv
+
+Per crear un entorn virtual amb venv, executeu la següent ordre al directori
+arrel del projecte:
 
 ```sh
 python3 -m venv .venv
 ```
 
-### Activació de l'entorn virtual
+Per tal d'assegurar que l'entorn virtual s'ha creat correctament, podeu
+comprovar que el directori `.venv/` s'ha creat al directori arrel del projecte.
+
+> [!TIP]
+> En macos, python ja inclou venv per defecte. En altres sistemes operatius,
+> pot ser necessari instal·lar el paquet `python3-venv`. Per exemple, en sistemes
+> basats en Debian/Ubuntu, podeu instal·lar-lo amb l'ordre següent:
+
+```sh
+sudo apt-get install python3-venv
+```
+
+#### Activació i desactivació de l'entorn virtual amb venv
+
+Per activar l'entorn virtual, executeu la següent ordre:
 
 ```sh
 source .venv/bin/activate
 ```
 
-### Instal·lació dels requisits
+Per a desactivar l'entorn virtual, executeu la següent ordre:
+
+```sh
+deactivate
+```
+
+#### Instal·lació i actualització de dependències amb venv
+
+Per a instal·lar les biblioteques de Python es pot utilitzar el fitxer
+`requirements.txt` amb l'ordre:
 
 ```sh
 python3 -m pip install -r requirements.txt
 ```
 
+Si no voleu utilitzar el fitxer `requirements.txt`, podeu instal·lar les
+biblioteques necessàries amb la següent ordre després d'activar l'entorn virtual:
+
+```sh
+python3 -m pip install pandas selenium --upgrade pip
+```
+
+Un cop instal·lades les dependències, es poden actualitzar amb l'ordre:
+
+```sh
+python3 -m pip install --upgrade pandas selenium
+```
+
 > [!IMPORTANT]
-> Assegureu-vos d'estar dins de l'entorn virtual abans d'instal·lar les
-> dependències, una vegada activat l'entorn virtual es mostra `(.venv)`.
+> Assegureu-vos d'estar dins de l'entorn virtual abans d'instal·lar o
+> actualitzar les dependències.
+
+### Entorn virtual amb conda
+
+#### Creació de l'entorn virtual amb conda
+
+Per crear un entorn virtual amb conda, executeu la següent ordre al directori
+arrel del projecte:
+
+```sh
+conda env create --prefix=./.conda --file=environment.yml python=3.9
+```
+
+Per tal d'assegurar que l'entorn virtual s'ha creat correctament, podeu
+comprovar que el directori `.conda/` s'ha creat al directori arrel del projecte.
+
+> [!NOTE]
+> Si no voleu utilitzar el fitxer `environment.yml`, podeu crear l'entorn virtual
+amb les següents ordres:
+
+```sh
+conda create --prefix=./.conda python=3.9
+conda activate ./.conda
+conda install pandas selenium
+```
+
+> [!TIP]
+> Miniconda requereix menys espai i és més lleuger que Anaconda. Per a
+> instal·lar Miniconda en sistemes macOS, podeu utilitzar Homebrew:
+
+```sh
+brew install --cask miniconda
+conda init
+conda config --set auto_activate_base False
+source ~/.bash_profile
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+```
+
+#### Activació i desactivació de l'entorn virtual amb conda
+
+Per activar l'entorn virtual, executeu la següent ordre:
+
+```sh
+conda activate ./.conda
+```
+
+Per a desactivar l'entorn virtual, executeu la següent ordre:
+
+```sh
+conda deactivate
+```
+
+> [!TIP]
+> Per canviar el prompt de l'entorn virtual i que mostri el nom de l'entorn,
+> un cop activat, podeu executar la següent ordre per escurçar-lo:
+
+```sh
+conda config --set env_prompt '({name}) '
+```
+
+#### Actualització de dependències amb conda
+
+Un cop instal·lades les dependències, es poden actualitzar amb l'ordre:
+
+```sh
+conda update pandas selenium
+```
+
+> [!IMPORTANT]
+> Assegureu-vos d'estar dins de l'entorn virtual abans d'actualitzar les
+> dependències.
 
 ### Execució del codi
 
