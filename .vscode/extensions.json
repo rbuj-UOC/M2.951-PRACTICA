@@ -10,7 +10,10 @@
         "editorconfig.editorconfig",
         "ms-python.pylint",
         "ms-python.black-formatter",
-        "DavidAnson.vscode-markdownlint"
+        "DavidAnson.vscode-markdownlint",
+        "timonwong.shellcheck",
+        // v7.2.8: Downgrading to v7.2.5 resolves the issue about "There is no formatter for 'shellscript' files installed."
+        "foxundermoon.shell-format"
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": [

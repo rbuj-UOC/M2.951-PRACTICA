@@ -33,6 +33,35 @@ dependències.
 `boost.sh`.
 - `requirements.txt`: fitxer amb les dependències del projecte.
 
+## Requisits
+
+- Python 3.9 o superior
+- bash shell >= 4.3 (`wait -n` en l'script boost.sh)
+- Biblioteques de Python:
+  - pandas: per al processament de dades
+  - selenium: per al web scraping
+- Altres biblioteques de Python, incloses a la biblioteca estàndard:
+  - argparse: per al processament d'arguments de línia d'ordres
+  - datetime: per al maneig de dates i hores
+  - os: per a la interacció amb el sistema operatiu
+  - re: per a l'ús d'expressions regulars
+  - time: per a funcions relacionades amb el temps
+- Visual Studio Code (opcional)
+  - `shfmt` és necessari per donar format als scripts, en entorns macos es pot
+  instal·lar amb l'ordre (opcional)
+
+```sh
+brew install shfmt
+```
+
+> [!TIP]
+> Per a instal·lar les biblioteques de Python es pot utilitzar el fitxer
+> `requirements.txt` amb l'ordre:
+
+```sh
+python3 -m pip install -r requirements.txt
+```
+
 ## Utilització del codi
 
 Per tal de crear l'entorn virtual podeu executar directament l'script `init.sh`
@@ -62,15 +91,17 @@ source .venv/bin/activate
 ### Instal·lació dels requisits
 
 ```sh
-(.venv) $ python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
+
+> [!IMPORTANT]
+> Assegureu-vos d'estar dins de l'entorn virtual abans d'instal·lar les
+> dependències, una vegada activat l'entorn virtual es mostra `(.venv)`.
 
 ### Execució del codi
 
 ```sh
-(.venv) $ python3 source/main.py
-Scraping data...
-Saving data to dataset.csv...
+python3 source/main.py -d 30 -b 01.01.2023 -o dataset/meteocat_data.csv
 ```
 
 Per consultar els arguments opcionals de l'aplicació:

@@ -19,10 +19,16 @@ help_func() {
 # parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --help|-h) help_func; exit 0 ;;
-        --verbose|-v) set -x ;;
-        --quiet|-q) set +x ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    --help | -h)
+        help_func
+        exit 0
+        ;;
+    --verbose | -v) set -x ;;
+    --quiet | -q) set +x ;;
+    *)
+        echo "Unknown parameter passed: $1"
+        exit 1
+        ;;
     esac
     shift
 done
