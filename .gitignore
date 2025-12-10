@@ -210,3 +210,8 @@ __marimo__/
 dataset/
 logs/
 .DS_Store
+.Rhistory
+
+informe.log
+informe.html
+informe.pdf

@@ -1,0 +1,337 @@
+---
+title: Pràctica 2 - neteja i anàlisi de les dades
+author: "Nora Bolivar i Robert Buj"
+date: "07/01/2025"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+  pdf_document:
+    includes:
+      in_header: header.tex
+    toc: true
+    toc_depth: 2
+    number_sections: true
+toc-title: "Taula de continguts"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, error = FALSE, message = FALSE)
+library(readr)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(stats)
+library(corrplot)
+library(knitr)
+library(kableExtra)
+library(VIM)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Carrega del dataset amb les mesures de les estacions meteorològiques
+dataset_measurements <- read_csv("dataset/dataset.csv", locale = locale(decimal_mark = ","))
+# Selecciona les columnes amb les dades de les estacions meteorològiques
+dataset_station_list <- dataset_measurements %>%
+    select(
+        `Estació [Codi]`,
+        code,
+        Comarca,
+        Municipi,
+        Latitud,
+        Longitud,
+        `Altitud (m)`,
+        `Estat actual`,
+        `Data alta`,
+        `Data baixa`
+    ) %>%
+    distinct()
+```
+
+# Descripció del dataset
+
+El dataset emprat en aquesta pràctica recull certes dades de totes les estacions
+automàtiques operatives de la Xarxa d'Estacions Meteorològiques Automàtiques
+(XEMA) durant un cert nombre de dies. 
+
+Amb aquest dataset, volem veure com és la humitat relativa a diferents punts de
+Catalunya.
+
+A la web meteo.cat podem accedir a un llistat de totes les estacions i comprovar
+el seu estat actual. D'aquest llistat s'han recollit les principals
+característiques de les estacions. Per a aquest dataset s'han fet servir 8
+estacions escollides de manera aleatòria i s'han recollit les dades
+meteorològiques que han proporcionat durant dues setmanes, d'X a Y,. A la web de
+cada estació, a l'apartat dades de període estan disponibles totes les dades que
+recull l'estació cada mitja hora.
+
+Respecte a la informació meteorològica s'ha aconseguit de la taula “Dades de
+període” a cada estació. S'ha de tenir en compte que no totes les estacions
+tenen tots els aparells i, per tant, no tenen sempre totes les columnes. S'ha
+observat que no totes les taules són iguals i en conseqüència s'ha escollit
+certes variables que comparteixen totes.
+
+Primer tenim les dades de l'estació que apareixen al “Llistat d'estacions”
+
+| # | Nom | Descripció | Tipus | Valors possibles |
+| - | --- | ---------- | ----- | ---------------- |
+| 1 | Comarca | Comarca on es troba l'estació | Categòrica | Text |
+| 2 | Municipi | Municipi on es troba l'estació | Categòrica | Text |
+| 3 | Estació [Codi] | Nom de l'estació i codi identificador | Categòrica | Text |
+| 4 | Latitud | Latitud de l'estació | Quantitativa contínua | Valors reals |
+| 5 | Longitud | Longitud de l'estació | Quantitativa contínua | Valors reals |
+| 6 | Altitud (m) | Altitud de l'estació en metres | Quantitativa contínua | Valors reals |
+| 7 | Data alta | Data d'alta de l'estació | Data | Data en format dd.mm.aaaa |
+| 8 | Data baixa | Data de baixa de l'estació | Data | Data en format dd.mm.aaaa |
+| 9 | Estat actual | Estat actual de l'estació | Categòrica | "Desmantellada" o "Operativa" |
+| 10 | code | Codi identificador de l'estació | Categòrica | Text de 2 caràcters de longitud |
+| 11 | date | Data de la mesura | Data | Data en format dd.mm.aaaa |
+| 12 | Període TU | Hora de la mesura en Temps Universal | Categòrica | Període en format HH:MM - HH:MM |
+
+Després indiquem la informació meteorològica.
+
+| # | Nom   | Descripció | Tipus | Valors possibles |
+| - | ---- | ---------- | ----- | ---------------- |
+| 13 | TM °C | Temperatura mitjana en graus Celsius | Quantitativa contínua | Valors reals |
+| 14 | TX °C | Temperatura màxima en graus Celsius | Quantitativa contínua | Valors reals |
+| 15 | TN °C | Temperatura mínima en graus Celsius | Quantitativa contínua | Valors reals |
+| 16 | HRM % | Humitat relativa mitjana en percentatge | Quantitativa contínua | Valors reals |
+| 17 | PPT mm | Precipitació en mil·límetres | Quantitativa contínua | Valors reals |
+| 18 | VVM (2 m) km/h | Velocitat mitjana del vent a 2 metres en km/h | Quantitativa contínua | Valors reals |
+| 19 | DVM (2 m) graus | Direcció del vent a 2 metres en graus | Quantitativa contínua | Valors reals |
+| 20 | VVX (2 m) km/h | Velocitat màxima del vent a 2 metres en km/h | Quantitativa contínua | Valors reals |
+| 21 | RS W/m2 | Radiació solar en watts per metre quadrat | Quantitativa contínua | Valors reals |
+| 22 | VVM (10 m) km/h | Velocitat mitjana del vent a 10 metres en km/h | Quantitativa contínua | Valors reals |
+| 23 | DVM (10 m) graus | Direcció del vent a 10 metres en graus | Quantitativa contínua | Valors reals |
+| 24 | VVX (10 m) km/h | Velocitat màxima del vent a 10 metres en km/h | Quantitativa contínua | Valors reals |
+| 25 | PM hPa | Pressió atmosfèrica mitjana en hectopascals | Quantitativa discreta | Valors enters |
+| 26 | VVM (6 m) km/h | Velocitat mitjana del vent a 6 metres en km/h | Quantitativa contínua | Valors reals |
+| 27 | DVM (6 m) graus | Direcció del vent a 6 metres en graus | Quantitativa contínua | Valors reals |
+| 28 | VVX (6 m) km/h | Velocitat màxima del vent a 6 metres en km/h | Quantitativa contínua | Valors reals |
+| 29 | GN cm | Gruix de neu en centímetres | Quantitativa contínua | Valors reals |
+
+# Integració i selecció
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Taula amb el nombre d'estacions de cada Comarca
+stations_by_location <- dataset_station_list %>%
+    group_by(Comarca) %>%
+    summarise(Count = n()) %>%
+    ungroup() %>%
+    arrange(desc(Count))
+kable(
+    stations_by_location,
+    # Format dels nombres a la taula
+    format.args = list(big.mark = "."),
+    # Etiqueta de la taula
+    caption = "Nombre d'estacions de cada comarca"
+) %>%
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(stations_by_location)
+```
+
+# Neteja de les dades
+
+```{r}
+# Informació bàsica del conjunt de dades principal
+glimpse(dataset_measurements)
+```
+
+Una estació meteorològica té com a molt 14.472 observacions corresponents a 364
+dies (valors diferents a la variable ```date```), amb 48 observacions per dia
+(una cada 30 minuts, valors diferents a la variable ```Període TU```). Hi ha
+un total de 189 estacions meteorològiques diferents (valors diferents a la
+variable ```code```).
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Nombre de valors diferents en la variable
+unique_values_counts <- sapply(dataset_measurements, function(x) length(unique(x)))
+unique_values_df <- data.frame(
+    Variable = names(unique_values_counts),
+    Unique_Values = as.integer(unique_values_counts)
+)
+# Ordena el dataframe per nombre de valors diferents de forma ascendent
+unique_values_df <- unique_values_df %>%
+    arrange(Unique_Values)
+# Mostra la taula amb el nombre de valors diferents per variable
+kable(
+    unique_values_df,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Nombre de valors diferents per variable",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Variable", "Nombre de valors diferents")
+) %>%
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(unique_values_counts, unique_values_df)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Nombre dies que té cada estació així com el nombre de files
+station_days <- dataset_measurements %>%
+    group_by(code) %>%
+    # Calcula el nombre de files i el nombre de dies únics per a cada estació
+    summarise(
+        Number_of_Rows = n(),
+        Number_of_Days = n_distinct(date)
+    ) %>%
+    # Ordena per Number_of_Days
+    arrange(desc(Number_of_Days)) %>%
+    # Selecciona i canvia el nom les variables per mostar-les a la taula
+    select(
+        `Codi de l'estació` = code,
+        `Nombre de dies` = Number_of_Days,
+        `Nombre de files` = Number_of_Rows
+    ) %>%
+    ungroup()
+# Mostra la taula amb el nombre de dies i files per estació
+kable(
+    station_days,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Nombre de dies i nombre de files de cada estació meteorològica"
+) %>%
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(station_days)
+```
+
+```{r}
+# Resum estadístic del conjunt de dades principal
+summary(dataset_measurements)
+```
+
+## Gestió dels valors perduts
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Taula amb el recompre de valors no disponibles més grans que zero i ordenats
+# de forma descendent
+missing_values_summary <- sapply(dataset_measurements, function(x) sum(is.na(x)))
+missing_values_summary <- missing_values_summary[missing_values_summary > 0]
+missing_values_summary <- sort(missing_values_summary, decreasing = TRUE)
+missing_values_summary_df <- data.frame(
+    Variable = names(missing_values_summary),
+    Missing_Values = as.integer(missing_values_summary)
+)
+kable(
+    missing_values_summary_df,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors no disponibles en el dataset",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Variable", "Nombre de valors no disponibles")
+) %>%
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_values_summary, missing_values_summary_df)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Taula amb el recompte de valors no disponibles per estació
+missing_values_by_station <- dataset_measurements %>%
+    group_by(code) %>%
+    summarise(across(everything(), ~ sum(is.na(.)))) %>%
+    ungroup()
+# Elimina les columnes on totes les files siguin 0
+missing_values_by_station <- missing_values_by_station %>%
+    select(where(~ any(. != 0)))
+
+kable(
+    missing_values_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors no disponibles en el dataset per estació"
+) %>%
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_values_by_station)
+```
+
+## Conversió de tipus de dades
+
+```{r}
+# Conversió del tipus de dades de les variables i eliminació
+dataset_measurements <- dataset_measurements %>%
+    mutate(
+        # Variables de dates (3)
+        date = as.Date(date, format = "%d.%m.%Y"),
+        `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
+        `Data baixa` = as.Date(`Data baixa`, format = "%d.%m.%Y"),
+        # Variables categòriques (6)
+        `Estació [Codi]` = as.factor(`Estació [Codi]`),
+        Comarca = as.factor(Comarca),
+        Municipi = as.factor(Municipi),
+        code = as.factor(code),
+        `Estat actual` = as.factor(`Estat actual`),
+        # Variables numèriques geogràfiques (3)
+        `Altitud (m)` = as.numeric(`Altitud (m)`),
+        Longitud = as.numeric(Longitud),
+        Latitud = as.numeric(Latitud),
+        # Variables numèriques de temperatura (3)
+        `TM °C` = as.numeric(`TM °C`),
+        `TX °C` = as.numeric(`TX °C`),
+        `TN °C` = as.numeric(`TN °C`),
+        # Variables numèriques (12)
+        `DVM (2 m) graus` = as.numeric(`DVM (2 m) graus`),
+        `DVM (10 m) graus` = as.numeric(`DVM (10 m) graus`),
+        `GN cm` = as.numeric(`GN cm`),
+        `HRM %` = as.numeric(`HRM %`),
+        `PM hPa` = as.numeric(`PM hPa`),
+        `PPT mm` = as.numeric(`PPT mm`),
+        `RS W/m2` = as.numeric(`RS W/m2`),
+        `VVM (2 m) km/h` = as.numeric(`VVM (2 m) km/h`),
+        `VVM (6 m) km/h` = as.numeric(`VVM (6 m) km/h`),
+        `VVM (10 m) km/h` = as.numeric(`VVM (10 m) km/h`),
+        `VVX (2 m) km/h` = as.numeric(`VVX (2 m) km/h`),
+        `VVX (10 m) km/h` = as.numeric(`VVX (10 m) km/h`)
+    )
+# Resum estadístic del conjunt de dades després de la conversió de tipus
+summary(dataset_measurements)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Dades de les estacions meteorològiques
+kable(
+    dataset_station_list,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = "."),
+    # Etiqueta de la taula
+    caption = "Llistat de les estacions meteorològiques"
+) %>%
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+## Gestió de valors extrems
+
+## Altres mètodes de neteja
+
+# Anàlisi de les dades
+
+# Resolució del problema

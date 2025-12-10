@@ -225,8 +225,20 @@ conda update pandas selenium
 
 ### Execució del codi
 
+Per baixar les dades de les estacions de l'ultim anys des del 3 de desembre de
+2025:
+
 ```sh
-python3 source/main.py -d 30 -b 01.01.2023 -o dataset/meteocat_data.csv
+python3 source/main.py -d 365 -b 03.12.2025 -m
+python3 source/main.py -w
+```
+
+En cas que no es vulguin baixar les dades i es desitgi utilitzar el dataset
+comprimit:
+
+```sh
+tar xvfa dataset.tar.xz
+python3 source/main.py -w
 ```
 
 Per consultar els arguments opcionals de l'aplicació:

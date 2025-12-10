@@ -4,6 +4,7 @@
         "Meteo",
         "xema"
     ],
+    "editor.formatOnSave": true,
     "[json]": {
         "editor.formatOnSave": true
     },
