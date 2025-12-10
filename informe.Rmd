@@ -3,13 +3,13 @@ title: Pràctica 2 - neteja i anàlisi de les dades
 author: "Nora Bolivar i Robert Buj"
 date: "07/01/2025"
 output:
-  html_document:
-    toc: true
-    toc_depth: 2
-    number_sections: true
   pdf_document:
     includes:
       in_header: header.tex
+    toc: true
+    toc_depth: 2
+    number_sections: true
+  html_document:
     toc: true
     toc_depth: 2
     number_sections: true
@@ -31,22 +31,9 @@ library(VIM)
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Carrega del dataset amb les mesures de les estacions meteorològiques
-dataset_measurements <- read_csv("dataset/dataset.csv", locale = locale(decimal_mark = ","))
-# Selecciona les columnes amb les dades de les estacions meteorològiques
-dataset_station_list <- dataset_measurements %>%
-    select(
-        `Estació [Codi]`,
-        code,
-        Comarca,
-        Municipi,
-        Latitud,
-        Longitud,
-        `Altitud (m)`,
-        `Estat actual`,
-        `Data alta`,
-        `Data baixa`
-    ) %>%
-    distinct()
+dataset_measurements <- read_csv("dataset/dataset.csv",
+    locale = locale(decimal_mark = ",")
+)
 ```
 
 # Descripció del dataset
@@ -72,7 +59,7 @@ tenen tots els aparells i, per tant, no tenen sempre totes les columnes. S'ha
 observat que no totes les taules són iguals i en conseqüència s'ha escollit
 certes variables que comparteixen totes.
 
-Primer tenim les dades de l'estació que apareixen al “Llistat d'estacions”
+Primer tenim les dades de l'estació que apareixen al “Llistat d'estacions”:
 
 | # | Nom | Descripció | Tipus | Valors possibles |
 | - | --- | ---------- | ----- | ---------------- |
@@ -89,7 +76,7 @@ Primer tenim les dades de l'estació que apareixen al “Llistat d'estacions”
 | 11 | date | Data de la mesura | Data | Data en format dd.mm.aaaa |
 | 12 | Període TU | Hora de la mesura en Temps Universal | Categòrica | Període en format HH:MM - HH:MM |
 
-Després indiquem la informació meteorològica.
+Després indiquem la informació meteorològica:
 
 | # | Nom   | Descripció | Tipus | Valors possibles |
 | - | ---- | ---------- | ----- | ---------------- |
@@ -113,40 +100,82 @@ Després indiquem la informació meteorològica.
 
 # Integració i selecció
 
+En conjunt de dades conté les dades meteorològiques de 189 estacions
+meteorològiques diferents.
+
+```{r}
+# Nombre d'estacions meteorològiques diferents
+n_distinct(dataset_measurements$`Estació [Codi]`)
+```
+
+La variable d'una estació meteorològica pot tenir com a molt 17.472
+observacions: 364 dies (```date```), 48 observacions per dia (una cada 30
+minuts, ```Període TU```). Hi ha 108 estacions meteorològiques que tenen
+exactament 17.472 files.
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Taula amb el nombre d'estacions de cada Comarca
-stations_by_location <- dataset_station_list %>%
-    group_by(Comarca) %>%
+# Mostra el nombre d'estacions meteorològiques que tenen 17.472 registres
+stations_with_full_data <- dataset_measurements %>%
+    group_by(`Estació [Codi]`) %>%
     summarise(Count = n()) %>%
-    ungroup() %>%
+    filter(Count == 17472) %>%
+    ungroup()
+nrow(stations_with_full_data)
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(stations_with_full_data)
+```
+
+En les altres 81 estacions meteorològiques no es disposa de totes les 17.472
+files. En la taula seguent només es mostren les 5 primers i últimes 5 estacions,
+ordenades per nombre de files, que no tenen totes les 17.472 files. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Taula amb les estacions meteorològiques que no tenen 17.472 files,
+# ordenades de major a menor, i mostrant les primeres i últimes 5
+stations_incomplete_data <- dataset_measurements %>%
+    group_by(`Estació [Codi]`) %>%
+    summarise(Count = n()) %>%
+    filter(Count < 17472) %>%
     arrange(desc(Count))
+stations_incomplete_data_display <- rbind(
+    head(stations_incomplete_data, 5),
+    tail(stations_incomplete_data, 5)
+)
 kable(
-    stations_by_location,
+    stations_incomplete_data_display,
     # Format dels nombres a la taula
-    format.args = list(big.mark = "."),
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
     # Etiqueta de la taula
-    caption = "Nombre d'estacions de cada comarca"
+    caption = "Estacions meteorològiques sense totes les 17.472 files",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Estació [Codi]", "Nombre de files")
 ) %>%
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
-    )
+    ) %>%
+    pack_rows("Primeres 5 estacions", 1, 5) %>%
+    pack_rows("Últimes 5 estacions", 6, 10, latex_gap_space = "2em")
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(stations_by_location)
+rm(stations_incomplete_data, stations_incomplete_data_display)
 ```
 
-# Neteja de les dades
+En el conjunt de dades hi ha un total de 182 municipis diferents.
 
 ```{r}
-# Informació bàsica del conjunt de dades principal
-glimpse(dataset_measurements)
+# Nombre de municipis diferents
+n_distinct(dataset_measurements$Municipi)
 ```
 
-Una estació meteorològica té com a molt 14.472 observacions corresponents a 364
-dies (valors diferents a la variable ```date```), amb 48 observacions per dia
-(una cada 30 minuts, valors diferents a la variable ```Període TU```). Hi ha
-un total de 189 estacions meteorològiques diferents (valors diferents a la
-variable ```code```).
+En el conjunt de dades hi ha un total de 42 comarques diferents.
+
+```{r}
+# Nombre de comarques diferents
+n_distinct(dataset_measurements$Comarca)
+```
+
+En la següent taula es mostra el nombre de valors diferents per variable.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Nombre de valors diferents en la variable
@@ -158,7 +187,6 @@ unique_values_df <- data.frame(
 # Ordena el dataframe per nombre de valors diferents de forma ascendent
 unique_values_df <- unique_values_df %>%
     arrange(Unique_Values)
-# Mostra la taula amb el nombre de valors diferents per variable
 kable(
     unique_values_df,
     # Format dels nombres a la taula
@@ -177,39 +205,26 @@ kable(
 rm(unique_values_counts, unique_values_df)
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Nombre dies que té cada estació així com el nombre de files
-station_days <- dataset_measurements %>%
-    group_by(code) %>%
-    # Calcula el nombre de files i el nombre de dies únics per a cada estació
-    summarise(
-        Number_of_Rows = n(),
-        Number_of_Days = n_distinct(date)
-    ) %>%
-    # Ordena per Number_of_Days
-    arrange(desc(Number_of_Days)) %>%
-    # Selecciona i canvia el nom les variables per mostar-les a la taula
-    select(
-        `Codi de l'estació` = code,
-        `Nombre de dies` = Number_of_Days,
-        `Nombre de files` = Number_of_Rows
-    ) %>%
-    ungroup()
-# Mostra la taula amb el nombre de dies i files per estació
-kable(
-    station_days,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Nombre de dies i nombre de files de cada estació meteorològica"
-) %>%
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(station_days)
+S'eliminen les variables ```Data baixa``` i ```Estat actual``` ja que totes les
+estacions estan operatives.
+
+```{r}
+# Elimina les variables del conjunt de dades
+dataset_measurements <- dataset_measurements %>%
+    select(-`Data baixa`, -`Estat actual`)
 ```
+
+# Neteja de les dades
+
+En el següent bloc de codi es mostra informació bàsica del conjunt de dades
+principal, el qual té 29 columnes i 3.251.663 de files.
+
+```{r}
+# Informació bàsica del conjunt de dades principal
+glimpse(dataset_measurements)
+```
+
+En el següent bloc de codi es mostra un resum estadístic del conjunt de dades:
 
 ```{r}
 # Resum estadístic del conjunt de dades principal
@@ -218,22 +233,37 @@ summary(dataset_measurements)
 
 ## Gestió dels valors perduts
 
+Les variables següents no tenen valors perduts:
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Taula amb el recompre de valors no disponibles més grans que zero i ordenats
-# de forma descendent
-missing_values_summary <- sapply(dataset_measurements, function(x) sum(is.na(x)))
-missing_values_summary <- missing_values_summary[missing_values_summary > 0]
-missing_values_summary <- sort(missing_values_summary, decreasing = TRUE)
-missing_values_summary_df <- data.frame(
-    Variable = names(missing_values_summary),
-    Missing_Values = as.integer(missing_values_summary)
-)
+# Mostra una taula amb les variables que no tenen valors perduts
+missing_values_none <- sapply(dataset_measurements, function(x) sum(is.na(x)))
+missing_values_none <- missing_values_none[missing_values_none == 0]
+missing_values_none <- names(missing_values_none)
+missing_values_none
+```
+
+En la següent taula es mostra el recompte de valors no disponibles per
+variable.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Crea un dataset sense les variables de missing_values_none
+dataset_na_measurements <- dataset_measurements %>%
+    select(-all_of(missing_values_none))
+# Taula amb el recompre de valors no disponibles sense les variables que no en tenen
+missing_values_table <- sapply(dataset_na_measurements, function(x) sum(is.na(x)))
+missing_values_table <- missing_values_table[missing_values_table > 0]
+missing_values_table_df <- data.frame(
+    Variable = names(missing_values_table),
+    Missing_Values = as.integer(missing_values_table)
+) %>%
+    arrange(desc(Missing_Values))
 kable(
-    missing_values_summary_df,
+    missing_values_table_df,
     # Format dels nombres a la taula
     format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
     # Etiqueta de la taula
-    caption = "Recompte de valors no disponibles en el dataset",
+    caption = "Recompte de valors no disponibles per variable",
     # Alineació de les columnes
     align = c("l", "r"),
     col.names = c("Variable", "Nombre de valors no disponibles")
@@ -242,33 +272,18 @@ kable(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
     )
+# Gràfic de barres
+ggplot(missing_values_table_df, aes(x = reorder(Variable, -Missing_Values), y = Missing_Values)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors no disponibles per variable",
+        x = "Variable",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_values_summary, missing_values_summary_df)
-```
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Taula amb el recompte de valors no disponibles per estació
-missing_values_by_station <- dataset_measurements %>%
-    group_by(code) %>%
-    summarise(across(everything(), ~ sum(is.na(.)))) %>%
-    ungroup()
-# Elimina les columnes on totes les files siguin 0
-missing_values_by_station <- missing_values_by_station %>%
-    select(where(~ any(. != 0)))
-
-kable(
-    missing_values_by_station,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors no disponibles en el dataset per estació"
-) %>%
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_values_by_station)
+rm(missing_values_table, missing_values_table_df, dataset_na_measurements)
 ```
 
 ## Conversió de tipus de dades
@@ -280,13 +295,11 @@ dataset_measurements <- dataset_measurements %>%
         # Variables de dates (3)
         date = as.Date(date, format = "%d.%m.%Y"),
         `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
-        `Data baixa` = as.Date(`Data baixa`, format = "%d.%m.%Y"),
         # Variables categòriques (6)
         `Estació [Codi]` = as.factor(`Estació [Codi]`),
         Comarca = as.factor(Comarca),
         Municipi = as.factor(Municipi),
         code = as.factor(code),
-        `Estat actual` = as.factor(`Estat actual`),
         # Variables numèriques geogràfiques (3)
         `Altitud (m)` = as.numeric(`Altitud (m)`),
         Longitud = as.numeric(Longitud),
@@ -311,21 +324,6 @@ dataset_measurements <- dataset_measurements %>%
     )
 # Resum estadístic del conjunt de dades després de la conversió de tipus
 summary(dataset_measurements)
-```
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Dades de les estacions meteorològiques
-kable(
-    dataset_station_list,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = "."),
-    # Etiqueta de la taula
-    caption = "Llistat de les estacions meteorològiques"
-) %>%
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
 ```
 
 ## Gestió de valors extrems
