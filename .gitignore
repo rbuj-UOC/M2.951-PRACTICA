@@ -215,3 +215,5 @@ logs/
 informe.log
 informe.html
 informe.pdf
+informe.tex
+tmp-*.tex

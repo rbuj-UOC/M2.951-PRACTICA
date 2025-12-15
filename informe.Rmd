@@ -29,13 +29,6 @@ library(kableExtra)
 library(VIM)
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Carrega del dataset amb les mesures de les estacions meteorològiques
-dataset_measurements <- read_csv("dataset/dataset.csv",
-    locale = locale(decimal_mark = ",")
-)
-```
-
 # Descripció del dataset
 
 El dataset emprat en aquesta pràctica recull certes dades de totes les estacions
@@ -66,9 +59,9 @@ Primer tenim les dades de l'estació que apareixen al “Llistat d'estacions”:
 | 1 | Comarca | Comarca on es troba l'estació | Categòrica | Text |
 | 2 | Municipi | Municipi on es troba l'estació | Categòrica | Text |
 | 3 | Estació [Codi] | Nom de l'estació i codi identificador | Categòrica | Text |
-| 4 | Latitud | Latitud de l'estació | Quantitativa contínua | Valors reals |
-| 5 | Longitud | Longitud de l'estació | Quantitativa contínua | Valors reals |
-| 6 | Altitud (m) | Altitud de l'estació en metres | Quantitativa contínua | Valors reals |
+| 4 | Latitud | Latitud de l'estació | Quantitativa contínua | Valors reals [40.0, 43.0] |
+| 5 | Longitud | Longitud de l'estació | Quantitativa contínua | Valors reals [0.0, 4.0] |
+| 6 | Altitud (m) | Altitud de l'estació en metres | Quantitativa contínua | Valors reals [0.0, 3200.0] |
 | 7 | Data alta | Data d'alta de l'estació | Data | Data en format dd.mm.aaaa |
 | 8 | Data baixa | Data de baixa de l'estació | Data | Data en format dd.mm.aaaa |
 | 9 | Estat actual | Estat actual de l'estació | Categòrica | "Desmantellada" o "Operativa" |
@@ -76,29 +69,43 @@ Primer tenim les dades de l'estació que apareixen al “Llistat d'estacions”:
 | 11 | date | Data de la mesura | Data | Data en format dd.mm.aaaa |
 | 12 | Període TU | Hora de la mesura en Temps Universal | Categòrica | Període en format HH:MM - HH:MM |
 
+: Metadades de les estacions meteorològiques
+
 Després indiquem la informació meteorològica:
 
 | # | Nom   | Descripció | Tipus | Valors possibles |
 | - | ---- | ---------- | ----- | ---------------- |
-| 13 | TM °C | Temperatura mitjana en graus Celsius | Quantitativa contínua | Valors reals |
-| 14 | TX °C | Temperatura màxima en graus Celsius | Quantitativa contínua | Valors reals |
-| 15 | TN °C | Temperatura mínima en graus Celsius | Quantitativa contínua | Valors reals |
-| 16 | HRM % | Humitat relativa mitjana en percentatge | Quantitativa contínua | Valors reals |
-| 17 | PPT mm | Precipitació en mil·límetres | Quantitativa contínua | Valors reals |
-| 18 | VVM (2 m) km/h | Velocitat mitjana del vent a 2 metres en km/h | Quantitativa contínua | Valors reals |
-| 19 | DVM (2 m) graus | Direcció del vent a 2 metres en graus | Quantitativa contínua | Valors reals |
-| 20 | VVX (2 m) km/h | Velocitat màxima del vent a 2 metres en km/h | Quantitativa contínua | Valors reals |
-| 21 | RS W/m2 | Radiació solar en watts per metre quadrat | Quantitativa contínua | Valors reals |
-| 22 | VVM (10 m) km/h | Velocitat mitjana del vent a 10 metres en km/h | Quantitativa contínua | Valors reals |
-| 23 | DVM (10 m) graus | Direcció del vent a 10 metres en graus | Quantitativa contínua | Valors reals |
-| 24 | VVX (10 m) km/h | Velocitat màxima del vent a 10 metres en km/h | Quantitativa contínua | Valors reals |
+| 13 | TM °C | Temperatura mitjana en graus Celsius | Quantitativa contínua | Valors reals [-20.0, 50.0]|
+| 14 | TX °C | Temperatura màxima en graus Celsius | Quantitativa contínua | Valors reals [-20.0, 50.0] |
+| 15 | TN °C | Temperatura mínima en graus Celsius | Quantitativa contínua | Valors reals [-20.0, 50.0] |
+| 16 | HRM % | Humitat relativa mitjana en percentatge | Quantitativa contínua | Valors reals [0.0, 100.0]|
+| 17 | PPT mm | Precipitació en mil·límetres | Quantitativa contínua | Valors reals [0.0, Inf) |
+| 18 | VVM (2 m) km/h | Velocitat mitjana del vent a 2 metres en km/h | Quantitativa contínua | Valors reals [0.0, Inf) |
+| 19 | DVM (2 m) graus | Direcció del vent a 2 metres en graus | Quantitativa contínua | Valors reals [0.0, 360.0] |
+| 20 | VVX (2 m) km/h | Velocitat màxima del vent a 2 metres en km/h | Quantitativa contínua | Valors reals [0.0, Inf) |
+| 21 | RS W/m2 | Radiació solar en watts per metre quadrat | Quantitativa contínua | Valors reals [0.0, Inf) |
+| 22 | VVM (10 m) km/h | Velocitat mitjana del vent a 10 metres en km/h | Quantitativa contínua | Valors reals [0.0, Inf) |
+| 23 | DVM (10 m) graus | Direcció del vent a 10 metres en graus | Quantitativa contínua | Valors reals [0.0, 360.0] |
+| 24 | VVX (10 m) km/h | Velocitat màxima del vent a 10 metres en km/h | Quantitativa contínua | Valors reals [0.0, Inf) |
 | 25 | PM hPa | Pressió atmosfèrica mitjana en hectopascals | Quantitativa discreta | Valors enters |
-| 26 | VVM (6 m) km/h | Velocitat mitjana del vent a 6 metres en km/h | Quantitativa contínua | Valors reals |
-| 27 | DVM (6 m) graus | Direcció del vent a 6 metres en graus | Quantitativa contínua | Valors reals |
-| 28 | VVX (6 m) km/h | Velocitat màxima del vent a 6 metres en km/h | Quantitativa contínua | Valors reals |
-| 29 | GN cm | Gruix de neu en centímetres | Quantitativa contínua | Valors reals |
+| 26 | VVM (6 m) km/h | Velocitat mitjana del vent a 6 metres en km/h | Quantitativa contínua | Valors reals [0.0, inf) |
+| 27 | DVM (6 m) graus | Direcció del vent a 6 metres en graus | Quantitativa contínua | Valors reals [0.0, 360.0] |
+| 28 | VVX (6 m) km/h | Velocitat màxima del vent a 6 metres en km/h | Quantitativa contínua | Valors reals [0.0, Inf) |
+| 29 | GN cm | Gruix de neu en centímetres | Quantitativa contínua | Valors reals [0.0, Inf) |
+
+: Informació meteorològica recollida per les estacions
 
 # Integració i selecció
+
+Les dades s'han recollit en un fitxer CSV anomenat `dataset.csv`, que es troba
+dins de la carpeta `dataset`.
+
+```{r}
+# Carrega del dataset amb les mesures de les estacions meteorològiques
+dataset_measurements <- read_csv("dataset/dataset.csv",
+    locale = locale(decimal_mark = ",")
+)
+```
 
 En conjunt de dades conté les dades meteorològiques de 189 estacions
 meteorològiques diferents.
@@ -113,12 +120,12 @@ observacions: 364 dies (```date```), 48 observacions per dia (una cada 30
 minuts, ```Període TU```). Hi ha 108 estacions meteorològiques que tenen
 exactament 17.472 files.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r}
 # Mostra el nombre d'estacions meteorològiques que tenen 17.472 registres
-stations_with_full_data <- dataset_measurements %>%
-    group_by(`Estació [Codi]`) %>%
-    summarise(Count = n()) %>%
-    filter(Count == 17472) %>%
+stations_with_full_data <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Count = n()) |>
+    filter(Count == 17472) |>
     ungroup()
 nrow(stations_with_full_data)
 # Elimina els objectes creats per evitar conflictes en les següents seccions
@@ -129,13 +136,13 @@ En les altres 81 estacions meteorològiques no es disposa de totes les 17.472
 files. En la taula seguent només es mostren les 5 primers i últimes 5 estacions,
 ordenades per nombre de files, que no tenen totes les 17.472 files. 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r}
 # Taula amb les estacions meteorològiques que no tenen 17.472 files,
 # ordenades de major a menor, i mostrant les primeres i últimes 5
-stations_incomplete_data <- dataset_measurements %>%
-    group_by(`Estació [Codi]`) %>%
-    summarise(Count = n()) %>%
-    filter(Count < 17472) %>%
+stations_incomplete_data <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Count = n()) |>
+    filter(Count < 17472) |>
     arrange(desc(Count))
 stations_incomplete_data_display <- rbind(
     head(stations_incomplete_data, 5),
@@ -150,12 +157,12 @@ kable(
     # Alineació de les columnes
     align = c("l", "r"),
     col.names = c("Estació [Codi]", "Nombre de files")
-) %>%
+) |>
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
-    ) %>%
-    pack_rows("Primeres 5 estacions", 1, 5) %>%
+    ) |>
+    pack_rows("Primeres 5 estacions", 1, 5) |>
     pack_rows("Últimes 5 estacions", 6, 10, latex_gap_space = "2em")
 # Elimina els objectes creats per evitar conflictes en les següents seccions
 rm(stations_incomplete_data, stations_incomplete_data_display)
@@ -177,15 +184,18 @@ n_distinct(dataset_measurements$Comarca)
 
 En la següent taula es mostra el nombre de valors diferents per variable.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r}
 # Nombre de valors diferents en la variable
-unique_values_counts <- sapply(dataset_measurements, function(x) length(unique(x)))
+unique_values_counts <- sapply(
+    dataset_measurements,
+    function(x) length(unique(x))
+)
 unique_values_df <- data.frame(
     Variable = names(unique_values_counts),
     Unique_Values = as.integer(unique_values_counts)
 )
-# Ordena el dataframe per nombre de valors diferents de forma ascendent
-unique_values_df <- unique_values_df %>%
+# Ordena el conjunt de dades per nombre de valors diferents de forma ascendent
+unique_values_df <- unique_values_df |>
     arrange(Unique_Values)
 kable(
     unique_values_df,
@@ -196,7 +206,7 @@ kable(
     # Alineació de les columnes
     align = c("l", "r"),
     col.names = c("Variable", "Nombre de valors diferents")
-) %>%
+) |>
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
@@ -210,7 +220,7 @@ estacions estan operatives.
 
 ```{r}
 # Elimina les variables del conjunt de dades
-dataset_measurements <- dataset_measurements %>%
+dataset_measurements <- dataset_measurements |>
     select(-`Data baixa`, -`Estat actual`)
 ```
 
@@ -233,9 +243,24 @@ summary(dataset_measurements)
 
 ## Gestió dels valors perduts
 
+En la següent gràfica es mostra un mapa de calor dels valors perduts en el
+conjunt de dades.
+
+```{r}
+aggr(dataset_measurements,
+    col = c("lightblue", "red"),
+    numbers = TRUE,
+    sortVars = TRUE,
+    labels = names(dataset_measurements),
+    cex.axis = 0.7,
+    gap = 3,
+    ylab = c("Mapa de calor dels valors perduts", "Patró de valors perduts")
+)
+```
+
 Les variables següents no tenen valors perduts:
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE}
 # Mostra una taula amb les variables que no tenen valors perduts
 missing_values_none <- sapply(dataset_measurements, function(x) sum(is.na(x)))
 missing_values_none <- missing_values_none[missing_values_none == 0]
@@ -243,21 +268,38 @@ missing_values_none <- names(missing_values_none)
 missing_values_none
 ```
 
-En la següent taula es mostra el recompte de valors no disponibles per
+En la següent gràfica i taula es mostra el recompte de valors no disponibles per
 variable.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r}
 # Crea un dataset sense les variables de missing_values_none
-dataset_na_measurements <- dataset_measurements %>%
+dataset_na_measurements <- dataset_measurements |>
     select(-all_of(missing_values_none))
-# Taula amb el recompre de valors no disponibles sense les variables que no en tenen
-missing_values_table <- sapply(dataset_na_measurements, function(x) sum(is.na(x)))
+missing_values_table <- sapply(
+    dataset_na_measurements,
+    function(x) sum(is.na(x))
+)
 missing_values_table <- missing_values_table[missing_values_table > 0]
 missing_values_table_df <- data.frame(
     Variable = names(missing_values_table),
     Missing_Values = as.integer(missing_values_table)
-) %>%
+) |>
     arrange(desc(Missing_Values))
+# Gràfic de barres
+ggplot(
+    missing_values_table_df,
+    aes(x = reorder(Variable, -Missing_Values), y = Missing_Values)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors no disponibles per variable",
+        x = "Variable",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula amb el recompre de valors no disponibles sense les variables que
+# no en tenen
 kable(
     missing_values_table_df,
     # Format dels nombres a la taula
@@ -267,33 +309,695 @@ kable(
     # Alineació de les columnes
     align = c("l", "r"),
     col.names = c("Variable", "Nombre de valors no disponibles")
-) %>%
+) |>
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
     )
-# Gràfic de barres
-ggplot(missing_values_table_df, aes(x = reorder(Variable, -Missing_Values), y = Missing_Values)) +
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_values_table, missing_values_table_df, dataset_na_measurements)
+```
+
+En els següents subapartats s'analitzaran el valors perduts de cada variable,
+per ordre de més a menys valors perduts. En el recompte s'han exclòs les
+estacions que tenen gairebé tots els valors perduts (>17.000) o bé no tenen
+cap valor perdut (0).
+
+### Valors perduts de la variable `DVM (6 m) graus`
+
+```{r}
+# recompte de valors perduts de la variable DVM (6 m) graus per estació
+missing_dvm6_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_DVM6 = sum(is.na(`DVM (6 m) graus`))) |>
+    filter(Missing_DVM6 > 0 & Missing_DVM6 < 17000) |>
+    arrange(desc(Missing_DVM6))
+# Gràfica de barres del recompte de valors perduts de la variable DVM (6 m)
+# graus per estació
+ggplot(
+    missing_dvm6_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_DVM6), y = Missing_DVM6)
+) +
     geom_bar(stat = "identity", fill = "steelblue") +
     labs(
-        title = "Recompte de valors no disponibles per variable",
-        x = "Variable",
+        title = "Recompte de valors NA de la variable DVM (6 m) graus per estació",
+        x = "Estació [Codi]",
         y = "Nombre de valors no disponibles"
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable DVM (6 m) graus per
+# estació
+kable(
+    missing_dvm6_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable DVM (6 m) graus per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles DVM (6 m) graus"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_values_table, missing_values_table_df, dataset_na_measurements)
+rm(missing_dvm6_by_station)
+```
+
+### Valors perduts de la variable `VVX (6 m) km/h`
+
+```{r}
+# recompte de valors perduts de la variable VVX (6 m) km/h per estació
+missing_vvx6_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_VVX6 = sum(is.na(`VVX (6 m) km/h`))) |>
+    filter(Missing_VVX6 > 0 & Missing_VVX6 < 17000) |>
+    arrange(desc(Missing_VVX6))
+# Gràfica de barres del recompte de valors perduts de la variable VVX (6 m)
+# km/h per estació
+ggplot(
+    missing_vvx6_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_VVX6), y = Missing_VVX6)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable VVX (6 m) km/h per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable VVX (6 m) km/h per estació
+kable(
+    missing_vvx6_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable VVX (6 m) km/h per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles VVX (6 m) km/h"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_vvx6_by_station)
+```
+
+### Valors perduts de la variable `VVM (6 m) km/h`
+
+```{r}
+# recompte de valors perduts de la variable VVM (6 m) km/h per estació
+missing_vvm6_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_VVM6 = sum(is.na(`VVM (6 m) km/h`))) |>
+    filter(Missing_VVM6 > 0 & Missing_VVM6 < 17000) |>
+    arrange(desc(Missing_VVM6))
+# Gràfica de barres del recompte de valors perduts de la variable VVM (6 m)
+# km/h per estació
+ggplot(
+    missing_vvm6_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_VVM6), y = Missing_VVM6)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable VVM (6 m) km/h per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable VVM (6 m) km/h per estació
+kable(
+    missing_vvm6_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable VVM (6 m) km/h per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles VVM (6 m) km/h"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_vvm6_by_station)
+```
+
+### Valors perduts de la variable `GN cm`
+
+```{r}
+# recompte de valors perduts de la variable GN cm per estació
+missing_gn_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_GN = sum(is.na(`GN cm`))) |>
+    filter(Missing_GN > 0 & Missing_GN < 17000) |>
+    arrange(desc(Missing_GN))
+# Gràfica de barres del recompte de valors perduts de la variable GN cm per
+# estació
+ggplot(
+    missing_gn_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_GN), y = Missing_GN)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable GN cm per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable GN cm per estació
+kable(
+    missing_gn_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable GN cm per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Estació [Codi]", "Nombre de valors no disponibles GN cm")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_gn_by_station)
+```
+
+### Valors perduts de la variable `DVM (2 m) graus`
+
+```{r}
+# recompte de valors perduts de la variable DVM (2 m) graus per estació
+missing_dvm2_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_DVM2 = sum(is.na(`DVM (2 m) graus`))) |>
+    filter(Missing_DVM2 > 0 & Missing_DVM2 < 17000) |>
+    arrange(desc(Missing_DVM2))
+# Gràfica de barres del recompte de valors perduts de la variable DVM (2 m)
+# graus per estació
+ggplot(
+    missing_dvm2_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_DVM2), y = Missing_DVM2)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable DVM (2 m) graus per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable DVM (2 m) graus per
+# estació
+kable(
+    missing_dvm2_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable DVM (2 m) graus per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles DVM (2 m) graus"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_dvm2_by_station)
+```
+
+### Valors perduts de la variable `VVM (2 m) km/h`
+
+```{r}
+# recompte de valors perduts de la variable VVM (2 m) km/h per estació
+missing_vvm2_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_VVM2 = sum(is.na(`VVM (2 m) km/h`))) |>
+    filter(Missing_VVM2 > 0 & Missing_VVM2 < 17000) |>
+    arrange(desc(Missing_VVM2))
+# Gràfica de barres del recompte de valors perduts de la variable VVM (2 m)
+# km/h per estació
+ggplot(
+    missing_vvm2_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_VVM2), y = Missing_VVM2)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable VVM (2 m) km/h per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable VVM (2 m) km/h per estació
+kable(
+    missing_vvm2_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable VVM (2 m) km/h per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles VVM (2 m) km/h"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_vvm2_by_station)
+```
+
+### Valors perduts de la variable `VVX (2 m) km/h`
+
+```{r}
+# recompte de valors perduts de la variable VVX (2 m) km/h per estació
+missing_vvx2_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_VVX2 = sum(is.na(`VVX (2 m) km/h`))) |>
+    filter(Missing_VVX2 > 0 & Missing_VVX2 < 17000) |>
+    arrange(desc(Missing_VVX2))
+# Gràfica de barres del recompte de valors perduts de la variable VVX (2 m)
+# km/h per estació
+ggplot(
+    missing_vvx2_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_VVX2), y = Missing_VVX2)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable VVX (2 m) km/h per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable VVX (2 m) km/h per estació
+kable(
+    missing_vvx2_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable VVX (2 m) km/h per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles VVX (2 m) km/h"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_vvx2_by_station)
+```
+
+### Valors perduts de la variable `PM hPa`
+
+```{r}
+# recompte de valors perduts de la variable PM hPa per estació
+missing_pm_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_PM = sum(is.na(`PM hPa`))) |>
+    filter(Missing_PM > 0 & Missing_PM < 17000) |>
+    arrange(desc(Missing_PM))
+# Gràfica de barres del recompte de valors perduts de la variable PM hPa per
+# estació
+ggplot(
+    missing_pm_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_PM), y = Missing_PM)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable PM hPa per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable PM hPa per estació
+kable(
+    missing_pm_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable PM hPa per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles PM hPa"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_pm_by_station)
+```
+
+### Valors perduts de la variable `DVM (10 m) graus`
+
+```{r}
+# recompte de valors perduts de la variable DVM (10 m) graus per estació
+missing_dvm10_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_DVM10 = sum(is.na(`DVM (10 m) graus`))) |>
+    filter(Missing_DVM10 > 0 & Missing_DVM10 < 17000) |>
+    arrange(desc(Missing_DVM10))
+# Gràfica de barres del recompte de valors perduts de la variable DVM (10 m)
+# graus per estació
+ggplot(
+    missing_dvm10_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_DVM10), y = Missing_DVM10)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable DVM (10 m) graus per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable DVM (10 m) graus per
+# estació
+kable(
+    missing_dvm10_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable DVM (10 m) graus per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles DVM (10 m) graus"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_dvm10_by_station)
+```
+
+### Valors perduts de la variable `VVM (10 m) km/h`
+
+```{r}
+# recompte de valors perduts de la variable VVM (10 m) km/h per estació
+missing_vvm10_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_VVM10 = sum(is.na(`VVM (10 m) km/h`))) |>
+    filter(Missing_VVM10 > 0 & Missing_VVM10 < 17000) |>
+    arrange(desc(Missing_VVM10))
+# Gràfica de barres del recompte de valors perduts de la variable VVM (10 m)
+# km/h per estació
+ggplot(
+    missing_vvm10_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_VVM10), y = Missing_VVM10)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable VVM (10 m) km/h per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable VVM (10 m) km/h per
+# estació
+kable(
+    missing_vvm10_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable VVM (10 m) km/h per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles VVM (10 m) km/h"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_vvm10_by_station)
+```
+
+### Valors perduts de la variable `VVX (10 m) km/h`
+
+```{r}
+# recompte de valors perduts de la variable VVX (10 m) km/h per estació
+missing_vvx10_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_VVX10 = sum(is.na(`VVX (10 m) km/h`))) |>
+    filter(Missing_VVX10 > 0 & Missing_VVX10 < 17000) |>
+    arrange(desc(Missing_VVX10))
+# Gràfica de barres del recompte de valors perduts de la variable VVX (10 m)
+# km/h per estació
+ggplot(
+    missing_vvx10_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_VVX10), y = Missing_VVX10)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable VVX (10 m) km/h per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable VVX (10 m) km/h per
+# estació
+kable(
+    missing_vvx10_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable VVX (10 m) km/h per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles VVX (10 m) km/h"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_vvx10_by_station)
+```
+
+### Valors perduts de la variable `RS W/m2`
+
+```{r}
+# recompte de valors perduts de la variable RS W/m2 per estació
+missing_rs_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_RS = sum(is.na(`RS W/m2`))) |>
+    filter(Missing_RS > 0 & Missing_RS < 17000) |>
+    arrange(desc(Missing_RS))
+# Gràfica de barres del recompte de valors perduts de la variable RS W/m2 per
+# estació
+ggplot(
+    missing_rs_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_RS), y = Missing_RS)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable RS W/m2 per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable RS W/m2 per estació
+kable(
+    missing_rs_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable RS W/m2 per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c(
+        "Estació [Codi]",
+        "Nombre de valors no disponibles RS W/m2"
+    )
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_rs_by_station)
+```
+
+### Valors perduts de la variable `HRM %`
+
+```{r}
+# recompte de valors perduts de la variable HRM % per estació
+missing_hrm_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_HRM = sum(is.na(`HRM %`))) |>
+    filter(Missing_HRM > 0 & Missing_HRM < 17000) |>
+    arrange(desc(Missing_HRM))
+# Gràfica de barres del recompte de valors perduts de la variable HRM % per
+# estació
+ggplot(
+    missing_hrm_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_HRM), y = Missing_HRM)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable HRM % per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable HRM % per estació
+kable(
+    missing_hrm_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable HRM % per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Estació [Codi]", "Nombre de valors no disponibles HRM %")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_hrm_by_station)
+```
+
+### Valors perduts de la variable `TM ºC`
+
+```{r}
+# recompte de valors perduts de la variable TM ºC per estació
+missing_tm_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_TM = sum(is.na(`TM °C`))) |>
+    filter(Missing_TM > 0 & Missing_TM < 17000) |>
+    arrange(desc(Missing_TM))
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_tm_by_station,
+    aes(x = reorder(`Estació [Codi]`, -Missing_TM), y = Missing_TM)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable TM ºC per estació",
+        x = "Estació [Codi]",
+        y = "Nombre de valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable TM ºC per estació
+kable(
+    missing_tm_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable TM ºC per estació",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Estació [Codi]", "Nombre de valors no disponibles TM ºC")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_tm_by_station)
+```
+
+### Valors perduts de la variable `TN ºC`
+
+```{r}
+# recompte de valors perduts de la variable TN ºC per estació
+missing_tn_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_TN = sum(is.na(`TN °C`))) |>
+    filter(Missing_TN > 0 & Missing_TN < 17000) |>
+    arrange(desc(Missing_TN))
+missing_tn_by_station
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_tn_by_station)
+```
+
+### Valors perduts de la variable `TX ºC`
+
+```{r}
+# recompte de valors perduts de la variable TX ºC per estació
+missing_tx_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_TX = sum(is.na(`TX °C`))) |>
+    filter(Missing_TX > 0 & Missing_TX < 17000) |>
+    arrange(desc(Missing_TX))
+missing_tx_by_station
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_tx_by_station)
+```
+
+### Valors perduts de la variable `PPT mm`
+
+```{r}
+# recompte de valors perduts de la variable PPT mm per estació
+missing_ppt_by_station <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Missing_PPT = sum(is.na(`PPT mm`))) |>
+    filter(Missing_PPT > 0 & Missing_PPT < 17000) |>
+    arrange(desc(Missing_PPT))
+missing_ppt_by_station
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_ppt_by_station)
 ```
 
 ## Conversió de tipus de dades
 
 ```{r}
 # Conversió del tipus de dades de les variables i eliminació
-dataset_measurements <- dataset_measurements %>%
+dataset_measurements <- dataset_measurements |>
     mutate(
-        # Variables de dates (3)
-        date = as.Date(date, format = "%d.%m.%Y"),
+        # Variables de dates (1)
         `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
         # Variables categòriques (6)
         `Estació [Codi]` = as.factor(`Estació [Codi]`),
@@ -308,25 +1012,218 @@ dataset_measurements <- dataset_measurements %>%
         `TM °C` = as.numeric(`TM °C`),
         `TX °C` = as.numeric(`TX °C`),
         `TN °C` = as.numeric(`TN °C`),
-        # Variables numèriques (12)
+        # Variables numèriques de direcció del vent (3)
         `DVM (2 m) graus` = as.numeric(`DVM (2 m) graus`),
+        `DVM (6 m) graus` = as.numeric(`DVM (6 m) graus`),
         `DVM (10 m) graus` = as.numeric(`DVM (10 m) graus`),
-        `GN cm` = as.numeric(`GN cm`),
-        `HRM %` = as.numeric(`HRM %`),
-        `PM hPa` = as.numeric(`PM hPa`),
-        `PPT mm` = as.numeric(`PPT mm`),
-        `RS W/m2` = as.numeric(`RS W/m2`),
+        # Variables numèriques de velocitat del vent (5)
         `VVM (2 m) km/h` = as.numeric(`VVM (2 m) km/h`),
         `VVM (6 m) km/h` = as.numeric(`VVM (6 m) km/h`),
         `VVM (10 m) km/h` = as.numeric(`VVM (10 m) km/h`),
         `VVX (2 m) km/h` = as.numeric(`VVX (2 m) km/h`),
-        `VVX (10 m) km/h` = as.numeric(`VVX (10 m) km/h`)
+        `VVX (10 m) km/h` = as.numeric(`VVX (10 m) km/h`),
+        # Altres variables numèriques (5)
+        `GN cm` = as.numeric(`GN cm`),
+        `HRM %` = as.numeric(`HRM %`),
+        `PM hPa` = as.numeric(`PM hPa`),
+        `PPT mm` = as.numeric(`PPT mm`),
+        `RS W/m2` = as.numeric(`RS W/m2`)
     )
+# Afegeix l'hora a la data i elimina les variables `Període TU` i `date`
+dataset_measurements <- dataset_measurements |>
+    mutate(
+        date_time = as.POSIXct(
+            paste(date, substr(`Període TU`, 1, 5)),
+            format = "%d.%m.%Y %H:%M", tz = "UTC"
+        )
+    ) |>
+    select(-`Període TU`, -date)
 # Resum estadístic del conjunt de dades després de la conversió de tipus
 summary(dataset_measurements)
 ```
 
 ## Gestió de valors extrems
+
+No s'han detectat valors anòmals en les variables numèriques excepte en la
+variable ```HRM %``` (humitat relativa mitjana en percentatge).
+
+```{r}
+# diagrama de caixa de totes les variables numèriques amb velocitats del vent
+numeric_vars <- c(
+    "VVM (2 m) km/h", "VVM (6 m) km/h", "VVM (10 m) km/h",
+    "VVX (2 m) km/h", "VVX (10 m) km/h"
+)
+boxplot(
+    dataset_measurements[numeric_vars],
+    main = "Diagrama de caixa de les variables amb velocitats del vent",
+    col = "lightblue",
+    names = c("VVM 2 m", "VVM 6 m", "VVM 10 m", "VVX 2 m", "VVX 10 m"),
+    las = 1
+)
+# diagrama de caixa de totes les variables numèriques amb direcció del vent
+numeric_vars <- c("DVM (2 m) graus", "DVM (6 m) graus", "DVM (10 m) graus")
+boxplot(
+    dataset_measurements[numeric_vars],
+    main = "Diagrama de caixa de les variables amb direcció del vent",
+    col = "lightblue",
+    names = c("DVM 2 m", "DVM 6 m", "DVM 10 m"),
+    las = 1
+)
+# diagrama de caixa de totes les variables numèriques amb temperatures
+numeric_vars <- c("TM °C", "TX °C", "TN °C")
+boxplot(
+    dataset_measurements[numeric_vars],
+    main = "Diagrama de caixa de les variables amb temperatures",
+    col = "lightblue",
+    names = c("TM °C", "TX °C", "TN °C"),
+    las = 1
+)
+# diagrama de caixa de totes les variables numèriques geogràfiques
+boxplot(
+    dataset_measurements["Longitud"],
+    main = "Diagrama de caixa de les variables de la longitud",
+    col = "lightblue",
+    las = 1
+)
+boxplot(
+    dataset_measurements["Latitud"],
+    main = "Diagrama de caixa de les variables de la latitud",
+    col = "lightblue",
+    las = 1
+)
+boxplot(
+    dataset_measurements["Altitud (m)"],
+    main = "Diagrama de caixa de l'altitud",
+    col = "lightblue",
+    names = c("Altitud m"),
+    las = 1
+)
+# diagrama de caixa de les altres variables numèriques
+boxplot(
+    dataset_measurements["GN cm"],
+    main = "Diagrama de caixa del gruix de neu",
+    col = "lightblue",
+    las = 1
+)
+boxplot(
+    dataset_measurements["PM hPa"],
+    main = "Diagrama de caixa de la pressió atmosfèrica mitjana",
+    col = "lightblue",
+    las = 1
+)
+boxplot(
+    dataset_measurements["PPT mm"],
+    main = "Diagrama de caixa de la precipitació",
+    col = "lightblue",
+    las = 1
+)
+boxplot(
+    dataset_measurements["RS W/m2"],
+    main = "Diagrama de caixa de la radiació solar",
+    col = "lightblue",
+    las = 1
+)
+```
+
+En la variable ```HRM %``` (humitat relativa mitjana en percentatge) s'han
+detectat tres estacions amb valors anòmals. A continuació s'analitza aquesta
+variable.
+
+```{r}
+boxplot(
+    dataset_measurements["HRM %"],
+    main = "Diagrama de caixa de la humitat relativa",
+    col = "lightblue",
+    las = 1
+)
+# Estacions amb humitat relativa mitjana més alta
+highest_humidity_stations <- dataset_measurements |>
+    group_by(`Estació [Codi]`) |>
+    summarise(Avg_Humidity = mean(`HRM %`, na.rm = TRUE)) |>
+    arrange(desc(Avg_Humidity)) |>
+    head(10)
+highest_humidity_stations
+# Gràfica amb la humitat relativa mitjana de les estacions amb més humitat
+ggplot(
+    highest_humidity_stations,
+    aes(x = reorder(`Estació [Codi]`, -Avg_Humidity), y = Avg_Humidity)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Humitat relativa mitjana de les estacions amb més humitat",
+        x = "Estació [Codi]",
+        y = "Humitat relativa mitjana (%)"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Diagrama de caixa de la humitat relativa mitjana de les estacions anòmales
+selected_stations <- c(
+    "Lac Redon (2.247 m) [VS]", "Pantà de Siurana [MR]",
+    "Roses [D4]"
+)
+humidity_selected_stations <- dataset_measurements |>
+    filter(`Estació [Codi]` %in% selected_stations) |>
+    select(`Estació [Codi]`, `HRM %`, date_time)
+ggplot(humidity_selected_stations, aes(x = `Estació [Codi]`, y = `HRM %`)) +
+    geom_boxplot(fill = "lightblue") +
+    labs(
+        title = "Diagrama de caixa de la humitat relativa mitjana de les estacions seleccionades",
+        x = "Estació [Codi]",
+        y = "Humitat relativa mitjana (%)"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# gràfica amb els valors de la humitat relativa mitjana de les estacions
+# anòmales al llarg del temps
+ggplot(
+    humidity_selected_stations,
+    aes(x = date_time, y = `HRM %`, color = `Estació [Codi]`)
+) +
+    geom_line() +
+    labs(
+        title = "Humitat relativa mitjana de les estacions seleccionades al llarg del temps",
+        x = "Data",
+        y = "Humitat relativa mitjana (%)",
+        color = "Estació [Codi]"
+    ) +
+    theme_minimal()
+# gràfica dels valors d'humitat relativa mitjana de les estacions anòmales per
+# al dia 15 de març de 2025
+ggplot(
+    filter(humidity_selected_stations, as.Date(date_time) ==
+        as.Date("2025-03-15")),
+    aes(x = date_time, y = `HRM %`, color = `Estació [Codi]`)
+) +
+    geom_line() +
+    labs(
+        title = "Humitat relativa mitjana de les estacions seleccionades el 15 de març de 2025",
+        x = "Hora",
+        y = "Humitat relativa mitjana (%)",
+        color = "Estació [Codi]"
+    ) +
+    theme_minimal()
+# Correcció dels valors anòmals (dividir per 10) el ```HRM %``` de les estacions
+# amb valors anòmals
+dataset_measurements <- dataset_measurements |>
+    mutate(
+        `HRM %` = ifelse(
+            `Estació [Codi]` %in% selected_stations,
+            `HRM %` / 10,
+            `HRM %`
+        )
+    )
+# Torna a generar el diagrama de caixa de la variable ```HRM %``` després de
+# la correcció
+boxplot(
+    dataset_measurements["HRM %"],
+    main = "Diagrama de caixa de la humitat relativa",
+    col = "lightblue",
+    las = 1
+)
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(highest_humidity_stations, humidity_selected_stations)
+rm(selected_stations)
+```
 
 ## Altres mètodes de neteja
 

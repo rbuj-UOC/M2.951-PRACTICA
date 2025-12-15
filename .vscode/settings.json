@@ -1,8 +1,24 @@
 {
     "cSpell.language": "ca,en",
     "cSpell.words": [
+        "aggr",
+        "corrplot",
+        "dplyr",
+        "ggplot",
+        "hjust",
+        "kable",
+        "knitr",
         "Meteo",
-        "xema"
+        "nrow",
+        "rbind",
+        "readr",
+        "readxl",
+        "sapply",
+        "steelblue",
+        "summarise",
+        "ungroup",
+        "xema",
+        "ylab"
     ],
     "editor.formatOnSave": true,
     "[json]": {
