@@ -61,5 +61,7 @@
     "shellformat.path": "/opt/homebrew/bin/shfmt",
     "shellformat.effectLanguages": [
         "shellscript"
-    ]
+    ],
+    // "r.rpath.mac": "${workspaceFolder}/.conda/bin/R",
+    "r.helpPanel.cacheIndexFiles": "Workspace"
 }

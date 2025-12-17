@@ -160,7 +160,7 @@ Per crear un entorn virtual amb conda, executeu la següent ordre al directori
 arrel del projecte:
 
 ```sh
-conda env create --prefix=./.conda --file=environment.yml python=3.9
+conda env create --prefix=./.conda --file=environment.yml python=3.11
 ```
 
 Per tal d'assegurar que l'entorn virtual s'ha creat correctament, podeu
@@ -171,9 +171,10 @@ comprovar que el directori `.conda/` s'ha creat al directori arrel del projecte.
 amb les següents ordres:
 
 ```sh
-conda create --prefix=./.conda python=3.9
+conda create --prefix=./.conda python=3.11
 conda activate ./.conda
-conda install pandas selenium
+conda install pip pandas selenium r-base=4.5.2 r-corrplot r-ggplot2 r-dplyr \
+    r-kableextra r-knitr r-readr r-rmarkdown r-tidyverse
 ```
 
 > [!TIP]
@@ -225,7 +226,7 @@ conda update pandas selenium
 
 ### Execució del codi
 
-Per baixar les dades de les estacions de l'ultim anys des del 3 de desembre de
+Per baixar les dades de les estacions de l'ultim any fins al 3 de desembre de
 2025:
 
 ```sh
