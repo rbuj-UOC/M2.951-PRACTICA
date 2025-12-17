@@ -2629,6 +2629,60 @@ pca_resultat <- prcomp(df_pca, center = TRUE, scale. = TRUE)
 summary(pca_resultat)
 # Mostrem la relació entre variables i components (Rotation)
 pca_resultat$rotation
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(df_pca, variables_continues)
+```
+
+En el diagrama de colze (Scree Plot) podem observar la variància explicada per
+cada component principal. Les dues primeres components principals expliquen una
+gran part de la variància total (gairebé el 50%), i les següents components
+explicaran menys variància.
+
+```{r, echo=FALSE, fig.align='center'}
+# Gràfica de Scree Plot
+scree_data <- data.frame(
+    Component = 1:length(pca_resultat$sdev),
+    Variancia = (pca_resultat$sdev)^2
+)
+ggplot(scree_data, aes(x = Component, y = Variancia)) +
+    geom_line(color = "blue") +
+    geom_point(color = "red") +
+    labs(
+        title = "Scree Plot",
+        x = "Component Principal",
+        y = "Variància Explicada"
+    ) +
+    theme_minimal()
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(scree_data)
+```
+
+```{r, echo=FALSE, fig.align='center'}
+# Percentatges de variància explicada per cada component
+variancia_explicada <- (pca_resultat$sdev)^2
+percentatge_variancia <- variancia_explicada / sum(variancia_explicada) * 100
+# Noms de les variables dels components principals
+nom_variables <- rownames(pca_resultat$rotation)
+kable(
+    data.frame(
+        Component = nom_variables,
+        Variancia_Explicada = variancia_explicada,
+        Percentatge_Variancia = percentatge_variancia
+    ),
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Alineació de les columnes
+    align = c("l", "l"),
+    # Etiqueta de la taula
+    caption = "Percentatge de variància explicada per cada component principal",
+    col.names = c("Component Principal", "Variància Explicada", "% Variància")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(variancia_explicada, percentatge_variancia, nom_variables)
 ```
 
 #### Component Principal 1 (PC1)
