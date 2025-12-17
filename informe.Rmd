@@ -27,6 +27,8 @@ library(corrplot)
 library(knitr)
 library(kableExtra)
 library(VIM)
+library(car)
+library(lubridate)
 ```
 
 # Descripció del dataset
@@ -1225,8 +1227,265 @@ rm(highest_humidity_stations, humidity_selected_stations)
 rm(selected_stations)
 ```
 
+
 ## Altres mètodes de neteja
 
 # Anàlisi de les dades
+
+## Aplicació d'un Model Supervisat i un No Supervisat
+
+### Model Supervisat
+
+En aquest apartat volem calcular la Temperatura Mitjana (TM °C) en funció de les
+variables que ens proporciona el Meteocat, el mes i l'hora.
+
+```{r}
+# Dataset numèric, afegim mes i hora
+dataset_numeric <- dataset_measurements |>
+    select(
+        where(is.numeric),
+        date_time
+    )
+dataset_numeric$Mes <- factor(month(dataset_numeric$date_time))
+dataset_numeric$Hora <- factor(hour(dataset_numeric$date_time))
+# Model de regressió lineal per a la predicció de TM °C
+model_regressio <- lm(
+    `TM °C` ~ `Altitud (m)` + Latitud + Longitud + `HRM %` + `RS W/m2` +
+        `PM hPa` + `PPT mm` + `VVM (10 m) km/h` + `VVX (10 m) km/h` + `GN cm` +
+        Mes + Hora,
+    data = dataset_numeric
+)
+# Mostrem el resultat
+summary(model_regressio)
+```
+
+- **Capacitat explicativa ($R^2$)**: El model aconsegueix un $R^2$ ajustat de
+  0.8377. Això significa que explica el 83.77% de la variància en la Temperatura
+  Mitjana.
+- **Intercept**: Té un valor de 84.52. Aquesta és la temperatura mitjana
+  estimada (en ºC) quan tots els predictors són zero. En aquest cas no té un
+  significat físic.
+- **Altitud**: El coeficient té un valor de -1.049 i un $valor-p < 2e-16$.
+  Aquests resultats indiquen que aquest coeficient és significatiu. A més, el
+  signe és coherent, ja que a major altitud, menor temperatura.
+- **Latitud**: Té un valor de -2.197 i un $valor-p < 2e-16$. Això indica que per
+  cada grau cap al nord, la temperatura baixa 2.2ºC, el que és coherent amb el
+  clima (als pirineus fa més fred en general).
+- **Longitud**: Té un valor de +0.6257 i un $valor-p < 2e-16$. Això indica que
+  per cap a l'est, la temperatura augmenta una mica, però no afecta tant com la
+  latitud.
+- **HRM %**: El coeficient té un valor de -0.0915 i un $valor-p < 2e-16$. Més
+  humitat relativa implica un descens en la temperatura.
+- **RS W/M2**: Té un valor de +0.0042 i un $valor-p < 2e-16.$ El seu valor
+  positiu indica que per cada unitat d'augment en la radiació solar, la
+  temperatura augmenta. Coherent físicament.
+- **PM hPa**: Té un valor de +1.652e-03 i un $valor-p < 2e-16$. El seu valor
+  positiu indica que l'augment de la pressió s'associa a temperatures
+  lleugerament més altes. Això és degut al fet que l'alta pressió sol implicar
+  cels clars i temps més estable.
+- **PPT mm**: Té un valor de +0.059 i un valor-p de 0.0017. El seu valor
+  positiu indica que un augment en la precipitació s'associa a una temperatura
+  mitjana més alta segons el model.
+- **VVM (10 m) km/h**: Té un valor de +0.0575 i un $valor-p < 2e-16$. El seu
+  valor positiu indica que en situacions de vent mitjà constant, la temperatura
+  tendeix a mantenir-se més alta.
+- **VVX (10 m) km/h**: Té un valor de -0.0406 i un $valor-p < 2e-16$. El seu
+  valor negatiu indica que les ràfegues de vent molt fortes estan associades a
+  descensos de temperatura.
+- **GN cm**: Té un valor de -0.0079 i un $valor-p < 2e-16$. El seu valor negatiu
+  confirma que la presència de neu al terra redueix la temperatura mitjana.
+- **Variables temporals (Mes i Hora)**: Són altament significatives ($< 2e-16$).
+  Els coeficients mostren clarament el cicle estacional (Agost és +14.5ºC
+  respecte a Gener) i el cicle diari (les 15:00h són +3.0ºC respecte a la
+  mitjanit).
+- **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
+  el model és significatiu.
+- La inclusió de totes les variables ha provocat una pèrdua massiva
+  d'observacions (de 3,2 milions a 85.000 utilitzades) 
+
+Veiem la multicolinealitat.
+
+```{r, attr.source='.numberLines'}
+vif(model_regressio)
+```
+
+Perquè les variables no presentin multicolinealitat han de ser inferiors a 5.
+
+- **Altitud i Pressió**: L'Altitud presenta un GVIF de 15,84 i la Pressió de
+  11.66. Aquests valors són molt alts, indicant que la forta relació física
+  inversa entre pressió i altitud genera multicolinealitat en el model.
+- **Variables del Vent**: VVM i VVX tenen GVIFs al voltant de 6,9, confirmant
+  que estan molt correlacionades entre si.
+- **Variables Temporals**: GVIFs molt baixos.
+
+Per tant, farem un segon model de regressió lineal amb menys predictors:
+eliminem la neu, vents (molts NA) i longitud.
+
+```{r, , attr.source='.numberLines'}
+# Creació del model de regressió més simple
+# Eliminem PM (molt relacionada amb l'altitud), VVM (molt correlacionada amb
+# VVX), GN (poques mostres)
+model_regressio_simple <- lm(
+    `TM °C` ~ `Altitud (m)` + Latitud + Longitud + `HRM %` + `RS W/m2` +
+        `PPT mm` + `VVX (10 m) km/h` + Mes + Hora,
+    data = dataset_numeric
+)
+summary(model_regressio_simple)
+vif(model_regressio_simple)
+```
+
+- **Capacitat explicativa ($R^2$)**: El model aconsegueix un $R^2$ ajustat de
+  $0.8536$. Això significa que explica el $85.36\%$ de la variància en la
+  Temperatura Mitjana.
+- **Intercept**: Té un valor de 59.43. Aquesta és la temperatura mitjana
+  estimada (en ºC) quan tots els predictors són zero. En aquest cas no té un
+  significat físic directe.
+- **Altitud**: El coeficient té un valor de -5.029e-03 i un $valor-p < 2e-16$.
+  Aquests resultats indiquen que aquest coeficient és significatiu. A més, el
+  signe és coherent, ja que a major altitud, la temperatura disminueix.
+- **Latitud**: Té un valor de -1.259 i un $valor-p < 2e-16$. Això indica que per
+  cada grau cap al nord, la temperatura baixa 2.2ºC, el que és coherent amb el
+  clima (als pirineus fa més fred en general).
+- **Longitud**: Té un valor de 0.2818 i un $valor-p < 2e-16$. Això indica que
+  per cap a l'est, la temperatura augmenta una mica, però no afecta tant com la
+  latitud.
+- **HRM %**: El coeficient té un valor de -0.0038 i un $valor-p < 2e-16$. Més
+  humitat relativa implica un descens en la temperatura.
+- **RS W/M2**: Té un valor de +0.0075 i un $valor-p < 2e-16$. El seu valor
+  positiu indica que per cada unitat d'augment en la radiació solar, la
+  temperatura augmenta. Coherent físicament.
+- **PPT mm**: Té un valor de -0.2497 i un valor-p de 0.008442. El seu valor
+  negatiu indica que un augment en la precipitació s'associa a una temperatura
+  mitjana més baixa segons el model.
+- **VVX (10 m) km/h**: Té un valor de +0.0365 i un $valor-p < 2e-16$. El seu
+  signe ha canviat respecte l'anterior model.
+- **Variables temporals (Mes i Hora)**: Són altament significatives ($<2e-16$).
+  Els coeficients mostren clarament el cicle estacional (Agost és +15.63ºC
+  respecte a Gener).
+- **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
+  el model és significatiu.
+- Ara no s'han exclòs tantes dades.
+- La multicolinearitat és correcte
+
+### Model No Supervisat
+
+Fem servir el PCA per reduir la dimensionalitat
+
+```{r, attr.source='.numberLines'}
+# Ens quedem amb les variables continues, no amb les temporals que són cícliques
+variables_continues <- c(
+    "Altitud (m)",
+    "Latitud",
+    "Longitud",
+    "HRM %",
+    "RS W/m2",
+    "PPT mm",
+    "VVX (10 m) km/h"
+)
+# Fem subset ometent valors NA
+df_pca <- dataset_numeric[, variables_continues]
+df_pca <- na.omit(df_pca)
+# Apliquem PCA
+pca_resultat <- prcomp(df_pca, center = TRUE, scale. = TRUE)
+# Mostrem la importància de les components
+summary(pca_resultat)
+# Mostrem la relació entre variables i components (Rotation)
+pca_resultat$rotation
+```
+
+#### Component Principal 1 (PC1)
+
+PC1 explica la màxima variància del conjunt de dades.
+
+Els pesos més alts i significatius són:
+
+- Latitud: +0.713 (Molt alt i positiu)
+- Altitud: +0.583 (Alt i positiu)
+- Longitud: +0.345 (Moderat)
+
+Aquesta component representa clarament la geografia. Un valor alt en PC1 indica
+una estació amb una Latitud alta (Nord) i Altitud alta (muntanya/interior).
+ 
+#### Component Principal 2 (PC2)
+
+PC2 explica la següent major quantitat de variància independent de PC1.
+
+- VVX: +0.551 (Molt alt i positiu)
+- RS: +0.505 (Alt i positiu)
+- HRM: -0.485 (Alt i negatiu)
+- Longitud: -0.387 (Moderat i negatiu)
+
+Un valor alt en PC2 indica una estació amb molta Radiació Solar (RS) i Vent
+Màxim (VVX), i baixa Humitat Relativa (HRM). Això es podria interpretar com a
+condicions de temps assolellat, sec i ventós.
+
+#### Component Principal 3 (PC3)
+
+- Longitud: +0.630 (Molt alt i positiu)
+- RS: +0.501 (Alt i positiu)
+- PPT: -0.342 (Moderat i negatiu)
+- Altitud: -0.467 (Alt i negatiu)
+
+Un valor alt en PC3 representa una estació situada a l'Est (Longitud alta) amb
+alta Radiació Solar, sovint a baixa Altitud (negatiu) i amb menys Precipitació.
+
+#### Component Principal 4 (PC4)
+- PPT mm: +0.876 (Molt alt i dominant)
+
+Aquesta component està gairebé totalment dominada per la Precipitació (PPT mm).
+Essencialment, PC4 aïlla la variabilitat lligada als episodis de pluja del resta
+de factors climàtics.
+
+## Contrast d'Hipòtesi
+
+Primerament aconseguim la mediana d'altituds.
+
+```{r, attr.source='.numberLines'}
+mediana_global_altitud <- median(dataset_numeric$`Altitud (m)`, na.rm = TRUE)
+mediana_global_altitud
+```
+
+Pregunta: Existeix una diferència significativa en la Humitat Relativa Mitjana
+(HRM %) entre les estacions de baixa altitud ($\le 350\text{m}$) i les de gran
+altitud ($\ge 1350\text{m}$)?
+
+- Hipòtesi Nul·la ($H_0$): La diferència real de mitjanes d'HRM entre el grup de
+  Baixa Altitud i el de Gran Altitud és igual a zero
+  ($\mu_{\text{Baixa}} - \mu_{\text{Gran}} = 0$).
+- Hipòtesi Alternativa ($H_a$): La diferència real de mitjanes d'HRM no és igual
+  a zero ($\mu_{\text{Baixa}} - \mu_{\text{Gran}} \neq 0$).
+
+```{r, attr.source='.numberLines'}
+dataset_grups <- dataset_numeric |>
+    select(`Altitud (m)`, `HRM %`) |>
+    na.omit() |>
+    mutate(Grup_Altitud = case_when(
+        `Altitud (m)` <= 350 ~ "Baixa_Altitud",
+        `Altitud (m)` >= 350 ~ "Gran_Altitud",
+        TRUE ~ "Altres"
+    )) |>
+    filter(Grup_Altitud != "Altres")
+```
+
+Fem servir la Prova T de Welch per seguretat, que és robusta davant la
+no-normalitat i la possible manca d'homocedasticitat.
+
+```{r, attr.source='.numberLines'}
+# Prova T de Welch
+prova_t <- t.test(`HRM %` ~ Grup_Altitud,
+    data = dataset_grups,
+    var.equal = FALSE
+)
+print(prova_t)
+``` 
+
+- **Significació Estadística**: Atès que el valor $p< 2.2e-16$ és molt menor que
+  el nivell de significació estàndard ($\alpha = 0.05$), es rebutja la hipòtesi
+  nul·la. Per tant, establim que existeix una diferència estadísticament
+  significativa en la Humitat Relativa Mitjana entre les estacions de Baixa
+  Altitud i les de Gran Altitud.
+- Diferència de Mitjanes:
+  - Mitjana HRM Baixa Altitud: 80.36%
+  - Mitjana HRM Gran Altitud: 73.45%
 
 # Resolució del problema
