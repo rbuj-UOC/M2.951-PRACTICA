@@ -112,7 +112,8 @@ de dades:
 
 ```{r, attr.source='.numberLines'}
 dataset_measurements <- read_csv("dataset/dataset.csv",
-    locale = locale(decimal_mark = ",")
+    locale = locale(decimal_mark = ","),
+    na = c("", "NA", "NaN", "nan", "(s/d)")
 )
 ```
 
@@ -334,29 +335,90 @@ dataset_measurements <- dataset_measurements |>
     select(`Nom estació`, `Codi estació`, everything())
 ```
 
-# Neteja de les dades
+# Conversió de tipus de dades
 
-```{r, echo=FALSE}
-# mida del conjunt de dades
-data_dimensions <- dim(dataset_measurements)
-```
+Abans de començar l'anàlisi de les dades, és important assegurar-se que les
+variables tenen el tipus de dada correcte. Això facilitarà l'anàlisi i la
+visualització de les dades.
 
-En el següent bloc de codi es mostra informació bàsica del conjunt de dades, el
-qual ara té `r data_dimensions[2]` columnes i
-`r format(data_dimensions[1], big.mark = ".")` de files.
-
-```{r}
-# Informació bàsica del conjunt de dades principal
+```{r, attr.source='.numberLines'}
+# Visualització dels tipus de dades originals
 glimpse(dataset_measurements)
 ```
 
-En el següent bloc de codi es mostra un resum estadístic del conjunt de dades
-sense fer cap conversió de tipus:
+En la conversió del tipus de dades, s'han realitzat les següents accions:
 
-```{r}
-# Resum estadístic del conjunt de dades principal
+- Es converteix la variable `Data alta` al tipus de dada Date.
+- Es crea una nova variable `Data i hora` que combina les variables `date` i
+  `Període TU`, convertint-les al tipus de dada POSIXct.
+- Es converteixen les variables categòriques `Codi estació`, `Nom estació`,
+  `Comarca`, `Municipi` i `code` al tipus de dada Factor.
+- Es converteixen les variables numèriques geogràfiques `Altitud (m)`,
+  `Longitud` i `Latitud` al tipus de dada Numeric.
+- Es converteixen les variables numèriques de temperatura `TM °C`, `TX °C` i
+  `TN °C` al tipus de dada Numeric.
+- Es converteixen les variables numèriques de direcció del vent `DVM (2 m)
+  graus`, `DVM (6 m) graus` i `DVM (10 m) graus` al tipus de dada Numeric.
+- Es converteixen les variables numèriques de velocitat del vent `VVM (2 m)
+  km/h`, `VVM (6 m) km/h`, `VVM (10 m) km/h`, `VVX (2 m) km/h` i `VVX (10 m)
+  km/h` al tipus de dada Numeric.
+- Es converteixen les altres variables numèriques `GN cm`, `HRM %`, `PM hPa`,
+  `PPT mm` i `RS W/m2` al tipus de dada Numeric.
+- S'elimina la variable `Període TU` i la variable `date` del conjunt de dades.
+
+```{r, attr.source='.numberLines'}
+# Conversió del tipus de dades de les variables i eliminació
+dataset_measurements <- dataset_measurements |>
+    mutate(
+        # Variables de dates (2)
+        `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
+        `Data i hora` = as.POSIXct(
+            paste(date, substr(`Període TU`, 1, 5)),
+            format = "%d.%m.%Y %H:%M", tz = "UTC"
+        ),
+        # Variables categòriques (5)
+        `Codi estació` = as.factor(`Codi estació`),
+        `Nom estació` = as.factor(`Nom estació`),
+        Comarca = as.factor(Comarca),
+        Municipi = as.factor(Municipi),
+        code = as.factor(code),
+        # Variables numèriques geogràfiques (3)
+        `Altitud (m)` = as.numeric(`Altitud (m)`),
+        Longitud = as.numeric(Longitud),
+        Latitud = as.numeric(Latitud),
+        # Variables numèriques de temperatura (3)
+        `TM °C` = as.numeric(`TM °C`),
+        `TX °C` = as.numeric(`TX °C`),
+        `TN °C` = as.numeric(`TN °C`),
+        # Variables numèriques de direcció del vent (3)
+        `DVM (2 m) graus` = as.numeric(`DVM (2 m) graus`),
+        `DVM (6 m) graus` = as.numeric(`DVM (6 m) graus`),
+        `DVM (10 m) graus` = as.numeric(`DVM (10 m) graus`),
+        # Variables numèriques de velocitat del vent (5)
+        `VVM (2 m) km/h` = as.numeric(`VVM (2 m) km/h`),
+        `VVM (6 m) km/h` = as.numeric(`VVM (6 m) km/h`),
+        `VVM (10 m) km/h` = as.numeric(`VVM (10 m) km/h`),
+        `VVX (2 m) km/h` = as.numeric(`VVX (2 m) km/h`),
+        `VVX (10 m) km/h` = as.numeric(`VVX (10 m) km/h`),
+        # Altres variables numèriques (5)
+        `GN cm` = as.numeric(`GN cm`),
+        `HRM %` = as.numeric(`HRM %`),
+        `PM hPa` = as.numeric(`PM hPa`),
+        `PPT mm` = as.numeric(`PPT mm`),
+        `RS W/m2` = as.numeric(`RS W/m2`)
+    ) |>
+    select(-`Període TU`, -date)
+```
+
+A continuació es mostra un resum estadístic del conjunt de dades després de la
+conversió de tipus.
+
+```{r, attr.source='.numberLines'}
+# Resum estadístic del conjunt de dades després de la conversió de tipus
 summary(dataset_measurements)
 ```
+
+# Neteja de les dades
 
 ## Gestió dels valors perduts
 
@@ -502,7 +564,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -604,7 +666,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -705,7 +767,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -803,7 +865,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -905,7 +967,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1006,7 +1068,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1107,7 +1169,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1208,7 +1270,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1310,7 +1372,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1412,7 +1474,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1514,7 +1576,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1615,7 +1677,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1711,7 +1773,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1797,8 +1859,7 @@ kable(
     )
 ```
 
-En la gràfica delis valors perduts estan concentrats en dies sense mesures o
- dies mancants.
+Gràfiques dels valors perduts de la variable `TM ºC` per estació.
 
 ```{r, echo=FALSE, fig.height=2, fig.align='center'}
 # funció per crear les gràfiques
@@ -1810,7 +1871,7 @@ my_function <- function(dataset, station_code) {
     n_empty <- nrow(station_data)
     # taula amb el recompte de valors perduts per dia
     daily_missing <- station_data |>
-        group_by(date = as.Date(date, "%d.%m.%Y")) |>
+        group_by(date = as.Date(`Data i hora`)) |>
         summarise(Missing_per_day = n()) |>
         filter(Missing_per_day > 0) |>
         arrange(desc(Missing_per_day))
@@ -1853,7 +1914,7 @@ if (iteration %% 2 == 1) {
 
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tm_by_station, plist, iteration, my_function)
+rm(plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `TN ºC`
@@ -1869,12 +1930,93 @@ missing_tn_by_station <- dataset_measurements |>
     summarise(Missing_TN = sum(is.na(`TN °C`))) |>
     filter(Missing_TN > 0 & Missing_TN < 17000) |>
     arrange(desc(Missing_TN))
-missing_tn_by_station
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_tn_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_TN), y = Missing_TN)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable TN ºC",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable TN ºC per estació
+kable(
+    missing_tn_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable TN ºC",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Gràfiques dels valors perduts de la variable `TN ºC` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`TN °C`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, TN ºC",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_tn_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
 ```
 
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tn_by_station)
+rm(missing_tn_by_station, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `TX ºC`
@@ -1890,12 +2032,93 @@ missing_tx_by_station <- dataset_measurements |>
     summarise(Missing_TX = sum(is.na(`TX °C`))) |>
     filter(Missing_TX > 0 & Missing_TX < 17000) |>
     arrange(desc(Missing_TX))
-missing_tx_by_station
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_tx_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_TX), y = Missing_TX)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable TX ºC",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable TX ºC per estació
+kable(
+    missing_tx_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable TX ºC",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Grafiques dels valors perduts de la variable `TX ºC` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`TX °C`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, TX ºC",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_tx_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
 ```
 
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tx_by_station)
+rm(missing_tx_by_station, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `PPT mm`
@@ -1911,87 +2134,93 @@ missing_ppt_by_station <- dataset_measurements |>
     summarise(Missing_PPT = sum(is.na(`PPT mm`))) |>
     filter(Missing_PPT > 0 & Missing_PPT < 17000) |>
     arrange(desc(Missing_PPT))
-missing_ppt_by_station
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_ppt_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_PPT), y = Missing_PPT)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable PPT mm",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable PPT mm per estació
+kable(
+    missing_ppt_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable PPT mm",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Gràfiques dels valors perduts de la variable `PPT mm` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`PPT mm`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, PPT mm",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_ppt_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
 ```
 
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_ppt_by_station)
-```
-
-## Conversió de tipus de dades
-
-En la conversió del tipus de dades, s'han realitzat les següents accions:
-
-- Es converteix la variable `Data alta` al tipus de dada Date.
-- Es crea una nova variable `date_time` que combina les variables `date` i
-  `Període TU`, convertint-les al tipus de dada POSIXct.
-- Es converteixen les variables categòriques `Codi estació`, `Nom estació`,
-  `Comarca`, `Municipi` i `code` al tipus de dada Factor.
-- Es converteixen les variables numèriques geogràfiques `Altitud (m)`,
-  `Longitud` i `Latitud` al tipus de dada Numeric.
-- Es converteixen les variables numèriques de temperatura `TM °C`, `TX °C` i
-  `TN °C` al tipus de dada Numeric.
-- Es converteixen les variables numèriques de direcció del vent `DVM (2 m)
-  graus`, `DVM (6 m) graus` i `DVM (10 m) graus` al tipus de dada Numeric.
-- Es converteixen les variables numèriques de velocitat del vent `VVM (2 m)
-  km/h`, `VVM (6 m) km/h`, `VVM (10 m) km/h`, `VVX (2 m) km/h` i `VVX (10 m)
-  km/h` al tipus de dada Numeric.
-- Es converteixen les altres variables numèriques `GN cm`, `HRM %`, `PM hPa`,
-  `PPT mm` i `RS W/m2` al tipus de dada Numeric.
-- S'elimina la variable `Període TU` i la variable `date` del conjunt de dades
-  original.
-
-```{r, attr.source='.numberLines'}
-# Conversió del tipus de dades de les variables i eliminació
-dataset_measurements <- dataset_measurements |>
-    mutate(
-        # Variables de dates (2)
-        `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
-        date_time = as.POSIXct(
-            paste(date, substr(`Període TU`, 1, 5)),
-            format = "%d.%m.%Y %H:%M", tz = "UTC"
-        ),
-        # Variables categòriques (5)
-        `Codi estació` = as.factor(`Codi estació`),
-        `Nom estació` = as.factor(`Nom estació`),
-        Comarca = as.factor(Comarca),
-        Municipi = as.factor(Municipi),
-        code = as.factor(code),
-        # Variables numèriques geogràfiques (3)
-        `Altitud (m)` = as.numeric(`Altitud (m)`),
-        Longitud = as.numeric(Longitud),
-        Latitud = as.numeric(Latitud),
-        # Variables numèriques de temperatura (3)
-        `TM °C` = as.numeric(`TM °C`),
-        `TX °C` = as.numeric(`TX °C`),
-        `TN °C` = as.numeric(`TN °C`),
-        # Variables numèriques de direcció del vent (3)
-        `DVM (2 m) graus` = as.numeric(`DVM (2 m) graus`),
-        `DVM (6 m) graus` = as.numeric(`DVM (6 m) graus`),
-        `DVM (10 m) graus` = as.numeric(`DVM (10 m) graus`),
-        # Variables numèriques de velocitat del vent (5)
-        `VVM (2 m) km/h` = as.numeric(`VVM (2 m) km/h`),
-        `VVM (6 m) km/h` = as.numeric(`VVM (6 m) km/h`),
-        `VVM (10 m) km/h` = as.numeric(`VVM (10 m) km/h`),
-        `VVX (2 m) km/h` = as.numeric(`VVX (2 m) km/h`),
-        `VVX (10 m) km/h` = as.numeric(`VVX (10 m) km/h`),
-        # Altres variables numèriques (5)
-        `GN cm` = as.numeric(`GN cm`),
-        `HRM %` = as.numeric(`HRM %`),
-        `PM hPa` = as.numeric(`PM hPa`),
-        `PPT mm` = as.numeric(`PPT mm`),
-        `RS W/m2` = as.numeric(`RS W/m2`)
-    ) |>
-    select(-`Període TU`, -date)
-```
-
-A continuació es mostra un resum estadístic del conjunt de dades després de la
-conversió de tipus.
-
-```{r, attr.source='.numberLines'}
-# Resum estadístic del conjunt de dades després de la conversió de tipus
-summary(dataset_measurements)
+rm(missing_ppt_by_station, plist, iteration, my_function)
 ```
 
 ```{r, echo=FALSE, fig.align='center'}
@@ -2377,7 +2606,7 @@ físicament. Per tant, es decideix corregir aquests valors dividint-los per 10.
 selected_stations <- c("VS", "MR", "D4")
 humidity_selected_stations <- dataset_measurements |>
     filter(`Codi estació` %in% selected_stations) |>
-    select(`Codi estació`, `HRM %`, date_time)
+    select(`Codi estació`, `HRM %`, `Data i hora`)
 ggplot(humidity_selected_stations, aes(x = `Codi estació`, y = `HRM %`)) +
     geom_boxplot(fill = "lightblue") +
     labs(
@@ -2397,7 +2626,7 @@ temporal.
 # anòmales al llarg del temps
 ggplot(
     humidity_selected_stations,
-    aes(x = date_time, y = `HRM %`, color = `Codi estació`)
+    aes(x = `Data i hora`, y = `HRM %`, color = `Codi estació`)
 ) +
     geom_line() +
     labs(
@@ -2416,9 +2645,9 @@ dia concret, el 15 de març de 2025.
 # gràfica dels valors d'humitat relativa mitjana de les estacions anòmales per
 # al dia 15 de març de 2025
 ggplot(
-    filter(humidity_selected_stations, as.Date(date_time) ==
+    filter(humidity_selected_stations, as.Date(`Data i hora`) ==
         as.Date("2025-03-15")),
-    aes(x = date_time, y = `HRM %`, color = `Codi estació`)
+    aes(x = `Data i hora`, y = `HRM %`, color = `Codi estació`)
 ) +
     geom_line() +
     labs(
@@ -2475,17 +2704,21 @@ rm(selected_stations)
 ### Model Supervisat
 
 En aquest apartat volem calcular la Temperatura Mitjana (TM °C) en funció de les
-variables que ens proporciona el Meteocat, el mes i l'hora.
+variables que ens proporciona el Meteocat, el mes i l'hora. Primer crearem un
+model de regressió lineal amb totes les variables numèriques i després veurem
+la multicol·linealitat entre les variables. Després crearem un segon model de
+regressió lineal amb menys predictors per evitar la multicol·linealitat. 
 
 ```{r}
 # Dataset numèric, afegim mes i hora
 dataset_numeric <- dataset_measurements |>
     select(
         where(is.numeric),
-        date_time
+        `Data i hora`
     )
-dataset_numeric$Mes <- factor(month(dataset_numeric$date_time))
-dataset_numeric$Hora <- factor(hour(dataset_numeric$date_time))
+# Convertir els mesos i les hores a una variable numerica
+dataset_numeric$Mes <- month(dataset_numeric$`Data i hora`)
+dataset_numeric$Hora <- hour(dataset_numeric$`Data i hora`)
 # Model de regressió lineal per a la predicció de TM °C
 model_regressio <- lm(
     `TM °C` ~ `Altitud (m)` + Latitud + Longitud + `HRM %` + `RS W/m2` +
@@ -2493,117 +2726,83 @@ model_regressio <- lm(
         Mes + Hora,
     data = dataset_numeric
 )
-# Mostrem el resultat
+# Mostrem el resumen del model de regressió lineal
 summary(model_regressio)
+# Obtenim els valors de VIF per al model de regressió lineal simple creat
+vif_model_regressio <- vif(model_regressio)
+# Mostrem els valors de VIF en un taula ordenats de major a menor
+sort(vif_model_regressio, decreasing = TRUE)
 ```
 
-- **Capacitat explicativa ($R^2$)**: El model aconsegueix un $R^2$ ajustat de
-  0.8377. Això significa que explica el 83.77% de la variància en la Temperatura
-  Mitjana.
-- **Intercept**: Té un valor de 84.52. Aquesta és la temperatura mitjana
-  estimada (en ºC) quan tots els predictors són zero. En aquest cas no té un
-  significat físic.
-- **Altitud**: El coeficient té un valor de -1.049 i un $valor-p < 2e-16$.
-  Aquests resultats indiquen que aquest coeficient és significatiu. A més, el
-  signe és coherent, ja que a major altitud, menor temperatura.
-- **Latitud**: Té un valor de -2.197 i un $valor-p < 2e-16$. Això indica que per
-  cada grau cap al nord, la temperatura baixa 2.2ºC, el que és coherent amb el
-  clima (als pirineus fa més fred en general).
-- **Longitud**: Té un valor de +0.6257 i un $valor-p < 2e-16$. Això indica que
-  per cap a l'est, la temperatura augmenta una mica, però no afecta tant com la
-  latitud.
-- **HRM %**: El coeficient té un valor de -0.0915 i un $valor-p < 2e-16$. Més
-  humitat relativa implica un descens en la temperatura.
-- **RS W/M2**: Té un valor de +0.0042 i un $valor-p < 2e-16.$ El seu valor
-  positiu indica que per cada unitat d'augment en la radiació solar, la
-  temperatura augmenta. Coherent físicament.
-- **PM hPa**: Té un valor de +1.652e-03 i un $valor-p < 2e-16$. El seu valor
-  positiu indica que l'augment de la pressió s'associa a temperatures
-  lleugerament més altes. Això és degut al fet que l'alta pressió sol implicar
-  cels clars i temps més estable.
-- **PPT mm**: Té un valor de +0.059 i un valor-p de 0.0017. El seu valor
-  positiu indica que un augment en la precipitació s'associa a una temperatura
-  mitjana més alta segons el model.
-- **VVM (10 m) km/h**: Té un valor de +0.0575 i un $valor-p < 2e-16$. El seu
-  valor positiu indica que en situacions de vent mitjà constant, la temperatura
-  tendeix a mantenir-se més alta.
-- **VVX (10 m) km/h**: Té un valor de -0.0406 i un $valor-p < 2e-16$. El seu
-  valor negatiu indica que les ràfegues de vent molt fortes estan associades a
-  descensos de temperatura.
-- **GN cm**: Té un valor de -0.0079 i un $valor-p < 2e-16$. El seu valor negatiu
-  confirma que la presència de neu al terra redueix la temperatura mitjana.
-- **Variables temporals (Mes i Hora)**: Són altament significatives ($< 2e-16$).
-  Els coeficients mostren clarament el cicle estacional (Agost és +14.5ºC
-  respecte a Gener) i el cicle diari (les 15:00h són +3.0ºC respecte a la
-  mitjanit).
-- **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
-  el model és significatiu.
-- La inclusió de totes les variables ha provocat una pèrdua massiva
-  d'observacions (de 3,2 milions a 85.000 utilitzades) 
+Perquè les variables no presentin multicol·linealitat han de ser inferiors a 5.
 
-Veiem la multicolinealitat.
-
-```{r, attr.source='.numberLines'}
-vif(model_regressio)
-```
-
-Perquè les variables no presentin multicolinealitat han de ser inferiors a 5.
-
-- **Altitud i Pressió**: L'Altitud presenta un GVIF de 15,84 i la Pressió de
-  11.66. Aquests valors són molt alts, indicant que la forta relació física
-  inversa entre pressió i altitud genera multicolinealitat en el model.
-- **Variables del Vent**: VVM i VVX tenen GVIFs al voltant de 6,9, confirmant
+- **Altitud i Pressió**: L'Altitud presenta un VIF de `r format(vif_model_regressio["Altitud (m)"], digits = 2, decimal.mark = ",")`
+  i la Pressió de `r format(vif_model_regressio["PM hPa"], digits = 2, decimal.mark = ",")`.
+  Aquests valors són molt alts, indicant que la forta relació física inversa
+  entre pressió i altitud genera multicol·linealitat en el model.
+- **Variables del Vent**: VVM i VVX tenen VIF alts, `r format(vif_model_regressio["VVM (10 m) km/h"], digits = 2, decimal.mark = ",")`
+  i `r format(vif_model_regressio["VVX (10 m) km/h"], digits = 2, decimal.mark = ",")`,
+  respectivament.
   que estan molt correlacionades entre si.
-- **Variables Temporals**: GVIFs molt baixos.
+- **Latitud**: Té un VIF de `r format(vif_model_regressio["Latitud"], digits = 2, decimal.mark = ",")`,
+  que és alt degut a la seva correlació amb l'Altitud (les zones més altes
+  solen estar més al nord).
+- **Variables Temporals**: L'hora i i el mes tenen valors VIF molt baixos.
 
 Per tant, farem un segon model de regressió lineal amb menys predictors:
 eliminem la neu, vents (molts NA) i longitud.
 
 ```{r, , attr.source='.numberLines'}
 # Creació del model de regressió més simple
-# Eliminem PM (molt relacionada amb l'altitud), VVM (molt correlacionada amb
-# VVX), GN (poques mostres)
 model_regressio_simple <- lm(
     `TM °C` ~ `Altitud (m)` + Latitud + Longitud + `HRM %` + `RS W/m2` +
         `PPT mm` + `VVX (10 m) km/h` + Mes + Hora,
     data = dataset_numeric
 )
 summary(model_regressio_simple)
-vif(model_regressio_simple)
+sort(vif(model_regressio_simple), decreasing = TRUE)
 ```
 
 - **Capacitat explicativa ($R^2$)**: El model aconsegueix un $R^2$ ajustat de
-  $0.8536$. Això significa que explica el $85.36\%$ de la variància en la
-  Temperatura Mitjana.
-- **Intercept**: Té un valor de 59.43. Aquesta és la temperatura mitjana
-  estimada (en ºC) quan tots els predictors són zero. En aquest cas no té un
-  significat físic directe.
-- **Altitud**: El coeficient té un valor de -5.029e-03 i un $valor-p < 2e-16$.
-  Aquests resultats indiquen que aquest coeficient és significatiu. A més, el
-  signe és coherent, ja que a major altitud, la temperatura disminueix.
-- **Latitud**: Té un valor de -1.259 i un $valor-p < 2e-16$. Això indica que per
-  cada grau cap al nord, la temperatura baixa 2.2ºC, el que és coherent amb el
-  clima (als pirineus fa més fred en general).
-- **Longitud**: Té un valor de 0.2818 i un $valor-p < 2e-16$. Això indica que
-  per cap a l'est, la temperatura augmenta una mica, però no afecta tant com la
-  latitud.
-- **HRM %**: El coeficient té un valor de -0.0038 i un $valor-p < 2e-16$. Més
-  humitat relativa implica un descens en la temperatura.
-- **RS W/M2**: Té un valor de +0.0075 i un $valor-p < 2e-16$. El seu valor
-  positiu indica que per cada unitat d'augment en la radiació solar, la
-  temperatura augmenta. Coherent físicament.
-- **PPT mm**: Té un valor de -0.2497 i un valor-p de 0.008442. El seu valor
-  negatiu indica que un augment en la precipitació s'associa a una temperatura
-  mitjana més baixa segons el model.
-- **VVX (10 m) km/h**: Té un valor de +0.0365 i un $valor-p < 2e-16$. El seu
-  signe ha canviat respecte l'anterior model.
+  `r format(summary(model_regressio_simple)$adj.r.squared, digits = 4, decimal.mark = ",")`.
+  Això significa que explica el `r format(summary(model_regressio_simple)$adj.r.squared * 100, digits = 2, decimal.mark = ",")` %
+  de la variància en la Temperatura Mitjana. En l'anterior model era del
+  `r format(summary(model_regressio)$adj.r.squared, digits = 4, decimal.mark = ",")`.
+- **Error estàndard de la regressió**: L'error estàndard és de
+  `r format(summary(model_regressio_simple)$sigma, digits = 4, decimal.mark = ",")` ºC.
+  Això indica que les prediccions del model tenen un error mitjà d'aproximadament
+  aquesta quantitat respecte als valors reals. En l'anterior model era de
+  `r format(summary(model_regressio)$sigma, digits = 4, decimal.mark = ",")` ºC.
+- **Intercept**: Té un valor de `r format(coef(model_regressio_simple)[1], digits = 2, decimal.mark = ",")`.
+  Aquesta és la temperatura mitjana estimada (en ºC) quan tots els predictors
+  són zero. En aquest cas no té un significat físic directe.
+- **Altitud**: El coeficient té un valor de `r format(coef(model_regressio_simple)["Altitud (m)"], digits = 4, decimal.mark = ",")`
+  i un valor-p $<2e-16$. Aquests resultats indiquen que aquest coeficient és
+  significatiu. A més, el signe és coherent, ja que a major altitud, la
+  temperatura disminueix.
+- **Latitud**: Té un valor de `r format(coef(model_regressio_simple)["Latitud"], digits = 4, decimal.mark = ",")`
+  i un valor-p $<2e-16$. Això indica que per cada grau cap al nord, la
+  temperatura baixa 2.2ºC, el que és coherent amb el clima (als pirineus fa més
+  fred en general).
+- **Longitud**: Té un valor de `r format(coef(model_regressio_simple)["Longitud"], digits = 4, decimal.mark = ",")`
+  i un valor-p $<2e-16$. Això indica que per cap a l'est, la temperatura
+  augmenta una mica, però no afecta tant com la latitud.
+- **HRM %**: El coeficient té un valor de `r format(coef(model_regressio_simple)["HRM %"], digits = 4, decimal.mark = ",")`
+  i un valor-p $<2e-16$. Més humitat relativa implica un descens en la
+  temperatura.
+- **RS W/M2**: Té un valor de `r format(coef(model_regressio_simple)["RS W/m2"], digits = 4, decimal.mark = ",")`
+  i un valor-p $<2e-16$. El seu valor positiu indica que per cada unitat
+  d'augment en la radiació solar, la temperatura augmenta. Coherent físicament.
+- **PPT mm**: Té un valor de `r format(coef(model_regressio_simple)["PPT mm"], digits = 4, decimal.mark = ",")`
+  i un valor-p de 0.008442. El seu valor negatiu indica que un augment en la
+  precipitació s'associa a una temperatura mitjana més baixa segons el model.
+- **VVX (10 m) km/h**: Té un valor de `r format(coef(model_regressio_simple)["VVX (10 m) km/h"], digits = 4, decimal.mark = ",")`
+  i un valor-p $<2e-16$. El seu signe ha canviat respecte l'anterior model.
 - **Variables temporals (Mes i Hora)**: Són altament significatives ($<2e-16$).
-  Els coeficients mostren clarament el cicle estacional (Agost és +15.63ºC
-  respecte a Gener).
 - **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
   el model és significatiu.
 - Ara no s'han exclòs tantes dades.
-- La multicolinearitat és correcte
+- La multicolinearitat és correcta.
 
 ### Model No Supervisat
 
@@ -2771,13 +2970,14 @@ prova_t <- t.test(`HRM %` ~ Grup_Altitud,
 print(prova_t)
 ``` 
 
-- **Significació Estadística**: Atès que el valor $p< 2.2e-16$ és molt menor que
-  el nivell de significació estàndard ($\alpha = 0.05$), es rebutja la hipòtesi
+- **Significació Estadística**: Atès que el valor de p és
+  `r format(prova_t$p.value, decimal.mark = ",")` menor que el
+  nivell de significació estàndard ($\alpha = 0.05$), es rebutja la hipòtesi
   nul·la. Per tant, establim que existeix una diferència estadísticament
   significativa en la Humitat Relativa Mitjana entre les estacions de Baixa
   Altitud i les de Gran Altitud.
 - Diferència de Mitjanes:
-  - Mitjana HRM Baixa Altitud: 80.36%
-  - Mitjana HRM Gran Altitud: 73.45%
+  - Mitjana HRM Baixa Altitud: `r format(prova_t$estimate["mean in group Baixa_Altitud"], decimal.mark = ",")`%
+  - Mitjana HRM Gran Altitud: `r format(prova_t$estimate["mean in group Gran_Altitud"], decimal.mark = ",")`%
 
 # Resolució del problema
