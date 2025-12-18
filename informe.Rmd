@@ -352,7 +352,7 @@ En la conversió del tipus de dades, s'han realitzat les següents accions:
 - Es crea una nova variable `Data i hora` que combina les variables `date` i
   `Període TU`, convertint-les al tipus de dada POSIXct.
 - Es converteixen les variables categòriques `Codi estació`, `Nom estació`,
-  `Comarca`, `Municipi` i `code` al tipus de dada Factor.
+  `Comarca`, `Municipi` i `Codi estació` al tipus de dada Factor.
 - Es converteixen les variables numèriques geogràfiques `Altitud (m)`,
   `Longitud` i `Latitud` al tipus de dada Numeric.
 - Es converteixen les variables numèriques de temperatura `TM °C`, `TX °C` i
@@ -381,7 +381,6 @@ dataset_measurements <- dataset_measurements |>
         `Nom estació` = as.factor(`Nom estació`),
         Comarca = as.factor(Comarca),
         Municipi = as.factor(Municipi),
-        code = as.factor(code),
         # Variables numèriques geogràfiques (3)
         `Altitud (m)` = as.numeric(`Altitud (m)`),
         Longitud = as.numeric(Longitud),
@@ -407,7 +406,7 @@ dataset_measurements <- dataset_measurements |>
         `PPT mm` = as.numeric(`PPT mm`),
         `RS W/m2` = as.numeric(`RS W/m2`)
     ) |>
-    select(-`Període TU`, -date)
+    select(-`Període TU`, -date, -code)
 ```
 
 A continuació es mostra un resum estadístic del conjunt de dades després de la
@@ -419,6 +418,114 @@ summary(dataset_measurements)
 ```
 
 # Neteja de les dades
+
+A causa de que les estacions meteorològiques són dispositius electrònics que
+poden fallar o tenir problemes tècnics, és comú trobar valors perduts en els
+conjunts de dades meteorològiques. Aquests valors perduts poden ser deguts a
+diversos motius, com ara errors en la transmissió de dades, problemes amb els
+sensors, o condicions meteorològiques extremes que impedeixen la recollida de
+dades.
+
+Per tal de garantir la qualitat i la fiabilitat de l'anàlisi, els valors perduts
+s'imputaran utilitzant diferents tècniques segons la variable i el context. No
+obstant això, s'utilitzarà l'anàlisi de valors perduts per comprendre millor la
+distribució i el patró dels valors perduts en el conjunt de dades.
+
+La majoria de les estacions meteorològiques estan distribuïdes per tota la
+geografia de Catalunya. En les següents gràfiques es mostren les ubicacions de
+les estacions meteorològiques sobre els límits administratius de Catalunya.
+
+```{r, echo=FALSE, fig.align='center'}
+# https://www.icgc.cat/ca/Geoinformacio-i-mapes/Dades-i-productes/Geoinformacio-cartografica/Divisions-administratives
+# Converteix a objecte sf (CRS geogràfic WGS84)
+stations_sf <- st_as_sf(
+    unique(dataset_measurements[, c("Codi estació", "Longitud", "Latitud")]),
+    coords = c("Longitud", "Latitud"),
+    crs = 4326
+)
+```
+
+```{r, echo=FALSE, fig.align='center'}
+# Obté els límits de Catalunya
+limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-catalunya-1000000-20250730.json", quiet = TRUE)
+p1 <- ggplot() +
+    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
+    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
+    labs(
+        title = "Estacions meteorològiques (Catalunya)",
+        x = "Longitud",
+        y = "Latitud"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(), axis.title.x = element_blank()
+    )
+# Obté els límits de les provincies de Catalunya
+limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-provincies-1000000-20250730.json", quiet = TRUE)
+p2 <- ggplot() +
+    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
+    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
+    labs(
+        title = "Estacions meteorològiques (provincies)",
+        x = "Longitud",
+        y = "Latitud"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(), axis.title.x = element_blank()
+    )
+# Mostra les tres gràfiques en una sola figura
+grid.arrange(p1, p2, ncol = 2)
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(p1, p2, limits)
+```
+
+```{r, echo=FALSE, fig.align='center'}
+# Obté els límits de les comarques de Catalunya
+limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-comarques-1000000-20250730.json", quiet = TRUE)
+p1 <- ggplot() +
+    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
+    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
+    labs(
+        title = "Estacions meteorològiques (comarques)",
+        x = "Longitud",
+        y = "Latitud"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(), axis.title.x = element_blank()
+    )
+# Obté els límits dels municipis de Catalunya
+limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-municipis-1000000-20250730.json", quiet = TRUE)
+p2 <- ggplot() +
+    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
+    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
+    labs(
+        title = "Estacions meteorològiques (municipis)",
+        x = "Longitud",
+        y = "Latitud"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(), axis.title.x = element_blank()
+    )
+# Mostra les tres gràfiques en una sola figura
+grid.arrange(p1, p2, ncol = 2)
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(p1, p2, limits, stations_sf)
+```
 
 ## Gestió dels valors perduts
 
@@ -480,8 +587,6 @@ ggplot(
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-\newpage
-
 ```{r, echo=FALSE}
 # Taula amb el recompre de valors no disponibles sense les variables que
 # no en tenen
@@ -503,10 +608,456 @@ kable(
 rm(missing_values_table, missing_values_table_df, dataset_na_measurements)
 ```
 
+En la següent gràfica es mostra la matriu de correlació entre les variables
+numèriques del conjunt de dades, per tal de veure si hi ha alguna variable
+correlacionada que pugui ajudar en la imputació dels valors perduts. S'exclouen
+les variables categòriques i les variables que tenen més del 20% de valors
+perduts.
+
+```{r, echo=FALSE, fig.align='center'}
+dataset_measurements_cor <- dataset_measurements |>
+    select(
+        `Altitud (m)`,
+        Longitud,
+        Latitud,
+        `PPT mm`,
+        `TM °C`,
+        `HRM %`,
+        `TN °C`,
+        `TX °C`,
+        `RS W/m2`
+    )
+# Matriu de correlació de totes les variables
+correlation_matrix <- cor(
+    dataset_measurements_cor,
+    use = "pairwise.complete.obs",
+)
+# Gràfica de la matriu de correlació
+corrplot(
+    correlation_matrix,
+    method = "color",
+    type = "upper",
+    tl.col = "black",
+    tl.srt = 45,
+    diag = FALSE,
+    title = "Matriu de correlació de les variables",
+    mar = c(0, 0, 1, 0)
+)
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(dataset_measurements_cor, correlation_matrix)
+```
+
 En els següents subapartats s'analitzaran el valors perduts de cada variable,
 per ordre de més a menys valors perduts. En el recompte s'han exclòs les
 estacions que tenen gairebé tots els valors perduts (>17.000) o bé no tenen
 cap valor perdut (0).
+
+### Valors perduts de la variable `PPT mm`
+
+La variable `PPT mm` (precipitació mitjana en mil·límetres) no té valors
+perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
+de 17000 valors perduts).
+
+```{r, attr.source='.numberLines'}
+# recompte de valors perduts de la variable PPT mm per estació
+missing_ppt_by_station <- dataset_measurements |>
+    group_by(`Codi estació`) |>
+    summarise(Missing_PPT = sum(is.na(`PPT mm`))) |>
+    filter(Missing_PPT > 0 & Missing_PPT < 17000) |>
+    arrange(desc(Missing_PPT))
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_ppt_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_PPT), y = Missing_PPT)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable PPT mm",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable PPT mm per estació
+kable(
+    missing_ppt_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable PPT mm",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Gràfiques dels valors perduts de la variable `PPT mm` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`PPT mm`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, PPT mm",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_ppt_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
+```
+
+```{r, echo=FALSE}
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(
+    missing_ppt_by_station, plist, iteration, my_function, sub_air,
+    preProc, sub_air_imp
+)
+```
+
+### Valors perduts de la variable `TX ºC`
+
+La variable `TX ºC` (temperatura màxima mitjana en graus Celsius) no té valors
+perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
+de 17000 valors perduts).
+
+```{r, attr.source='.numberLines'}
+# recompte de valors perduts de la variable TX ºC per estació
+missing_tx_by_station <- dataset_measurements |>
+    group_by(`Codi estació`) |>
+    summarise(Missing_TX = sum(is.na(`TX °C`))) |>
+    filter(Missing_TX > 0 & Missing_TX < 17000) |>
+    arrange(desc(Missing_TX))
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_tx_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_TX), y = Missing_TX)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable TX ºC",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable TX ºC per estació
+kable(
+    missing_tx_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable TX ºC",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Grafiques dels valors perduts de la variable `TX ºC` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`TX °C`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, TX ºC",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_tx_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
+```
+
+```{r, echo=FALSE}
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_tx_by_station, plist, iteration, my_function)
+```
+
+### Valors perduts de la variable `TN ºC`
+
+La variable `TN ºC` (temperatura mínima mitjana en graus Celsius) no té valors
+perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
+de 17000 valors perduts).
+
+```{r, attr.source='.numberLines'}
+# recompte de valors perduts de la variable TN ºC per estació
+missing_tn_by_station <- dataset_measurements |>
+    group_by(`Codi estació`) |>
+    summarise(Missing_TN = sum(is.na(`TN °C`))) |>
+    filter(Missing_TN > 0 & Missing_TN < 17000) |>
+    arrange(desc(Missing_TN))
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_tn_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_TN), y = Missing_TN)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable TN ºC",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable TN ºC per estació
+kable(
+    missing_tn_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable TN ºC",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Gràfiques dels valors perduts de la variable `TN ºC` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`TN °C`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, TN ºC",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_tn_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
+```
+
+```{r, echo=FALSE}
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(missing_tn_by_station, plist, iteration, my_function)
+```
+
+### Valors perduts de la variable `TM ºC`
+
+```{r, echo=FALSE, fig.height=3, fig.align='center'}
+# recompte de valors perduts de la variable TM ºC per estació
+missing_tm_by_station <- dataset_measurements |>
+    group_by(`Codi estació`) |>
+    summarise(Missing_TM = sum(is.na(`TM °C`))) |>
+    filter(Missing_TM > 0 & Missing_TM < 17000) |>
+    arrange(desc(Missing_TM))
+# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
+# estació
+ggplot(
+    missing_tm_by_station,
+    aes(x = reorder(`Codi estació`, -Missing_TM), y = Missing_TM)
+) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(
+        title = "Recompte de valors NA de la variable TM ºC",
+        x = "Codi estació",
+        y = "# valors no disponibles"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Taula del recompte de valors perduts de la variable TM ºC per estació
+kable(
+    missing_tm_by_station,
+    # Format dels nombres a la taula
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+    # Etiqueta de la taula
+    caption = "Recompte de valors NA de la variable TM ºC",
+    # Alineació de les columnes
+    align = c("l", "r"),
+    col.names = c("Codi estació", "# NA")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+Gràfiques dels valors perduts de la variable `TM ºC` per estació.
+
+```{r, echo=FALSE, fig.height=2, fig.align='center'}
+# funció per crear les gràfiques
+my_function <- function(dataset, station_code) {
+    station_data <- subset(
+        dataset,
+        `Codi estació` == station_code & is.na(`TM °C`)
+    )
+    n_empty <- nrow(station_data)
+    # taula amb el recompte de valors perduts per dia
+    daily_missing <- station_data |>
+        group_by(date = as.Date(`Data i hora`)) |>
+        summarise(Missing_per_day = n()) |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+    p <- ggplot(
+        daily_missing,
+        aes(x = date, y = Missing_per_day)
+    ) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(
+                n_empty,
+                "NA, TM ºC",
+                station_code
+            ),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+    return(p)
+}
+# Mostra les gràfiques per parelles
+iteration <- 0
+plist <- list()
+for (station in missing_tm_by_station$`Codi estació`) {
+    iteration <- iteration + 1
+    p <- my_function(
+        dataset_measurements,
+        station
+    )
+    plist <- append(plist, list(p))
+    if (iteration %% 2 == 0) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+        plist <- list()
+    }
+}
+if (iteration %% 2 == 1) {
+    do.call("grid.arrange", c(plist, ncol = 2))
+}
+```
+
+```{r, echo=FALSE}
+# Elimina els objectes creats per evitar conflictes en les següents seccions
+rm(plist, iteration, my_function)
+```
 
 ### Valors perduts de la variable `DVM (6 m) graus`
 
@@ -1817,502 +2368,6 @@ if (iteration %% 2 == 1) {
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
 rm(missing_hrm_by_station, plist, iteration, my_function)
-```
-
-### Valors perduts de la variable `TM ºC`
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable TM ºC per estació
-missing_tm_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_TM = sum(is.na(`TM °C`))) |>
-    filter(Missing_TM > 0 & Missing_TM < 17000) |>
-    arrange(desc(Missing_TM))
-# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
-# estació
-ggplot(
-    missing_tm_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_TM), y = Missing_TM)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable TM ºC",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Taula del recompte de valors perduts de la variable TM ºC per estació
-kable(
-    missing_tm_by_station,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable TM ºC",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
-```
-
-Gràfiques dels valors perduts de la variable `TM ºC` per estació.
-
-```{r, echo=FALSE, fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`TM °C`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, TM ºC",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
-# Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_tm_by_station$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(plist, iteration, my_function)
-```
-
-### Valors perduts de la variable `TN ºC`
-
-La variable `TN ºC` (temperatura mínima mitjana en graus Celsius) no té valors
-perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
-de 17000 valors perduts).
-
-```{r, attr.source='.numberLines'}
-# recompte de valors perduts de la variable TN ºC per estació
-missing_tn_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_TN = sum(is.na(`TN °C`))) |>
-    filter(Missing_TN > 0 & Missing_TN < 17000) |>
-    arrange(desc(Missing_TN))
-# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
-# estació
-ggplot(
-    missing_tn_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_TN), y = Missing_TN)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable TN ºC",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Taula del recompte de valors perduts de la variable TN ºC per estació
-kable(
-    missing_tn_by_station,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable TN ºC",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
-```
-
-Gràfiques dels valors perduts de la variable `TN ºC` per estació.
-
-```{r, echo=FALSE, fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`TN °C`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, TN ºC",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
-# Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_tn_by_station$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tn_by_station, plist, iteration, my_function)
-```
-
-### Valors perduts de la variable `TX ºC`
-
-La variable `TX ºC` (temperatura màxima mitjana en graus Celsius) no té valors
-perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
-de 17000 valors perduts).
-
-```{r, attr.source='.numberLines'}
-# recompte de valors perduts de la variable TX ºC per estació
-missing_tx_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_TX = sum(is.na(`TX °C`))) |>
-    filter(Missing_TX > 0 & Missing_TX < 17000) |>
-    arrange(desc(Missing_TX))
-# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
-# estació
-ggplot(
-    missing_tx_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_TX), y = Missing_TX)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable TX ºC",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Taula del recompte de valors perduts de la variable TX ºC per estació
-kable(
-    missing_tx_by_station,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable TX ºC",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
-```
-
-Grafiques dels valors perduts de la variable `TX ºC` per estació.
-
-```{r, echo=FALSE, fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`TX °C`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, TX ºC",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
-# Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_tx_by_station$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tx_by_station, plist, iteration, my_function)
-```
-
-### Valors perduts de la variable `PPT mm`
-
-La variable `PPT mm` (precipitació mitjana en mil·límetres) no té valors
-perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
-de 17000 valors perduts).
-
-```{r, attr.source='.numberLines'}
-# recompte de valors perduts de la variable PPT mm per estació
-missing_ppt_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_PPT = sum(is.na(`PPT mm`))) |>
-    filter(Missing_PPT > 0 & Missing_PPT < 17000) |>
-    arrange(desc(Missing_PPT))
-# Gràfica de barres del recompte de valors perduts de la variable TM ºC per
-# estació
-ggplot(
-    missing_ppt_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_PPT), y = Missing_PPT)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable PPT mm",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Taula del recompte de valors perduts de la variable PPT mm per estació
-kable(
-    missing_ppt_by_station,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable PPT mm",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
-```
-
-Gràfiques dels valors perduts de la variable `PPT mm` per estació.
-
-```{r, echo=FALSE, fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`PPT mm`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, PPT mm",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
-# Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_ppt_by_station$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_ppt_by_station, plist, iteration, my_function)
-```
-
-```{r, echo=FALSE, fig.align='center'}
-# https://www.icgc.cat/ca/Geoinformacio-i-mapes/Dades-i-productes/Geoinformacio-cartografica/Divisions-administratives
-# Converteix a objecte sf (CRS geogràfic WGS84)
-stations_sf <- st_as_sf(
-    unique(dataset_measurements[, c("Codi estació", "Longitud", "Latitud")]),
-    coords = c("Longitud", "Latitud"),
-    crs = 4326
-)
-```
-
-```{r, echo=FALSE, fig.align='center'}
-# Obté els límits de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-catalunya-1000000-20250730.json", quiet = TRUE)
-p1 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (Catalunya)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
-    )
-# Obté els límits de les provincies de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-provincies-1000000-20250730.json", quiet = TRUE)
-p2 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (provincies)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
-    )
-# Mostra les tres gràfiques en una sola figura
-grid.arrange(p1, p2, ncol = 2)
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, limits)
-```
-
-```{r, echo=FALSE, fig.align='center'}
-# Obté els límits de les comarques de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-comarques-1000000-20250730.json", quiet = TRUE)
-p1 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (comarques)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
-    )
-# Obté els límits dels municipis de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-municipis-1000000-20250730.json", quiet = TRUE)
-p2 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (municipis)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
-    )
-# Mostra les tres gràfiques en una sola figura
-grid.arrange(p1, p2, ncol = 2)
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, limits, stations_sf)
 ```
 
 ## Gestió de valors extrems
