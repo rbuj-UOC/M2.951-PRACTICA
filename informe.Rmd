@@ -117,13 +117,8 @@ dataset_measurements <- read_csv("dataset/dataset.csv",
 )
 ```
 
-```{r, echo=FALSE}
-# Mida del conjunt de dades
-data_dimensions <- dim(dataset_measurements)
-```
-
-El conjunt de dades té `r format(data_dimensions[2], big.mark = ".")` variables
-(columnes) i `r format(data_dimensions[1], big.mark = ".")` registres (files).
+El conjunt de dades té `r format(ncol(dataset_measurements), big.mark = ".")` variables
+(columnes) i `r format(nrow(dataset_measurements), big.mark = ".")` registres (files).
 
 ```{r, echo=FALSE}
 # Elimina l'objecte creat per evitar conflictes en les següents seccions
