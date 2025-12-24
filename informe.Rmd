@@ -1693,7 +1693,35 @@ print(prova_t)
 ## Analisis de valors perduts
 
 ```{r, attr.source='.numberLines'}
-# Funció per crear taules de valors perduts
+# Funció per crear gràfiques de valors perduts
+plot_missing_func <- function(dataset, station_code, variable_name) {
+    station_data <- dataset |>
+        filter(`Codi estació` == station_code, is.na(!!sym(variable_name)))
+
+    n_empty <- nrow(station_data)
+
+    if (n_empty == 0) {
+        return(NULL)
+    }
+
+    daily_missing <- station_data |>
+        mutate(date = as.Date(`Data i hora`)) |>
+        group_by(date) |>
+        summarise(Missing_per_day = n(), .groups = "drop") |>
+        filter(Missing_per_day > 0) |>
+        arrange(desc(Missing_per_day))
+
+    ggplot(daily_missing, aes(x = date, y = Missing_per_day)) +
+        geom_bar(stat = "identity", fill = "coral3") +
+        labs(
+            title = paste(n_empty, "NA,", variable_name, station_code),
+            x = "Data",
+            y = "# NA"
+        ) +
+        theme_minimal()
+}
+
+# Funció per obtenir els valors perduts
 create_missing_func <- function(dataset, variable_name) {
     dataset |>
         group_by(`Codi estació`) |>
@@ -1730,46 +1758,13 @@ kable(
 Gràfiques dels valors perduts.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`PPT mm`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, PPT mm",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_ppt$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "PPT mm")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -1812,46 +1807,13 @@ kable(
 Grafiques dels valors perduts:
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`TX °C`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, TX ºC",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_tx$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "TX °C")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -1894,46 +1856,13 @@ kable(
 Gràfiques dels valors perduts:
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`TN °C`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, TN ºC",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_tn$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "TN °C")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -1977,46 +1906,13 @@ kable(
 Gràfiques dels valors perduts:
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`TM °C`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, TM ºC",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_tm$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "TM °C")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2064,46 +1960,13 @@ Estacions amb valors perduts a la variable `DVM (6 m) graus`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`DVM (6 m) graus`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, DVM (6 m) graus",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
-
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_dvm6$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "DVM (6 m) graus")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2147,46 +2010,13 @@ kable(
 Estacions amb valors perduts a la variable `VVX (6 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`VVX (6 m) km/h`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, VVX (6 m) km/h",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_vvx6$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "VVX (6 m) km/h")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2231,46 +2061,13 @@ kable(
 Estacions amb valors perduts a la variable `VVM (6 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`VVM (6 m) km/h`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, VVM (6 m) km/h",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_vvm6$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "VVM (6 m) km/h")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2311,46 +2108,13 @@ kable(
 Estacions amb valors perduts de la variable `GN cm`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`GN cm`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, GN cm",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_gn$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "GN cm")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2395,46 +2159,13 @@ kable(
 Estacions amb valors perduts de la variable `DVM (2 m) graus`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`DVM (2 m) graus`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, DVM (2 m) graus",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_dvm2$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "DVM (2 m) graus")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2478,46 +2209,13 @@ kable(
 Estacions amb valors perduts de la variable `VVM (2 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`VVM (2 m) km/h`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, VVM (2 m) km/h",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_vvm2$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "VVM (2 m) km/h")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2561,46 +2259,13 @@ kable(
 Estacions amb valors perduts de la variable `VVX (2 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`VVX (2 m) km/h`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, VVX (2 m) km/h",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_vvx2$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "VVX (2 m) km/h")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2644,46 +2309,13 @@ kable(
 Estacions amb valors perduts de la variable `PM hPa`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`PM hPa`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, PM hPa",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_pm$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "PM hPa")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2728,46 +2360,13 @@ kable(
 Estacions amb valors perduts de la variable `DVM (10 m) graus`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`DVM (10 m) graus`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, DVM (10 m) graus",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_dvm10$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "DVM (10 m) graus")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2812,46 +2411,13 @@ kable(
 Estacions amb valors perduts de la variable `VVM (10 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`VVM (10 m) km/h`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, VVM (10 m) km/h",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_vvm10$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "VVM (10 m) km/h")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2896,46 +2462,13 @@ kable(
 Estacions amb valors perduts de la variable `VVX (10 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`VVX (10 m) km/h`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, VVX (10 m) km/h",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_vvx10$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "VVX (10 m) km/h")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -2979,46 +2512,13 @@ kable(
 Estacions amb valors perduts de la variable `RS W/m2`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`RS W/m2`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, RS W/m2",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_rs$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "RS W/m2")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -3057,46 +2557,13 @@ kable(
 ```
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
-my_function <- function(dataset, station_code) {
-    station_data <- subset(
-        dataset,
-        `Codi estació` == station_code & is.na(`HRM %`)
-    )
-    n_empty <- nrow(station_data)
-    # taula amb el recompte de valors perduts per dia
-    daily_missing <- station_data |>
-        group_by(date = as.Date(`Data i hora`)) |>
-        summarise(Missing_per_day = n()) |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
-    p <- ggplot(
-        daily_missing,
-        aes(x = date, y = Missing_per_day)
-    ) +
-        geom_bar(stat = "identity", fill = "coral3") +
-        labs(
-            title = paste(
-                n_empty,
-                "NA, HRM %",
-                station_code
-            ),
-            x = "Data",
-            y = "# NA"
-        ) +
-        theme_minimal()
-    return(p)
-}
 # Mostra les gràfiques per parelles
 iteration <- 0
 plist <- list()
 for (station in missing_hrm$`Codi estació`) {
     iteration <- iteration + 1
-    p <- my_function(
-        dataset_measurements,
-        station
-    )
-    plist <- append(plist, list(p))
+    p <- plot_missing_func(dataset_measurements, station, "HRM %")
+    if (!is.null(p)) plist <- append(plist, list(p))
     if (iteration %% 2 == 0) {
         do.call("grid.arrange", c(plist, ncol = 2))
         plist <- list()
@@ -3114,5 +2581,5 @@ rm(missing_hrm, plist, iteration, my_function)
 
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(create_missing_func)
+rm(create_missing_func, plot_missing_func)
 ```
