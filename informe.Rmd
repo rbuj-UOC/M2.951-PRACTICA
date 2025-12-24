@@ -279,16 +279,13 @@ del conjunt de dades.
 
 ```{r, echo=FALSE}
 # Nombre de valors diferents en la variable
-unique_values_counts <- sapply(
-    dataset_measurements,
-    function(x) length(unique(x))
-)
-unique_values_df <- data.frame(
-    Variable = names(unique_values_counts),
-    Unique_Values = as.integer(unique_values_counts)
-)
-# Ordena el conjunt de dades per nombre de valors diferents de forma ascendent
-unique_values_df <- unique_values_df |>
+unique_values_df <- dataset_measurements |>
+    summarise(across(everything(), ~ dplyr::n_distinct(.))) |>
+    tidyr::pivot_longer(
+        cols = everything(),
+        names_to = "Variable",
+        values_to = "Unique_Values"
+    ) |>
     arrange(Unique_Values)
 kable(
     unique_values_df,
@@ -308,7 +305,7 @@ kable(
 
 ```{r, echo=FALSE}
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(unique_values_counts, unique_values_df)
+rm(unique_values_df)
 ```
 
 A partir dels valors observats en la taula anterior, s'eliminen les variables
@@ -549,9 +546,15 @@ perduts igual a $0.00000000$:
 
 ```{r, echo=FALSE}
 # Mostra una taula amb les variables que no tenen valors perduts
-missing_values_none <- sapply(dataset_measurements, function(x) sum(is.na(x)))
-missing_values_none <- missing_values_none[missing_values_none == 0]
-missing_values_none <- names(missing_values_none)
+missing_values_none <- dataset_measurements |>
+    summarise(across(everything(), ~ sum(is.na(.)))) |>
+    tidyr::pivot_longer(
+        cols = everything(),
+        names_to = "Variable",
+        values_to = "Missing"
+    ) |>
+    filter(Missing == 0) |>
+    pull(Variable)
 missing_values_none
 ```
 
@@ -562,19 +565,18 @@ variable. Anteriorment ja s'ha vist el percentatge de valors perduts $>0$.
 # Crea un dataset sense les variables de missing_values_none
 dataset_na_measurements <- dataset_measurements |>
     select(-all_of(missing_values_none))
-missing_values_table <- sapply(
-    dataset_na_measurements,
-    function(x) sum(is.na(x))
-)
-missing_values_table <- missing_values_table[missing_values_table > 0]
-missing_values_table_df <- data.frame(
-    Variable = names(missing_values_table),
-    Missing_Values = as.integer(missing_values_table)
-) |>
+missing_values_df <- dataset_na_measurements |>
+    summarise(across(everything(), ~ sum(is.na(.)))) |>
+    tidyr::pivot_longer(
+        cols = everything(),
+        names_to = "Variable",
+        values_to = "Missing_Values"
+    ) |>
+    filter(Missing_Values > 0) |>
     arrange(desc(Missing_Values))
 # Gràfic de barres
 ggplot(
-    missing_values_table_df,
+    missing_values_df,
     aes(x = reorder(Variable, -Missing_Values), y = Missing_Values)
 ) +
     geom_bar(stat = "identity", fill = "darkorange2") +
@@ -591,7 +593,7 @@ ggplot(
 # Taula amb el recompre de valors no disponibles sense les variables que
 # no en tenen
 kable(
-    missing_values_table_df,
+    missing_values_df,
     # Format dels nombres a la taula
     format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
     # Etiqueta de la taula
@@ -605,7 +607,7 @@ kable(
         full_width = FALSE
     )
 # Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_values_table, missing_values_table_df, dataset_na_measurements)
+rm(missing_values_df, dataset_na_measurements)
 ```
 
 En la següent gràfica es mostra la matriu de correlació entre les variables
