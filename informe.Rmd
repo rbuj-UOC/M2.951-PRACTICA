@@ -1141,7 +1141,8 @@ p1 <- ggplot(pivot_longer(
     dataset_measurements,
     cols = numeric_vars,
     names_to = "Variable",
-    values_to = "Value"
+    values_to = "Value",
+    values_drop_na = TRUE
 ), aes(x = Variable, y = Value)) +
     geom_boxplot(fill = "lightblue") +
     labs(
@@ -1163,7 +1164,8 @@ p2 <- ggplot(pivot_longer(
     dataset_measurements,
     cols = numeric_vars,
     names_to = "Variable",
-    values_to = "Value"
+    values_to = "Value",
+    values_drop_na = TRUE
 ), aes(x = Variable, y = Value)) +
     geom_boxplot(fill = "lightblue") +
     labs(
@@ -1184,7 +1186,8 @@ p3 <- ggplot(pivot_longer(
     dataset_measurements,
     cols = numeric_vars,
     names_to = "Variable",
-    values_to = "Value"
+    values_to = "Value",
+    values_drop_na = TRUE
 ), aes(x = Variable, y = Value)) +
     geom_boxplot(fill = "lightblue") +
     labs(
@@ -1277,7 +1280,7 @@ establerts.
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3, fig.width=4}
 p1 <- ggplot(
-    dataset_measurements,
+    dataset_measurements[!is.na(dataset_measurements$`GN cm`), ],
     aes(y = `GN cm`)
 ) +
     geom_boxplot(fill = "lightblue") +
@@ -1296,7 +1299,7 @@ p1 <- ggplot(
         panel.grid.minor.x = element_blank()
     )
 p2 <- ggplot(
-    dataset_measurements,
+    dataset_measurements[!is.na(dataset_measurements$`PM hPa`), ],
     aes(y = `PM hPa`)
 ) +
     geom_boxplot(fill = "lightblue") +
@@ -1315,7 +1318,7 @@ p2 <- ggplot(
         panel.grid.minor.x = element_blank()
     )
 p3 <- ggplot(
-    dataset_measurements,
+    dataset_measurements[!is.na(dataset_measurements$`PPT mm`), ],
     aes(y = `PPT mm`)
 ) +
     geom_boxplot(fill = "lightblue") +
@@ -1334,7 +1337,7 @@ p3 <- ggplot(
         panel.grid.minor.x = element_blank()
     )
 p4 <- ggplot(
-    dataset_measurements,
+    dataset_measurements[!is.na(dataset_measurements$`RS W/m2`), ],
     aes(y = `RS W/m2`)
 ) +
     geom_boxplot(fill = "lightblue") +
@@ -1353,7 +1356,7 @@ p4 <- ggplot(
         panel.grid.minor.x = element_blank()
     )
 p5 <- ggplot(
-    dataset_measurements,
+    dataset_measurements[!is.na(dataset_measurements$`HRM %`), ],
     aes(y = `HRM %`)
 ) +
     geom_boxplot(fill = "lightblue") +
