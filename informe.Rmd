@@ -20,7 +20,7 @@ toc-title: "Taula de continguts"
 \newpage
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, error = FALSE, message = FALSE)
+knitr::opts_chunk$set(warning = FALSE, error = FALSE, message = FALSE, cache = TRUE)
 library(readr)
 library(readxl)
 library(dplyr)
