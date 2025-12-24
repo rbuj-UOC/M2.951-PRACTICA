@@ -120,11 +120,6 @@ dataset_measurements <- read_csv("dataset/dataset.csv",
 El conjunt de dades té `r format(ncol(dataset_measurements), big.mark = ".")` variables
 (columnes) i `r format(nrow(dataset_measurements), big.mark = ".")` registres (files).
 
-```{r, echo=FALSE}
-# Elimina l'objecte creat per evitar conflictes en les següents seccions
-rm(data_dimensions)
-```
-
 # Integració i selecció
 
 En aquest apartat es realitza una anàlisi preliminar del conjunt de dades per
@@ -172,11 +167,6 @@ Hi ha `r format(n_stations_with_full_data, big.mark = ".")` estacions
 meteorològiques que tenen exactament
 `r format(max_rows_per_station, big.mark = ".")` files.
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(n_stations, n_days, n_observations_per_day, stations_with_full_data)
-```
-
 En la següent taula es mostren les estacions meteorològiques que es van donar
 d'alta després del 4 de desembre de 2024, és a dir, estacions que no tenen totes
 les files en el conjunt de dades.
@@ -213,11 +203,6 @@ dataset_measurements <- dataset_measurements |>
     select(-data_alta)
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(new_stations)
-```
-
 En la taula següent es mosta un resum del nombre de registres de les estacions
 meteorològiques restants, on per temes d'espai, només es mostren les 5 primers
 i les últimes 5 estacions, ordenades per nombre de registres.
@@ -250,8 +235,6 @@ kable(
     ) |>
     pack_rows("Primeres 5 estacions", 1, 5) |>
     pack_rows("Últimes 5 estacions", 6, 10, latex_gap_space = "2em")
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(stations_incomplete_data, stations_incomplete_data_display)
 ```
 
 ```{r, echo=FALSE}
@@ -263,11 +246,6 @@ n_comarques <- n_distinct(dataset_measurements$Comarca)
 
 En el conjunt de dades hi ha un total de
 `r n_municipis` municipis i `r n_comarques` comarques diferents.
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(n_municipis, n_comarques)
-```
 
 En la següent taula es mostra el nombre de valors diferents per cada variable
 del conjunt de dades.
@@ -296,11 +274,6 @@ kable(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
     )
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(unique_values_df)
 ```
 
 A partir dels valors observats en la taula anterior, s'eliminen les variables
@@ -474,8 +447,6 @@ p2 <- ggplot() +
     )
 # Mostra les tres gràfiques en una sola figura
 grid.arrange(p1, p2, ncol = 2)
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, limits)
 ```
 
 ```{r, echo=FALSE, fig.align='center'}
@@ -515,8 +486,6 @@ p2 <- ggplot() +
     )
 # Mostra les tres gràfiques en una sola figura
 grid.arrange(p1, p2, ncol = 2)
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, limits, stations_sf)
 ```
 
 ## Gestió dels valors perduts
@@ -601,8 +570,6 @@ kable(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
     )
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_values_df, dataset_na_measurements)
 ```
 
 En la següent gràfica es mostra la matriu de correlació entre les variables
@@ -640,8 +607,6 @@ corrplot(
     title = "Matriu de correlació de les variables",
     mar = c(0, 0, 1, 0)
 )
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(dataset_measurements_cor, correlation_matrix)
 ```
 
 En els següents subapartats s'analitzaran el valors perduts de cada variable,
@@ -676,8 +641,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_ppt_by_station)
 ```
 
 ### Valors perduts de la variable `TX ºC`
@@ -707,8 +670,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tx_by_station)
 ```
 
 ### Valors perduts de la variable `TN ºC`
@@ -738,8 +699,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tn_by_station)
 ```
 
 ### Valors perduts de la variable `TM ºC`
@@ -765,8 +724,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tm_by_station)
 ```
 
 ### Valors perduts de la variable `DVM (6 m) graus`
@@ -792,8 +749,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_dvm6_by_station)
 ```
 
 ### Valors perduts de la variable `VVX (6 m) km/h`
@@ -819,8 +774,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvx6_by_station)
 ```
 
 ### Valors perduts de la variable `VVM (6 m) km/h`
@@ -846,8 +799,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvm6_by_station)
 ```
 
 ### Valors perduts de la variable `GN cm`
@@ -873,8 +824,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_gn_by_station)
 ```
 
 ### Valors perduts de la variable `DVM (2 m) graus`
@@ -900,8 +849,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_dvm2_by_station)
 ```
 
 ### Valors perduts de la variable `VVM (2 m) km/h`
@@ -927,8 +874,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvm2_by_station)
 ```
 
 ### Valors perduts de la variable `VVX (2 m) km/h`
@@ -954,8 +899,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvx2_by_station)
 ```
 
 ### Valors perduts de la variable `PM hPa`
@@ -981,8 +924,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_pm_by_station)
 ```
 
 ### Valors perduts de la variable `DVM (10 m) graus`
@@ -1008,8 +949,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_dvm10_by_station)
 ```
 
 ### Valors perduts de la variable `VVM (10 m) km/h`
@@ -1035,8 +974,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvm10_by_station)
 ```
 
 ### Valors perduts de la variable `VVX (10 m) km/h`
@@ -1062,8 +999,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvx10_by_station)
 ```
 
 ### Valors perduts de la variable `RS W/m2`
@@ -1089,8 +1024,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_rs_by_station)
 ```
 
 ### Valors perduts de la variable `HRM %`
@@ -1116,8 +1049,6 @@ ggplot(
     ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_hrm_by_station)
 ```
 
 ## Gestió de valors extrems
@@ -1201,8 +1132,6 @@ p3 <- ggplot(pivot_longer(
         axis.title.y = element_blank()
     )
 grid.arrange(p1, p2, p3, ncol = 3, widths = c(2, 1, 1))
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, p3)
 ```
 
 Les variables geogràfiques no presenten valors extrems segons els criteris
@@ -1268,8 +1197,6 @@ p3 <- ggplot(
         panel.grid.minor.x = element_blank()
     )
 grid.arrange(p1, p2, p3, nrow = 1)
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, p3)
 ```
 
 Les altres variables numèriques no presenten valors extrems segons els criteris
@@ -1371,8 +1298,6 @@ p5 <- ggplot(
         panel.grid.minor.x = element_blank()
     )
 grid.arrange(p1, p2, p3, p4, p5, nrow = 1)
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(p1, p2, p3, p4, p5)
 ```
 
 ## Altres mètodes de neteja
@@ -1529,8 +1454,6 @@ pca_resultat <- prcomp(df_pca, center = TRUE, scale. = TRUE)
 summary(pca_resultat)
 # Mostrem la relació entre variables i components (Rotation)
 pca_resultat$rotation
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(df_pca, variables_continues)
 ```
 
 En el diagrama de colze (Scree Plot) podem observar la variància explicada per
@@ -1553,8 +1476,6 @@ ggplot(scree_data, aes(x = Component, y = Variancia)) +
         y = "Variància Explicada"
     ) +
     theme_minimal()
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(scree_data)
 ```
 
 ```{r, echo=FALSE, fig.align='center'}
@@ -1581,8 +1502,6 @@ kable(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
     )
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(variancia_explicada, percentatge_variancia, nom_variables)
 ```
 
 #### Component Principal 1 (PC1)
@@ -1772,11 +1691,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_ppt, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `TX ºC`
 
 Taula del recompte de valors perduts:
@@ -1819,11 +1733,6 @@ for (station in missing_tx$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tx_by_station, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `TN ºC`
@@ -1870,12 +1779,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_tn, plist, iteration, my_function)
-```
-
-
 ### Valors perduts de la variable `TM ºC`
 
 Taula del recompte de valors perduts:
@@ -1918,11 +1821,6 @@ for (station in missing_tm$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `DVM (6 m) graus`
@@ -1974,11 +1872,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_dvm6_by_station, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `VVX (6 m) km/h`
 
 ```{r, attr.source='.numberLines'}
@@ -2023,12 +1916,6 @@ if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
 ```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvx6_by_station, plist, iteration, my_function)
-```
-
 
 ### Valors perduts de la variable `VVM (6 m) km/h`
 
@@ -2075,11 +1962,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvm6, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `GN cm`
 
 ```{r, attr.source='.numberLines'}
@@ -2120,11 +2002,6 @@ for (station in missing_gn$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_gn, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `DVM (2 m) graus`
@@ -2173,11 +2050,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_dvm2, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `VVM (2 m) km/h`
 
 ```{r, attr.source='.numberLines'}
@@ -2221,11 +2093,6 @@ for (station in missing_vvm2$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvm2, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `VVX (2 m) km/h`
@@ -2273,11 +2140,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvx2, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `PM hPa`
 
 ```{r, attr.source='.numberLines'}
@@ -2321,11 +2183,6 @@ for (station in missing_pm$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_pm, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `DVM (10 m) graus`
@@ -2374,11 +2231,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_dvm10, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `VVM (10 m) km/h`
 
 ```{r, attr.source='.numberLines'}
@@ -2423,11 +2275,6 @@ for (station in missing_vvm10$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvm10, plist, iteration, my_function)
 ```
 
 ### Valors perduts de la variable `VVX (10 m) km/h`
@@ -2476,11 +2323,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_vvx10, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `RS W/m2`
 
 ```{r, attr.source='.numberLines'}
@@ -2526,11 +2368,6 @@ if (iteration %% 2 == 1) {
 }
 ```
 
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_rs, plist, iteration, my_function)
-```
-
 ### Valors perduts de la variable `HRM %`
 
 ```{r, attr.source='.numberLines'}
@@ -2569,14 +2406,4 @@ for (station in missing_hrm$`Codi estació`) {
 if (iteration %% 2 == 1) {
     do.call("grid.arrange", c(plist, ncol = 2))
 }
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(missing_hrm, plist, iteration, my_function)
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(create_missing_func, plot_missing_func)
 ```
