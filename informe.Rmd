@@ -1638,6 +1638,24 @@ plot_missing_func <- function(dataset, station_code, variable_name) {
         theme_minimal()
 }
 
+# Funció per mostrar les gràfiques per parelles
+plot_paired_func <- function(missing, dataset, variable_name) {
+    iteration <- 0
+    plist <- list()
+    for (station_code in missing$`Codi estació`) {
+        iteration <- iteration + 1
+        p <- plot_missing_func(dataset, station_code, variable_name)
+        if (!is.null(p)) plist <- append(plist, list(p))
+        if (iteration %% 2 == 0) {
+            do.call("grid.arrange", c(plist, ncol = 2))
+            plist <- list()
+        }
+    }
+    if (iteration %% 2 == 1) {
+        do.call("grid.arrange", c(plist, ncol = 2))
+    }
+}
+
 # Funció per obtenir els valors perduts
 create_missing_func <- function(dataset, variable_name) {
     dataset |>
@@ -1676,20 +1694,7 @@ Gràfiques dels valors perduts.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_ppt$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "PPT mm")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_ppt, dataset_measurements, "PPT mm")
 ```
 
 ### Valors perduts de la variable `TX ºC`
@@ -1764,20 +1769,7 @@ Gràfiques dels valors perduts:
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_tn$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "TN °C")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_tn, dataset_measurements, "TN °C")
 ```
 
 ### Valors perduts de la variable `TM ºC`
@@ -1808,20 +1800,7 @@ Gràfiques dels valors perduts:
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_tm$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "TM °C")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_tm, dataset_measurements, "TM °C")
 ```
 
 ### Valors perduts de la variable `DVM (6 m) graus`
@@ -1855,22 +1834,8 @@ kable(
 Estacions amb valors perduts a la variable `DVM (6 m) graus`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# funció per crear les gràfiques
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_dvm6$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "DVM (6 m) graus")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_dvm6, dataset_measurements, "DVM (6 m) graus")
 ```
 
 ### Valors perduts de la variable `VVX (6 m) km/h`
@@ -1902,20 +1867,7 @@ Estacions amb valors perduts a la variable `VVX (6 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_vvx6$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "VVX (6 m) km/h")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_vvx6, dataset_measurements, "VVX (6 m) km/h")
 ```
 
 ### Valors perduts de la variable `VVM (6 m) km/h`
@@ -1947,20 +1899,7 @@ Estacions amb valors perduts a la variable `VVM (6 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_vvm6$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "VVM (6 m) km/h")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_vvm6, dataset_measurements, "VVM (6 m) km/h")
 ```
 
 ### Valors perduts de la variable `GN cm`
@@ -1989,20 +1928,7 @@ Estacions amb valors perduts de la variable `GN cm`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_gn$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "GN cm")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_gn, dataset_measurements, "GN cm")
 ```
 
 ### Valors perduts de la variable `DVM (2 m) graus`
@@ -2035,20 +1961,7 @@ Estacions amb valors perduts de la variable `DVM (2 m) graus`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_dvm2$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "DVM (2 m) graus")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_dvm2, dataset_measurements, "DVM (2 m) graus")
 ```
 
 ### Valors perduts de la variable `VVM (2 m) km/h`
@@ -2080,20 +1993,7 @@ Estacions amb valors perduts de la variable `VVM (2 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_vvm2$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "VVM (2 m) km/h")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_vvm2, dataset_measurements, "VVM (2 m) km/h")
 ```
 
 ### Valors perduts de la variable `VVX (2 m) km/h`
@@ -2125,20 +2025,7 @@ Estacions amb valors perduts de la variable `VVX (2 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_vvx2$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "VVX (2 m) km/h")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_vvx2, dataset_measurements, "VVX (2 m) km/h")
 ```
 
 ### Valors perduts de la variable `PM hPa`
@@ -2170,20 +2057,7 @@ Estacions amb valors perduts de la variable `PM hPa`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_pm$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "PM hPa")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_pm, dataset_measurements, "PM hPa")
 ```
 
 ### Valors perduts de la variable `DVM (10 m) graus`
@@ -2216,20 +2090,7 @@ Estacions amb valors perduts de la variable `DVM (10 m) graus`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_dvm10$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "DVM (10 m) graus")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_dvm10, dataset_measurements, "DVM (10 m) graus")
 ```
 
 ### Valors perduts de la variable `VVM (10 m) km/h`
@@ -2262,20 +2123,7 @@ Estacions amb valors perduts de la variable `VVM (10 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_vvm10$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "VVM (10 m) km/h")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_vvm10, dataset_measurements, "VVM (10 m) km/h")
 ```
 
 ### Valors perduts de la variable `VVX (10 m) km/h`
@@ -2308,20 +2156,7 @@ Estacions amb valors perduts de la variable `VVX (10 m) km/h`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_vvx10$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "VVX (10 m) km/h")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_vvx10, dataset_measurements, "VVX (10 m) km/h")
 ```
 
 ### Valors perduts de la variable `RS W/m2`
@@ -2353,20 +2188,7 @@ Estacions amb valors perduts de la variable `RS W/m2`.
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_rs$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "RS W/m2")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_rs, dataset_measurements, "RS W/m2")
 ```
 
 ### Valors perduts de la variable `HRM %`
@@ -2393,18 +2215,5 @@ kable(
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_hrm$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "HRM %")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_hrm, dataset_measurements, "HRM %")
 ```
