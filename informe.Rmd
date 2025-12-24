@@ -112,8 +112,8 @@ de dades:
 
 ```{r, attr.source='.numberLines'}
 dataset_measurements <- read_csv("dataset/dataset.csv",
-    locale = locale(decimal_mark = ","),
-    na = c("", "NA", "NaN", "nan", "(s/d)")
+    locale = locale(decimal_mark = "."),
+    na = c("", "(s/d)")
 )
 ```
 
@@ -1125,10 +1125,9 @@ rm(missing_hrm_by_station)
 
 ## Gestió de valors extrems
 
-No s'han detectat valors anòmals en les variables numèriques excepte en la
-variable ```HRM %``` (humitat relativa mitjana en percentatge).
+No s'han detectat valors anòmals en les variables numèriques.
 
-Les velocotats del vent, les direccions del vent i les temperatures no presenten
+Les velocitats del vent, les direccions del vent i les temperatures no presenten
 valors extrems segons els criteris establerts.
 
 ```{r, echo=FALSE, fig.height=3, fig.width=4, fig.align='center'}
@@ -1274,7 +1273,7 @@ rm(p1, p2, p3)
 ```
 
 Les altres variables numèriques no presenten valors extrems segons els criteris
-establerts, excepte la variable `HRM %`.
+establerts.
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3, fig.width=4}
 p1 <- ggplot(
@@ -1375,133 +1374,6 @@ grid.arrange(p1, p2, p3, p4, p5, nrow = 1)
 # Elimina els objectes creats per evitar conflictes en les següents seccions
 rm(p1, p2, p3, p4, p5)
 ```
-
-Si analitzem els valors de la humitat relativa mitjana per estació, podem veure
-que hi ha tres estacions amb valors anòmals molt elevats (superiors al 100%).
-
-```{r, attr.source='.numberLines', fig.align='center'}
-# Estacions amb humitat relativa mitjana més alta
-highest_humidity_stations <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Avg_Humidity = mean(`HRM %`, na.rm = TRUE)) |>
-    arrange(desc(Avg_Humidity)) |>
-    head(10)
-highest_humidity_stations
-```
-
-```{r, echo=FALSE, fig.align='center', fig.height=3}
-# Gràfica amb la humitat relativa mitjana de les estacions amb més humitat
-ggplot(
-    highest_humidity_stations,
-    aes(x = reorder(`Codi estació`, -Avg_Humidity), y = Avg_Humidity)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Humitat relativa mitjana de les estacions amb més humitat",
-        x = "Codi estació",
-        y = "Humitat relativa mitjana (%)"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Si observem els rangs dels valors de la humitat relativa mitjana de les estacions
-amb valors anòmals, veiem que estan per sobre del 100%, cosa que no és possible
-físicament. Per tant, es decideix corregir aquests valors dividint-los per 10.
-
-```{r, echo=FALSE, fig.align='center', fig.height=3, fig.width=2}
-# Diagrama de caixa de la humitat relativa mitjana de les estacions anòmales
-selected_stations <- c("VS", "MR", "D4")
-humidity_selected_stations <- dataset_measurements |>
-    filter(`Codi estació` %in% selected_stations) |>
-    select(`Codi estació`, `HRM %`, `Data i hora`)
-ggplot(humidity_selected_stations, aes(x = `Codi estació`, y = `HRM %`)) +
-    geom_boxplot(fill = "lightblue") +
-    labs(
-        title = "Boxplot HRM %\n3 estacions",
-        x = "Codi estació",
-        y = "Humitat relativa mitjana (%)"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-Segons semblen els valors anòmals estan presents al llarg de tot el període
-temporal.
-
-```{r, echo=FALSE, fig.align='center', fig.height=4}
-# gràfica amb els valors de la humitat relativa mitjana de les estacions
-# anòmales al llarg del temps
-ggplot(
-    humidity_selected_stations,
-    aes(x = `Data i hora`, y = `HRM %`, color = `Codi estació`)
-) +
-    geom_line() +
-    labs(
-        title = "HRM de les estacions seleccionades al llarg del temps",
-        x = "Data",
-        y = "Humitat relativa mitjana (%)",
-        color = "Codi estació"
-    ) +
-    theme_minimal()
-```
-
-Com confirma la següent gràfica, els valors anòmals també estan presents en un
-dia concret, el 15 de març de 2025.
-
-```{r, echo=FALSE, fig.align='center', fig.height=3}
-# gràfica dels valors d'humitat relativa mitjana de les estacions anòmales per
-# al dia 15 de març de 2025
-ggplot(
-    filter(humidity_selected_stations, as.Date(`Data i hora`) ==
-        as.Date("2025-03-15")),
-    aes(x = `Data i hora`, y = `HRM %`, color = `Codi estació`)
-) +
-    geom_line() +
-    labs(
-        title = "HRM de les estacions seleccionades el 15 de març de 2025",
-        x = "Hora",
-        y = "Humitat relativa mitjana (%)",
-        color = "Codi estació"
-    ) +
-    theme_minimal()
-```
-
-Per la qual cosa es normalitzen els valors anòmals dividint-los per 10.
-
-```{r, attr.source='.numberLines'}
-# Correcció dels valors anòmals (dividir per 10) el ```HRM %``` de les estacions
-# amb valors anòmals
-dataset_measurements <- dataset_measurements |>
-    mutate(
-        `HRM %` = ifelse(
-            `Codi estació` %in% selected_stations,
-            `HRM %` / 10,
-            `HRM %`
-        )
-    )
-```
-
-En el següent diagrama de caixa es pot observar que els valors anòmals han estat
-corregits.
-
-```{r, echo=FALSE, fig.align='center', fig.height=3, fig.width=2}
-# Torna a generar el diagrama de caixa de la variable ```HRM %``` després de
-# la correcció
-boxplot(
-    dataset_measurements["HRM %"],
-    main = "Boxplot\nHRM %",
-    col = "lightblue",
-    las = 1
-)
-```
-
-```{r, echo=FALSE}
-# Elimina els objectes creats per evitar conflictes en les següents seccions
-rm(highest_humidity_stations, humidity_selected_stations)
-rm(selected_stations)
-```
-
 
 ## Altres mètodes de neteja
 

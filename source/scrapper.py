@@ -543,6 +543,13 @@ class MeteoScraper:
         stations_df = self.__csv_to_dataframe("station_list.csv")
         # Add "code" column to stations_df
         stations_df["code"] = stations_df["Estació [Codi]"].apply(lambda x: x[-3:-1])
+        # Parse Latitude and Longitude columns to float
+        stations_df["Latitud"] = (
+            stations_df["Latitud"].str.replace(",", ".").astype(float)
+        )
+        stations_df["Longitud"] = (
+            stations_df["Longitud"].str.replace(",", ".").astype(float)
+        )
         # Merge measurements with stations on "code"
         final_df = pd.merge(stations_df, measurements_df, on="code", how="inner")
         # Save to CSV
