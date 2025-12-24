@@ -1664,6 +1664,24 @@ create_missing_func <- function(dataset, variable_name) {
         filter(Missing > 0, Missing < 17000) |>
         arrange(desc(Missing))
 }
+
+# Funció per crear taula de valors perduts
+table_missing_func <- function(missing, variable_name) {
+    kable(
+        missing,
+        # Format dels nombres a la taula
+        format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
+        # Etiqueta de la taula
+        caption = paste("Núm. de valors NA de la variable", variable_name),
+        # Alineació de les columnes
+        align = c("l", "r"),
+        col.names = c("Codi estació", "# NA")
+    ) |>
+        kable_styling(
+            bootstrap_options = c("striped", "hover", "condensed"),
+            full_width = FALSE
+        )
+}
 ```
 
 ### Valors perduts de la variable `PPT mm`
@@ -1674,20 +1692,7 @@ Taula del recompte de valors perduts:
 # recompte de valors perduts de la variable PPT mm per estació
 missing_ppt <- create_missing_func(dataset_measurements, "PPT mm")
 # Taula del recompte de valors perduts de la variable PPT mm per estació
-kable(
-    missing_ppt,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable PPT mm",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_ppt, "PPT mm")
 ```
 
 Gràfiques dels valors perduts.
@@ -1705,40 +1710,14 @@ Taula del recompte de valors perduts:
 # recompte de valors perduts de la variable TX ºC per estació
 missing_tx <- create_missing_func(dataset_measurements, "TX °C")
 # Taula del recompte de valors perduts de la variable TX ºC per estació
-kable(
-    missing_tx,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable TX ºC",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_tx, "TX ºC")
 ```
 
 Grafiques dels valors perduts:
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
-iteration <- 0
-plist <- list()
-for (station in missing_tx$`Codi estació`) {
-    iteration <- iteration + 1
-    p <- plot_missing_func(dataset_measurements, station, "TX °C")
-    if (!is.null(p)) plist <- append(plist, list(p))
-    if (iteration %% 2 == 0) {
-        do.call("grid.arrange", c(plist, ncol = 2))
-        plist <- list()
-    }
-}
-if (iteration %% 2 == 1) {
-    do.call("grid.arrange", c(plist, ncol = 2))
-}
+plot_paired_func(missing_tx, dataset_measurements, "TX °C")
 ```
 
 ### Valors perduts de la variable `TN ºC`
@@ -1749,20 +1728,7 @@ Taula del recompte de valors perduts:
 # recompte de valors perduts de la variable TN ºC per estació
 missing_tn <- create_missing_func(dataset_measurements, "TN °C")
 # Taula del recompte de valors perduts de la variable TN ºC per estació
-kable(
-    missing_tn,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable TN ºC",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_tn, "TN ºC")
 ```
 
 Gràfiques dels valors perduts:
@@ -1780,20 +1746,7 @@ Taula del recompte de valors perduts:
 # recompte de valors perduts de la variable TM ºC per estació
 missing_tm <- create_missing_func(dataset_measurements, "TM °C")
 # Taula del recompte de valors perduts de la variable TM ºC per estació
-kable(
-    missing_tm,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable TM ºC",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_tm, "TM ºC")
 ```
 
 Gràfiques dels valors perduts:
@@ -1812,23 +1765,7 @@ Taula del recompte de valors perduts;
 missing_dvm6 <- create_missing_func(dataset_measurements, "DVM (6 m) graus")
 # Taula del recompte de valors perduts de la variable DVM (6 m) graus per
 # estació
-kable(
-    missing_dvm6,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable DVM (6 m) graus",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# valors no disponibles"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_dvm6, "DVM (6 m) graus")
 ```
 
 Estacions amb valors perduts a la variable `DVM (6 m) graus`.
@@ -1844,23 +1781,7 @@ plot_paired_func(missing_dvm6, dataset_measurements, "DVM (6 m) graus")
 # recompte de valors perduts de la variable VVX (6 m) km/h per estació
 missing_vvx6 <- create_missing_func(dataset_measurements, "VVX (6 m) km/h")
 # Taula del recompte de valors perduts de la variable VVX (6 m) km/h per estació
-kable(
-    missing_vvx6,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable VVX (6 m) km/h",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# valors no disponibles"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_vvx6, "VVX (6 m) km/h")
 ```
 
 Estacions amb valors perduts a la variable `VVX (6 m) km/h`.
@@ -1876,23 +1797,7 @@ plot_paired_func(missing_vvx6, dataset_measurements, "VVX (6 m) km/h")
 # recompte de valors perduts de la variable VVM (6 m) km/h per estació
 missing_vvm6 <- create_missing_func(dataset_measurements, "VVM (6 m) km/h")
 # Taula del recompte de valors perduts de la variable VVM (6 m) km/h per estació
-kable(
-    missing_vvm6,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable VVM (6 m) km/h",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# valors no disponibles"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_vvm6, "VVM (6 m) km/h")
 ```
 
 Estacions amb valors perduts a la variable `VVM (6 m) km/h`.
@@ -1908,20 +1813,7 @@ plot_paired_func(missing_vvm6, dataset_measurements, "VVM (6 m) km/h")
 # recompte de valors perduts de la variable GN cm per estació
 missing_gn <- create_missing_func(dataset_measurements, "GN cm")
 # Taula del recompte de valors perduts de la variable GN cm per estació
-kable(
-    missing_gn,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable GN cm",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_gn, "GN cm")
 ```
 
 Estacions amb valors perduts de la variable `GN cm`.
@@ -1938,23 +1830,7 @@ plot_paired_func(missing_gn, dataset_measurements, "GN cm")
 missing_dvm2 <- create_missing_func(dataset_measurements, "DVM (2 m) graus")
 # Taula del recompte de valors perduts de la variable DVM (2 m) graus per
 # estació
-kable(
-    missing_dvm2,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable DVM (2 m) graus",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# valors no disponibles"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_dvm2, "DVM (2 m) graus")
 ```
 
 Estacions amb valors perduts de la variable `DVM (2 m) graus`.
@@ -1970,23 +1846,7 @@ plot_paired_func(missing_dvm2, dataset_measurements, "DVM (2 m) graus")
 # recompte de valors perduts de la variable VVM (2 m) km/h per estació
 missing_vvm2 <- create_missing_func(dataset_measurements, "VVM (2 m) km/h")
 # Taula del recompte de valors perduts de la variable VVM (2 m) km/h per estació
-kable(
-    missing_vvm2,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable VVM (2 m) km/h",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# valors no disponibles"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_vvm2, "VVM (2 m) km/h")
 ```
 
 Estacions amb valors perduts de la variable `VVM (2 m) km/h`.
@@ -2002,23 +1862,7 @@ plot_paired_func(missing_vvm2, dataset_measurements, "VVM (2 m) km/h")
 # recompte de valors perduts de la variable VVX (2 m) km/h per estació
 missing_vvx2 <- create_missing_func(dataset_measurements, "VVX (2 m) km/h")
 # Taula del recompte de valors perduts de la variable VVX (2 m) km/h per estació
-kable(
-    missing_vvx2,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable VVX (2 m) km/h",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# NA"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_vvx2, "VVX (2 m) km/h")
 ```
 
 Estacions amb valors perduts de la variable `VVX (2 m) km/h`.
@@ -2034,23 +1878,7 @@ plot_paired_func(missing_vvx2, dataset_measurements, "VVX (2 m) km/h")
 # recompte de valors perduts de la variable PM hPa per estació
 missing_pm <- create_missing_func(dataset_measurements, "PM hPa")
 # Taula del recompte de valors perduts de la variable PM hPa per estació
-kable(
-    missing_pm,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable PM hPa",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# NA"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_pm, "PM hPa")
 ```
 
 Estacions amb valors perduts de la variable `PM hPa`.
@@ -2067,23 +1895,7 @@ plot_paired_func(missing_pm, dataset_measurements, "PM hPa")
 missing_dvm10 <- create_missing_func(dataset_measurements, "DVM (10 m) graus")
 # Taula del recompte de valors perduts de la variable DVM (10 m) graus per
 # estació
-kable(
-    missing_dvm10,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable DVM (10 m) graus",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# NA"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_dvm10, "DVM (10 m) graus")
 ```
 
 Estacions amb valors perduts de la variable `DVM (10 m) graus`.
@@ -2100,23 +1912,7 @@ plot_paired_func(missing_dvm10, dataset_measurements, "DVM (10 m) graus")
 missing_vvm10 <- create_missing_func(dataset_measurements, "VVM (10 m) km/h")
 # Taula del recompte de valors perduts de la variable VVM (10 m) km/h per
 # estació
-kable(
-    missing_vvm10,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable VVM (10 m) km/h",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# NA"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_vvm10, "VVM (10 m) km/h")
 ```
 
 Estacions amb valors perduts de la variable `VVM (10 m) km/h`.
@@ -2133,23 +1929,7 @@ plot_paired_func(missing_vvm10, dataset_measurements, "VVM (10 m) km/h")
 missing_vvx10 <- create_missing_func(dataset_measurements, "VVX (10 m) km/h")
 # Taula del recompte de valors perduts de la variable VVX (10 m) km/h per
 # estació
-kable(
-    missing_vvx10,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable VVX (10 m) km/h",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# NA"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_vvx10, "VVX (10 m) km/h")
 ```
 
 Estacions amb valors perduts de la variable `VVX (10 m) km/h`.
@@ -2165,23 +1945,7 @@ plot_paired_func(missing_vvx10, dataset_measurements, "VVX (10 m) km/h")
 # recompte de valors perduts de la variable RS W/m2 per estació
 missing_rs <- create_missing_func(dataset_measurements, "RS W/m2")
 # Taula del recompte de valors perduts de la variable RS W/m2 per estació
-kable(
-    missing_rs,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable RS W/m2",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c(
-        "Codi estació",
-        "# NA"
-    )
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_rs, "RS W/m2")
 ```
 
 Estacions amb valors perduts de la variable `RS W/m2`.
@@ -2197,20 +1961,7 @@ plot_paired_func(missing_rs, dataset_measurements, "RS W/m2")
 # recompte de valors perduts de la variable HRM % per estació
 missing_hrm <- create_missing_func(dataset_measurements, "HRM %")
 # Taula del recompte de valors perduts de la variable HRM % per estació
-kable(
-    missing_hrm,
-    # Format dels nombres a la taula
-    format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
-    # Etiqueta de la taula
-    caption = "Recompte de valors NA de la variable HRM",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Codi estació", "# NA")
-) |>
-    kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
-    )
+table_missing_func(missing_hrm, "HRM %")
 ```
 
 ```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
