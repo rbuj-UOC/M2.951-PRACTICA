@@ -615,6 +615,36 @@ per ordre de més a menys valors perduts. En el recompte s'han exclòs les
 estacions que tenen gairebé tots els valors perduts (>17.000) o bé no tenen
 cap valor perdut (0).
 
+Les funcions següents són útils per obtenir i mostrar els valors perduts de les
+variables:
+
+```{r, attr.source='.numberLines'}
+# Funció per obtenir els valors perduts
+create_missing_func <- function(dataset, variable_name) {
+    dataset |>
+        group_by(`Codi estació`) |>
+        summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
+        filter(Missing > 0, Missing < 17000) |>
+        arrange(desc(Missing))
+}
+
+# Funció per mostrar els valors perduts
+plot_missing_sc_func <- function(dataset, variable_name) {
+    ggplot(
+        create_missing_func(dataset, variable_name),
+        aes(x = reorder(`Codi estació`, -Missing), y = Missing)
+    ) +
+        geom_bar(stat = "identity", fill = "steelblue") +
+        labs(
+            title = paste("Núm. de valors NA de la variable", variable_name),
+            x = "Codi estació",
+            y = "# valors no disponibles"
+        ) +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+```
+
 ### Valors perduts de la variable `PPT mm`
 
 La variable `PPT mm` (precipitació mitjana en mil·límetres) no té valors
@@ -622,26 +652,9 @@ perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
 de 17000 valors perduts).
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable PPT mm per estació
-missing_ppt_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_PPT = sum(is.na(`PPT mm`))) |>
-    filter(Missing_PPT > 0 & Missing_PPT < 17000) |>
-    arrange(desc(Missing_PPT))
 # Gràfica de barres del recompte de valors perduts de la variable TM ºC per
 # estació
-ggplot(
-    missing_ppt_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_PPT), y = Missing_PPT)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable PPT mm",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "PPT mm")
 ```
 
 ### Valors perduts de la variable `TX ºC`
@@ -651,26 +664,9 @@ perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
 de 17000 valors perduts).
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable TX ºC per estació
-missing_tx_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_TX = sum(is.na(`TX °C`))) |>
-    filter(Missing_TX > 0 & Missing_TX < 17000) |>
-    arrange(desc(Missing_TX))
 # Gràfica de barres del recompte de valors perduts de la variable TM ºC per
 # estació
-ggplot(
-    missing_tx_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_TX), y = Missing_TX)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable TX ºC",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "TX °C")
 ```
 
 ### Valors perduts de la variable `TN ºC`
@@ -680,376 +676,122 @@ perduts en cap estació que compleixi els criteris establerts (més de 0 i menys
 de 17000 valors perduts).
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable TN ºC per estació
-missing_tn_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_TN = sum(is.na(`TN °C`))) |>
-    filter(Missing_TN > 0 & Missing_TN < 17000) |>
-    arrange(desc(Missing_TN))
 # Gràfica de barres del recompte de valors perduts de la variable TM ºC per
 # estació
-ggplot(
-    missing_tn_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_TN), y = Missing_TN)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable TN ºC",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "TN °C")
 ```
 
 ### Valors perduts de la variable `TM ºC`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable TM ºC per estació
-missing_tm_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_TM = sum(is.na(`TM °C`))) |>
-    filter(Missing_TM > 0 & Missing_TM < 17000) |>
-    arrange(desc(Missing_TM))
 # Gràfica de barres del recompte de valors perduts de la variable TM ºC per
 # estació
-ggplot(
-    missing_tm_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_TM), y = Missing_TM)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable TM ºC",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "TM °C")
 ```
 
 ### Valors perduts de la variable `DVM (6 m) graus`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable DVM (6 m) graus per estació
-missing_dvm6_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_DVM6 = sum(is.na(`DVM (6 m) graus`))) |>
-    filter(Missing_DVM6 > 0 & Missing_DVM6 < 17000) |>
-    arrange(desc(Missing_DVM6))
 # Gràfica de barres del recompte de valors perduts de la variable DVM (6 m)
 # graus per estació
-ggplot(
-    missing_dvm6_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_DVM6), y = Missing_DVM6)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable DVM (6 m) graus",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "DVM (6 m) graus")
 ```
 
 ### Valors perduts de la variable `VVX (6 m) km/h`
 
 ```{r, echo=FALSE, fig.height=3,  fig.align='center'}
-# recompte de valors perduts de la variable VVX (6 m) km/h per estació
-missing_vvx6_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_VVX6 = sum(is.na(`VVX (6 m) km/h`))) |>
-    filter(Missing_VVX6 > 0 & Missing_VVX6 < 17000) |>
-    arrange(desc(Missing_VVX6))
 # Gràfica de barres del recompte de valors perduts de la variable VVX (6 m)
 # km/h per estació
-ggplot(
-    missing_vvx6_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_VVX6), y = Missing_VVX6)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable VVX (6 m) km/h",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "VVX (6 m) km/h")
 ```
 
 ### Valors perduts de la variable `VVM (6 m) km/h`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable VVM (6 m) km/h per estació
-missing_vvm6_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_VVM6 = sum(is.na(`VVM (6 m) km/h`))) |>
-    filter(Missing_VVM6 > 0 & Missing_VVM6 < 17000) |>
-    arrange(desc(Missing_VVM6))
 # Gràfica de barres del recompte de valors perduts de la variable VVM (6 m)
 # km/h per estació
-ggplot(
-    missing_vvm6_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_VVM6), y = Missing_VVM6)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable VVM (6 m) km/h",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "VVM (6 m) km/h")
 ```
 
 ### Valors perduts de la variable `GN cm`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable GN cm per estació
-missing_gn_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_GN = sum(is.na(`GN cm`))) |>
-    filter(Missing_GN > 0 & Missing_GN < 17000) |>
-    arrange(desc(Missing_GN))
 # Gràfica de barres del recompte de valors perduts de la variable GN cm per
 # estació
-ggplot(
-    missing_gn_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_GN), y = Missing_GN)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable GN cm",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "GN cm")
 ```
 
 ### Valors perduts de la variable `DVM (2 m) graus`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable DVM (2 m) graus per estació
-missing_dvm2_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_DVM2 = sum(is.na(`DVM (2 m) graus`))) |>
-    filter(Missing_DVM2 > 0 & Missing_DVM2 < 17000) |>
-    arrange(desc(Missing_DVM2))
 # Gràfica de barres del recompte de valors perduts de la variable DVM (2 m)
 # graus per estació
-ggplot(
-    missing_dvm2_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_DVM2), y = Missing_DVM2)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable DVM (2 m) graus",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "DVM (2 m) graus")
 ```
 
 ### Valors perduts de la variable `VVM (2 m) km/h`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # recompte de valors perduts de la variable VVM (2 m) km/h per estació
-missing_vvm2_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_VVM2 = sum(is.na(`VVM (2 m) km/h`))) |>
-    filter(Missing_VVM2 > 0 & Missing_VVM2 < 17000) |>
-    arrange(desc(Missing_VVM2))
 # Gràfica de barres del recompte de valors perduts de la variable VVM (2 m)
 # km/h per estació
-ggplot(
-    missing_vvm2_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_VVM2), y = Missing_VVM2)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable VVM (2 m) km/h",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "VVM (2 m) km/h")
 ```
 
 ### Valors perduts de la variable `VVX (2 m) km/h`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable VVX (2 m) km/h per estació
-missing_vvx2_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_VVX2 = sum(is.na(`VVX (2 m) km/h`))) |>
-    filter(Missing_VVX2 > 0 & Missing_VVX2 < 17000) |>
-    arrange(desc(Missing_VVX2))
 # Gràfica de barres del recompte de valors perduts de la variable VVX (2 m)
 # km/h per estació
-ggplot(
-    missing_vvx2_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_VVX2), y = Missing_VVX2)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable VVX (2 m) km/h",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "VVX (2 m) km/h")
 ```
 
 ### Valors perduts de la variable `PM hPa`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable PM hPa per estació
-missing_pm_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_PM = sum(is.na(`PM hPa`))) |>
-    filter(Missing_PM > 0 & Missing_PM < 17000) |>
-    arrange(desc(Missing_PM))
 # Gràfica de barres del recompte de valors perduts de la variable PM hPa per
 # estació
-ggplot(
-    missing_pm_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_PM), y = Missing_PM)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable PM hPa",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "PM hPa")
 ```
 
 ### Valors perduts de la variable `DVM (10 m) graus`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable DVM (10 m) graus per estació
-missing_dvm10_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_DVM10 = sum(is.na(`DVM (10 m) graus`))) |>
-    filter(Missing_DVM10 > 0 & Missing_DVM10 < 17000) |>
-    arrange(desc(Missing_DVM10))
 # Gràfica de barres del recompte de valors perduts de la variable DVM (10 m)
 # graus per estació
-ggplot(
-    missing_dvm10_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_DVM10), y = Missing_DVM10)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable DVM (10 m) graus",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "DVM (10 m) graus")
 ```
 
 ### Valors perduts de la variable `VVM (10 m) km/h`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable VVM (10 m) km/h per estació
-missing_vvm10_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_VVM10 = sum(is.na(`VVM (10 m) km/h`))) |>
-    filter(Missing_VVM10 > 0 & Missing_VVM10 < 17000) |>
-    arrange(desc(Missing_VVM10))
 # Gràfica de barres del recompte de valors perduts de la variable VVM (10 m)
 # km/h per estació
-ggplot(
-    missing_vvm10_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_VVM10), y = Missing_VVM10)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable VVM (10 m) km/h",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "VVM (10 m) km/h")
 ```
 
 ### Valors perduts de la variable `VVX (10 m) km/h`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable VVX (10 m) km/h per estació
-missing_vvx10_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_VVX10 = sum(is.na(`VVX (10 m) km/h`))) |>
-    filter(Missing_VVX10 > 0 & Missing_VVX10 < 17000) |>
-    arrange(desc(Missing_VVX10))
 # Gràfica de barres del recompte de valors perduts de la variable VVX (10 m)
 # km/h per estació
-ggplot(
-    missing_vvx10_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_VVX10), y = Missing_VVX10)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable VVX (10 m) km/h",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "VVX (10 m) km/h")
 ```
 
 ### Valors perduts de la variable `RS W/m2`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable RS W/m2 per estació
-missing_rs_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_RS = sum(is.na(`RS W/m2`))) |>
-    filter(Missing_RS > 0 & Missing_RS < 17000) |>
-    arrange(desc(Missing_RS))
 # Gràfica de barres del recompte de valors perduts de la variable RS W/m2 per
 # estació
-ggplot(
-    missing_rs_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_RS), y = Missing_RS)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable RS W/m2",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "RS W/m2")
 ```
 
 ### Valors perduts de la variable `HRM %`
 
 ```{r, echo=FALSE, fig.height=3, fig.align='center'}
-# recompte de valors perduts de la variable HRM % per estació
-missing_hrm_by_station <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing_HRM = sum(is.na(`HRM %`))) |>
-    filter(Missing_HRM > 0 & Missing_HRM < 17000) |>
-    arrange(desc(Missing_HRM))
 # Gràfica de barres del recompte de valors perduts de la variable HRM % per
 # estació
-ggplot(
-    missing_hrm_by_station,
-    aes(x = reorder(`Codi estació`, -Missing_HRM), y = Missing_HRM)
-) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    labs(
-        title = "Recompte de valors NA de la variable HRM",
-        x = "Codi estació",
-        y = "# valors no disponibles"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot_missing_sc_func(dataset_measurements, "HRM %")
 ```
 
 ## Gestió de valors extrems
@@ -1654,15 +1396,6 @@ plot_paired_func <- function(missing, dataset, variable_name) {
     if (iteration %% 2 == 1) {
         do.call("grid.arrange", c(plist, ncol = 2))
     }
-}
-
-# Funció per obtenir els valors perduts
-create_missing_func <- function(dataset, variable_name) {
-    dataset |>
-        group_by(`Codi estació`) |>
-        summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
-        filter(Missing > 0, Missing < 17000) |>
-        arrange(desc(Missing))
 }
 
 # Funció per crear taula de valors perduts
