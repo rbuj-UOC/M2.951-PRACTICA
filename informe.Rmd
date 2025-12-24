@@ -409,83 +409,59 @@ stations_sf <- st_as_sf(
     coords = c("Longitud", "Latitud"),
     crs = 4326
 )
-```
-
-```{r, echo=FALSE, fig.align='center'}
-# Obté els límits de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-catalunya-1000000-20250730.json", quiet = TRUE)
-p1 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (Catalunya)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
+# Funció que retorna un plot del les estacions en un mapa segons l'administració
+plot_boundaries_func <- function(administration, title, stations_sf) {
+    file_name <- paste("divisions-administratives-v2r1",
+        administration, "1000000-20250730.json",
+        sep = "-"
     )
-# Obté els límits de les provincies de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-provincies-1000000-20250730.json", quiet = TRUE)
-p2 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (provincies)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
+    file_path <- paste("divisions-administratives-v2r1-20250730", file_name,
+        sep = "/"
     )
-# Mostra les tres gràfiques en una sola figura
+    boundaries <- st_read(file_path, quiet = TRUE)
+    return(ggplot() +
+        geom_sf(data = boundaries, fill = "grey95", color = "grey60", size = 0.2) +
+        geom_sf(data = stations_sf, color = "blue", size = 0.5) +
+        labs(
+            title = title,
+            x = "Longitud",
+            y = "Latitud"
+        ) +
+        theme_minimal() +
+        theme(
+            plot.title = element_text(size = 10, hjust = 0.5),
+            panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+            axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+            axis.title.y = element_blank(), axis.title.x = element_blank()
+        ))
+}
+# Obté la grafica amb els límits de Catalunya
+p1 <- plot_boundaries_func(
+    "catalunya",
+    "Estacions meteorològiques (Catalunya)",
+    stations_sf
+)
+# Obté la grafica amb els límits de les provincies de Catalunya
+p2 <- plot_boundaries_func(
+    "provincies",
+    "Estacions meteorològiques (provincies)",
+    stations_sf
+)
+# Mostra les dues gràfiques en una sola figura
 grid.arrange(p1, p2, ncol = 2)
-```
-
-```{r, echo=FALSE, fig.align='center'}
-# Obté els límits de les comarques de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-comarques-1000000-20250730.json", quiet = TRUE)
-p1 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (comarques)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
-    )
-# Obté els límits dels municipis de Catalunya
-limits <- st_read("divisions-administratives-v2r1-20250730/divisions-administratives-v2r1-municipis-1000000-20250730.json", quiet = TRUE)
-p2 <- ggplot() +
-    geom_sf(data = limits, fill = "grey95", color = "grey60", size = 0.2) +
-    geom_sf(data = stations_sf, color = "blue", size = 0.5) +
-    labs(
-        title = "Estacions meteorològiques (municipis)",
-        x = "Longitud",
-        y = "Latitud"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(), axis.title.x = element_blank()
-    )
-# Mostra les tres gràfiques en una sola figura
+# Obté la grafica amb els límits de les comarques de Catalunya
+p1 <- plot_boundaries_func(
+    "comarques",
+    "Estacions meteorològiques (comarques)",
+    stations_sf
+)
+# Obté la grafica amb els límits dels municipis de Catalunya
+p2 <- plot_boundaries_func(
+    "municipis",
+    "Estacions meteorològiques (municipis)",
+    stations_sf
+)
+# Mostra les dues gràfiques en una sola figura
 grid.arrange(p1, p2, ncol = 2)
 ```
 
