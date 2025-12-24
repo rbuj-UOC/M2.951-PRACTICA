@@ -160,7 +160,9 @@ Per crear un entorn virtual amb conda, executeu la següent ordre al directori
 arrel del projecte:
 
 ```sh
-conda env create --prefix=./.conda --file=environment.yml python=3.11
+conda env create --prefix=./.conda --file=environment.yml
+conda activate ./.conda
+Rscript -e 'install.packages("VIM", repos="https://cloud.r-project.org")'
 ```
 
 Per tal d'assegurar que l'entorn virtual s'ha creat correctament, podeu
@@ -171,11 +173,16 @@ comprovar que el directori `.conda/` s'ha creat al directori arrel del projecte.
 amb les següents ordres:
 
 ```sh
-conda create --prefix=./.conda python=3.11
+conda create --prefix=./.conda
 conda activate ./.conda
-conda install pip pandas selenium r-base=4.5.2 r-corrplot r-ggplot2 r-dplyr \
-    r-kableextra r-knitr r-readr r-rmarkdown r-tidyverse
+conda install pip pandas selenium r-base=4.5.2 r-car r-corrplot r-deoptimr \
+    r-ggplot2 r-dplyr r-kableextra r-knitr r-languageserver r-laeken r-ranger \
+    r-rmarkdown r-robustbase r-sp r-tidyverse r-vcd r-xgboost
+Rscript -e 'install.packages("VIM", repos="https://cloud.r-project.org")'
 ```
+
+Dependències de VIM: r-deoptimr, r-laeken, r-ranger, r-robustbase, r-sp, r-vcd i
+r-xgboost
 
 > [!TIP]
 > Miniconda requereix menys espai i és més lleuger que Anaconda. Per a

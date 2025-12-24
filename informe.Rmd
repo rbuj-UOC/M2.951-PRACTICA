@@ -21,8 +21,7 @@ toc-title: "Taula de continguts"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, error = FALSE, message = FALSE, cache = TRUE)
-library(readr)
-library(readxl)
+library(data.table)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
@@ -111,9 +110,11 @@ En el següent bloc de codi es carrega el fitxer `dataset.csv` amb el conjunt
 de dades:
 
 ```{r, attr.source='.numberLines'}
-dataset_measurements <- read_csv("dataset/dataset.csv",
-    locale = locale(decimal_mark = "."),
-    na = c("", "(s/d)")
+dataset_measurements <- fread(
+    "dataset/dataset.csv",
+    dec = ".",
+    na.strings = c("", "(s/d)"),
+    data.table = FALSE # Retorna data.frame per compatibilitat
 )
 ```
 
