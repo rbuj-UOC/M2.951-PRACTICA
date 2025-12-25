@@ -419,7 +419,7 @@ les estacions meteorològiques sobre els límits administratius de Catalunya.
 # Funció que retorna un plot del les estacions en un mapa segons l'administració
 plot_boundaries_func <- function(
   administration, title, dataset = dataset_measurements,
-  station_summary = NULL
+  missing_summary = NULL, lost_summary = NULL
 ) {
     unique_stations <- unique(dataset[, c("Codi estació", "Longitud", "Latitud")])
     file_name <- paste("divisions-administratives-v2r1",
@@ -430,7 +430,7 @@ plot_boundaries_func <- function(
         sep = "/"
     )
     boundaries <- st_read(file_path, quiet = TRUE)
-    if (is.null(station_summary)) {
+    if (is.null(missing_summary) & is.null(lost_summary)) {
         stations_sf <- st_as_sf(
             unique_stations,
             coords = c("Longitud", "Latitud"),
@@ -453,25 +453,41 @@ plot_boundaries_func <- function(
             ))
     }
     other_sf <- unique_stations |>
-        filter(!`Codi estació` %in% station_summary$`Codi estació`) |>
+        filter(!`Codi estació` %in% missing_summary$`Codi estació`) |>
+        filter(!`Codi estació` %in% lost_summary$`Codi estació`) |>
         st_as_sf(
             coords = c("Longitud", "Latitud"),
             crs = 4326
         )
     missing_sf <- unique_stations |>
-        filter(`Codi estació` %in% station_summary$`Codi estació`) |>
+        filter(`Codi estació` %in% missing_summary$`Codi estació`) |>
+        st_as_sf(
+            coords = c("Longitud", "Latitud"),
+            crs = 4326
+        )
+    lost_sf <- unique_stations |>
+        filter(`Codi estació` %in% lost_summary$`Codi estació`) |>
         st_as_sf(
             coords = c("Longitud", "Latitud"),
             crs = 4326
         )
     return(ggplot() +
-        geom_sf(data = boundaries, fill = "grey95", color = "grey60", size = 0.2) +
-        geom_sf(data = other_sf, color = "blue", size = 0.5) +
-        geom_sf(data = missing_sf, color = "red", size = 1) +
+        geom_sf(data = boundaries, fill = "grey95", color = "grey70", size = 0.2) +
+        geom_sf(data = other_sf, color = "green4", size = 1) +
+        geom_sf(data = missing_sf, color = "dodgerblue", size = 2) +
+        geom_sf(data = lost_sf, color = "magenta4", size = 3) +
         labs(
             title = title,
             x = "Longitud",
             y = "Latitud"
+        ) +
+        scale_color_manual(
+            name = "Estacions",
+            values = c(
+                "Sense valors perduts" = "green4",
+                "Amb valors perduts" = "dodgerblue",
+                "Amb tots els valors perduts" = "magenta4"
+            )
         ) +
         theme_minimal() +
         theme(
@@ -638,15 +654,26 @@ variables:
 
 ```{r, attr.source='.numberLines'}
 # Funció per obtenir els valors perduts
-create_missing_func <- function(
+create_summary_func <- function(
   dataset = dataset_measurements, variable_name,
-  threshold = 17000
+  missing = TRUE, minimum = 0, threshold = 17000
 ) {
-    dataset |>
-        group_by(`Codi estació`) |>
-        summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
-        filter(Missing > 0, Missing < threshold) |>
-        arrange(desc(Missing))
+    if (missing) {
+        return(
+            dataset |>
+                group_by(`Codi estació`) |>
+                summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
+                filter(Missing > minimum, Missing < threshold) |>
+                arrange(desc(Missing))
+        )
+    }
+    return(
+        dataset |>
+            group_by(`Codi estació`) |>
+            summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
+            filter(Missing >= threshold) |>
+            arrange(desc(Missing))
+    )
 }
 
 # Funció per mostrar els valors perduts
@@ -654,7 +681,7 @@ plot_missing_sc_func <- function(
   dataset = dataset_measurements, variable_name,
   threshold = 17000, log_scale = FALSE
 ) {
-    missing_ds <- create_missing_func(dataset, variable_name, threshold)
+    missing_ds <- create_summary_func(dataset, variable_name, threshold)
     if (log_scale) {
         ggplot(
             missing_ds,
@@ -1477,7 +1504,7 @@ Taula del recompte de valors perduts:
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable PPT mm per estació
-missing_ppt <- create_missing_func(variable_name = "PPT mm")
+missing_ppt <- create_summary_func(variable_name = "PPT mm")
 # Taula del recompte de valors perduts de la variable PPT mm per estació
 table_missing_func(missing_ppt, "PPT mm")
 ```
@@ -1494,7 +1521,10 @@ plot_paired_func(missing = missing_ppt, variable_name = "PPT mm")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable PPT mm",
-    station_summary = missing_ppt
+    missing_summary = missing_ppt,
+    lost_summary = create_summary_func(
+        variable_name = "PPT mm", missing = FALSE
+    )
 )
 ```
 
@@ -1504,7 +1534,7 @@ Taula del recompte de valors perduts:
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable TX ºC per estació
-missing_tx <- create_missing_func(variable_name = "TX °C")
+missing_tx <- create_summary_func(variable_name = "TX °C")
 # Taula del recompte de valors perduts de la variable TX ºC per estació
 table_missing_func(missing_tx, "TX ºC")
 ```
@@ -1521,7 +1551,8 @@ plot_paired_func(missing = missing_tx, variable_name = "TX °C")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable TX ºC",
-    station_summary = missing_tx
+    missing_summary = missing_tx,
+    lost_summary = create_summary_func(variable_name = "TX °C", missing = FALSE)
 )
 ```
 
@@ -1531,7 +1562,7 @@ Taula del recompte de valors perduts:
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable TN ºC per estació
-missing_tn <- create_missing_func(variable_name = "TN °C")
+missing_tn <- create_summary_func(variable_name = "TN °C")
 # Taula del recompte de valors perduts de la variable TN ºC per estació
 table_missing_func(missing_tn, "TN ºC")
 ```
@@ -1548,7 +1579,8 @@ plot_paired_func(missing = missing_tn, variable_name = "TN °C")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable TN ºC",
-    station_summary = missing_tn
+    missing_summary = missing_tn,
+    lost_summary = create_summary_func(variable_name = "TN °C", missing = FALSE)
 )
 ```
 
@@ -1558,7 +1590,7 @@ Taula del recompte de valors perduts:
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable TM ºC per estació
-missing_tm <- create_missing_func(variable_name = "TM °C")
+missing_tm <- create_summary_func(variable_name = "TM °C")
 # Taula del recompte de valors perduts de la variable TM ºC per estació
 table_missing_func(missing_tm, "TM ºC")
 ```
@@ -1575,7 +1607,8 @@ plot_paired_func(missing = missing_tm, variable_name = "TM °C")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable TM ºC",
-    station_summary = missing_tm
+    missing_summary = missing_tm,
+    lost_summary = create_summary_func(variable_name = "TM °C", missing = FALSE)
 )
 ```
 
@@ -1585,7 +1618,7 @@ Taula del recompte de valors perduts;
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable DVM (6 m) graus per estació
-missing_dvm6 <- create_missing_func(variable_name = "DVM (6 m) graus")
+missing_dvm6 <- create_summary_func(variable_name = "DVM (6 m) graus")
 # Taula del recompte de valors perduts de la variable DVM (6 m) graus per
 # estació
 table_missing_func(missing_dvm6, "DVM (6 m) graus")
@@ -1603,7 +1636,10 @@ plot_paired_func(missing = missing_dvm6, variable_name = "DVM (6 m) graus")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable DVM (6 m) graus",
-    station_summary = missing_dvm6
+    missing_summary = missing_dvm6,
+    lost_summary = create_summary_func(
+        variable_name = "DVM (6 m) graus", missing = FALSE
+    )
 )
 ```
 
@@ -1611,7 +1647,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable VVX (6 m) km/h per estació
-missing_vvx6 <- create_missing_func(variable_name = "VVX (6 m) km/h")
+missing_vvx6 <- create_summary_func(variable_name = "VVX (6 m) km/h")
 # Taula del recompte de valors perduts de la variable VVX (6 m) km/h per estació
 table_missing_func(missing_vvx6, "VVX (6 m) km/h")
 ```
@@ -1628,7 +1664,10 @@ plot_paired_func(missing = missing_vvx6, variable_name = "VVX (6 m) km/h")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVX (6 m) km/h",
-    station_summary = missing_vvx6
+    missing_summary = missing_vvx6,
+    lost_summary = create_summary_func(
+        variable_name = "VVX (6 m) km/h", missing = FALSE
+    )
 )
 ```
 
@@ -1636,7 +1675,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable VVM (6 m) km/h per estació
-missing_vvm6 <- create_missing_func(variable_name = "VVM (6 m) km/h")
+missing_vvm6 <- create_summary_func(variable_name = "VVM (6 m) km/h")
 # Taula del recompte de valors perduts de la variable VVM (6 m) km/h per estació
 table_missing_func(missing_vvm6, "VVM (6 m) km/h")
 ```
@@ -1653,7 +1692,10 @@ plot_paired_func(missing = missing_vvm6, variable_name = "VVM (6 m) km/h")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVM (6 m) km/h",
-    station_summary = missing_vvm6
+    missing_summary = missing_vvm6,
+    lost_summary = create_summary_func(
+        variable_name = "VVM (6 m) km/h", missing = FALSE
+    )
 )
 ```
 
@@ -1661,7 +1703,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable GN cm per estació
-missing_gn <- create_missing_func(variable_name = "GN cm")
+missing_gn <- create_summary_func(variable_name = "GN cm")
 # Taula del recompte de valors perduts de la variable GN cm per estació
 table_missing_func(missing_gn, "GN cm")
 ```
@@ -1678,7 +1720,8 @@ plot_paired_func(missing = missing_gn, variable_name = "GN cm")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable GN cm",
-    station_summary = missing_gn
+    missing_summary = missing_gn,
+    lost_summary = create_summary_func(variable_name = "GN cm", missing = FALSE)
 )
 ```
 
@@ -1686,7 +1729,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable DVM (2 m) graus per estació
-missing_dvm2 <- create_missing_func(variable_name = "DVM (2 m) graus")
+missing_dvm2 <- create_summary_func(variable_name = "DVM (2 m) graus")
 # Taula del recompte de valors perduts de la variable DVM (2 m) graus per
 # estació
 table_missing_func(missing_dvm2, "DVM (2 m) graus")
@@ -1704,7 +1747,10 @@ plot_paired_func(missing = missing_dvm2, variable_name = "DVM (2 m) graus")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable DVM (2 m) graus",
-    station_summary = missing_dvm2
+    missing_summary = missing_dvm2,
+    lost_summary = create_summary_func(
+        variable_name = "DVM (2 m) graus", missing = FALSE
+    )
 )
 ```
 
@@ -1712,7 +1758,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable VVM (2 m) km/h per estació
-missing_vvm2 <- create_missing_func(variable_name = "VVM (2 m) km/h")
+missing_vvm2 <- create_summary_func(variable_name = "VVM (2 m) km/h")
 # Taula del recompte de valors perduts de la variable VVM (2 m) km/h per estació
 table_missing_func(missing_vvm2, "VVM (2 m) km/h")
 ```
@@ -1729,7 +1775,10 @@ plot_paired_func(missing = missing_vvm2, variable_name = "VVM (2 m) km/h")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVM (2 m) km/h",
-    station_summary = missing_vvm2
+    missing_summary = missing_vvm2,
+    lost_summary = create_summary_func(
+        variable_name = "VVM (2 m) km/h", missing = FALSE
+    )
 )
 ```
 
@@ -1737,7 +1786,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable VVX (2 m) km/h per estació
-missing_vvx2 <- create_missing_func(variable_name = "VVX (2 m) km/h")
+missing_vvx2 <- create_summary_func(variable_name = "VVX (2 m) km/h")
 # Taula del recompte de valors perduts de la variable VVX (2 m) km/h per estació
 table_missing_func(missing_vvx2, "VVX (2 m) km/h")
 ```
@@ -1754,7 +1803,10 @@ plot_paired_func(missing = missing_vvx2, variable_name = "VVX (2 m) km/h")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVX (2 m) km/h",
-    station_summary = missing_vvx2
+    missing_summary = missing_vvx2,
+    lost_summary = create_summary_func(
+        variable_name = "VVX (2 m) km/h", missing = FALSE
+    )
 )
 ```
 
@@ -1762,7 +1814,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable PM hPa per estació
-missing_pm <- create_missing_func(variable_name = "PM hPa")
+missing_pm <- create_summary_func(variable_name = "PM hPa")
 # Taula del recompte de valors perduts de la variable PM hPa per estació
 table_missing_func(missing_pm, "PM hPa")
 ```
@@ -1779,7 +1831,10 @@ plot_paired_func(missing = missing_pm, variable_name = "PM hPa")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable PM hPa",
-    station_summary = missing_pm
+    missing_summary = missing_pm,
+    lost_summary = create_summary_func(
+        variable_name = "PM hPa", missing = FALSE
+    )
 )
 ```
 
@@ -1787,7 +1842,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable DVM (10 m) graus per estació
-missing_dvm10 <- create_missing_func(variable_name = "DVM (10 m) graus")
+missing_dvm10 <- create_summary_func(variable_name = "DVM (10 m) graus")
 # Taula del recompte de valors perduts de la variable DVM (10 m) graus per
 # estació
 table_missing_func(missing_dvm10, "DVM (10 m) graus")
@@ -1805,7 +1860,10 @@ plot_paired_func(missing = missing_dvm10, variable_name = "DVM (10 m) graus")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable DVM (10 m) graus",
-    station_summary = missing_dvm10
+    missing_summary = missing_dvm10,
+    lost_summary = create_summary_func(
+        variable_name = "DVM (10 m) graus", missing = FALSE
+    )
 )
 ```
 
@@ -1813,7 +1871,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable VVM (10 m) km/h per estació
-missing_vvm10 <- create_missing_func(variable_name = "VVM (10 m) km/h")
+missing_vvm10 <- create_summary_func(variable_name = "VVM (10 m) km/h")
 # Taula del recompte de valors perduts de la variable VVM (10 m) km/h per
 # estació
 table_missing_func(missing_vvm10, "VVM (10 m) km/h")
@@ -1831,7 +1889,10 @@ plot_paired_func(missing = missing_vvm10, variable_name = "VVM (10 m) km/h")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVM (10 m) km/h",
-    station_summary = missing_vvm10
+    missing_summary = missing_vvm10,
+    lost_summary = create_summary_func(
+        variable_name = "VVM (10 m) km/h", missing = FALSE
+    )
 )
 ```
 
@@ -1839,7 +1900,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable VVX (10 m) km/h per estació
-missing_vvx10 <- create_missing_func(variable_name = "VVX (10 m) km/h")
+missing_vvx10 <- create_summary_func(variable_name = "VVX (10 m) km/h")
 # Taula del recompte de valors perduts de la variable VVX (10 m) km/h per
 # estació
 table_missing_func(missing_vvx10, "VVX (10 m) km/h")
@@ -1857,7 +1918,10 @@ plot_paired_func(missing = missing_vvx10, variable_name = "VVX (10 m) km/h")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVX (10 m) km/h",
-    station_summary = missing_vvx10
+    missing_summary = missing_vvx10,
+    lost_summary = create_summary_func(
+        variable_name = "VVX (10 m) km/h", missing = FALSE
+    )
 )
 ```
 
@@ -1865,7 +1929,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable RS W/m2 per estació
-missing_rs <- create_missing_func(variable_name = "RS W/m2")
+missing_rs <- create_summary_func(variable_name = "RS W/m2")
 # Taula del recompte de valors perduts de la variable RS W/m2 per estació
 table_missing_func(missing_rs, "RS W/m2")
 ```
@@ -1882,7 +1946,10 @@ plot_paired_func(missing = missing_rs, variable_name = "RS W/m2")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable RS W/m2",
-    station_summary = missing_rs
+    missing_summary = missing_rs,
+    lost_summary = create_summary_func(
+        variable_name = "RS W/m2", missing = FALSE
+    )
 )
 ```
 
@@ -1890,7 +1957,7 @@ plot_boundaries_func(
 
 ```{r, attr.source='.numberLines'}
 # recompte de valors perduts de la variable HRM % per estació
-missing_hrm <- create_missing_func(variable_name = "HRM %")
+missing_hrm <- create_summary_func(variable_name = "HRM %")
 # Taula del recompte de valors perduts de la variable HRM % per estació
 table_missing_func(missing_hrm, "HRM %")
 ```
@@ -1905,6 +1972,9 @@ plot_paired_func(missing = missing_hrm, variable_name = "HRM %")
 plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable HRM %",
-    station_summary = missing_hrm
+    missing_summary = missing_hrm,
+    lost_summary = create_summary_func(
+        variable_name = "HRM %", missing = FALSE
+    )
 )
 ```
