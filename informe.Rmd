@@ -109,7 +109,7 @@ python3 source/main.py -d 365 -b 03.12.2025
 En el següent bloc de codi es carrega el fitxer `dataset.csv` amb el conjunt
 de dades:
 
-```{r, attr.source='.numberLines'}
+```{r read-dataset, attr.source='.numberLines'}
 dataset_measurements <- fread(
     "dataset/dataset.csv",
     dec = ".",
@@ -123,9 +123,26 @@ El conjunt de dades té `r format(ncol(dataset_measurements), big.mark = ".")` v
 
 # Integració i selecció
 
-En aquest apartat es realitza una anàlisi preliminar del conjunt de dades per
-conèixer millor les seves característiques. S'eliminen les variables que només
-tenen un únic valor.
+La integració propiament dita es realitza durant el procés de web scraping, on
+es recullen les dades de les dues pàgines web i es combinen en un únic conjunt
+de dades. En aquest cas, no és necessari realitzar una integració addicional
+ja que les dades ja estan integrades en el fitxer `dataset.csv`.
+
+No obstant això, s'ha modificat la integració per utilitzar un únic separador
+de decimals (el punt) per a totes les variables numèriques. Originàriament en
+el fitxer `dataset.csv`, les variables `Latitud` i `Longitud` utilitzaven la
+coma com a separador decimal, mentre que la resta de variables numèriques
+utilitzen el punt.
+
+Aquest canvi ha permès una millor gestió de les dades numèriques, evitar
+problemes de conversió de tipus de dades i utilitzar la funció `fread` de la
+biblioteca `data.table` per carregar el conjunt de dades de manera eficient.
+
+En aquest apartat, un cop carregades les dades, es realitza una anàlisi
+preliminar del conjunt de dades per conèixer millor les seves característiques.
+Al final d'aquest apartat, s'hauran eliminat les variables innecessàries
+(`Estació [Codi]`, `Data baixa` i`Estat actual`) i s'hauran creat dues noves
+variables (`Nom estació` i `Codi estació`).
 
 Les dades meteorològiques es van recollir en un període d'un any, des del 4 de
 desembre de 2024 fins al 3 de desembre de 2025.
@@ -172,7 +189,7 @@ En la següent taula es mostren les estacions meteorològiques que es van donar
 d'alta després del 4 de desembre de 2024, és a dir, estacions que no tenen totes
 les files en el conjunt de dades.
 
-```{r, attr.source='.numberLines'}
+```{r new-stations, attr.source='.numberLines'}
 # Converteix la variable Data alta a format data
 dataset_measurements$`data_alta` <- as.Date(
     dataset_measurements$`Data alta`,
@@ -238,15 +255,8 @@ kable(
     pack_rows("Últimes 5 estacions", 6, 10, latex_gap_space = "2em")
 ```
 
-```{r, echo=FALSE}
-# Nombre de municipis diferents
-n_municipis <- n_distinct(dataset_measurements$Municipi)
-# Nombre de comarques diferents
-n_comarques <- n_distinct(dataset_measurements$Comarca)
-```
-
-En el conjunt de dades hi ha un total de
-`r n_municipis` municipis i `r n_comarques` comarques diferents.
+En el conjunt de dades hi ha un total de `r n_distinct(dataset_measurements$Municipi)` municipis
+i `r n_distinct(dataset_measurements$Comarca)` comarques diferents.
 
 En la següent taula es mostra el nombre de valors diferents per cada variable
 del conjunt de dades.
@@ -278,10 +288,10 @@ kable(
 ```
 
 A partir dels valors observats en la taula anterior, s'eliminen les variables
-```Data baixa``` i ```Estat actual``` perquè només tenen un únic valor, ja que
-totes les estacions estan operatives.
+`Data baixa` i `Estat actual` perquè només tenen un únic valor, ja que totes les
+estacions estan operatives.
 
-```{r}
+```{r, attr.source='.numberLines'}
 # Elimina les variables del conjunt de dades
 dataset_measurements <- dataset_measurements |>
     select(-`Data baixa`, -`Estat actual`)
@@ -303,8 +313,8 @@ dataset_measurements <- dataset_measurements |>
 
 # Conversió de tipus de dades
 
-Abans de començar l'anàlisi de les dades, és important assegurar-se que les
-variables tenen el tipus de dada correcte. Això facilitarà l'anàlisi i la
+Abans de continuar amb l'anàlisi de les dades, és important assegurar-se que les
+variables tinguin el tipus de dada correcte. Això facilitarà l'anàlisi i la
 visualització de les dades.
 
 ```{r, attr.source='.numberLines'}
