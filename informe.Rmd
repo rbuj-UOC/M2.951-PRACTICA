@@ -141,8 +141,8 @@ biblioteca `data.table` per carregar el conjunt de dades de manera eficient.
 En aquest apartat, un cop carregades les dades, es realitza una anàlisi
 preliminar del conjunt de dades per conèixer millor les seves característiques.
 Al final d'aquest apartat, s'hauran eliminat les variables innecessàries
-(`Estació [Codi]`, `Data baixa` i`Estat actual`) i s'hauran creat dues noves
-variables (`Nom estació` i `Codi estació`).
+(`Estació [Codi]`, `code`, `Data baixa` i `Estat actual`) i s'hauran creat dues
+noves variables (`Nom estació` i `Codi estació`).
 
 Les dades meteorològiques es van recollir en un període d'un any, des del 4 de
 desembre de 2024 fins al 3 de desembre de 2025.
@@ -301,13 +301,13 @@ Per facilitar la visualització de les gràfiques i taules, es creen dues
 variables noves `Nom estació` i `Codi estació` a partir de la variable
 `Estació [Codi]`.
 
-```{r, echo=FALSE}
+```{r, attr.source='.numberLines'}
 dataset_measurements <- dataset_measurements |>
     mutate(
         `Nom estació` = sub("(.*) \\[.*\\]", "\\1", `Estació [Codi]`),
         `Codi estació` = sub(".*\\[(.*)\\]", "\\1", `Estació [Codi]`)
     ) |>
-    select(-`Estació [Codi]`) |>
+    select(-`Estació [Codi]`, -code) |>
     select(`Nom estació`, `Codi estació`, everything())
 ```
 
@@ -315,7 +315,10 @@ dataset_measurements <- dataset_measurements |>
 
 Abans de continuar amb l'anàlisi de les dades, és important assegurar-se que les
 variables tinguin el tipus de dada correcte. Això facilitarà l'anàlisi i la
-visualització de les dades.
+visualització de les dades. Al final d'aquest apartat, s'hauran convertit les
+variables al tipus de dada adequat i s'hauran eliminat dues variables
+innecessàries (`Període TU` i `date`) i s'haurà creat una nova variable
+`Data i hora`.
 
 ```{r, attr.source='.numberLines'}
 # Visualització dels tipus de dades originals
@@ -382,7 +385,7 @@ dataset_measurements <- dataset_measurements |>
         `PPT mm` = as.numeric(`PPT mm`),
         `RS W/m2` = as.numeric(`RS W/m2`)
     ) |>
-    select(-`Període TU`, -date, -code)
+    select(-`Període TU`, -date)
 ```
 
 A continuació es mostra un resum estadístic del conjunt de dades després de la
