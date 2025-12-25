@@ -3,17 +3,17 @@ title: Pràctica 2 - neteja i anàlisi de les dades
 author: "Nora Bolivar, Robert Buj"
 date: "07/01/2025"
 output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    highlight: tango
   pdf_document:
     includes:
       in_header: header.tex
     toc: true
     toc_depth: 2
     number_sections: true
-  html_document:
-    toc: true
-    toc_depth: 2
-    number_sections: true
-    highlight: tango
 toc-title: "Taula de continguts"
 ---
 
@@ -34,6 +34,7 @@ library(car)
 library(lubridate)
 library(tidyr)
 library(sf)
+library(factoextra)
 ```
 
 # Descripció del dataset
@@ -1264,10 +1265,11 @@ variables_continues <- c(
     "VVX (10 m) km/h"
 )
 # Fem subset ometent valors NA
-df_pca <- dataset_numeric[, variables_continues]
+df_pca <- dataset_numeric[, c(variables_continues, "TM °C")]
 df_pca <- na.omit(df_pca)
+
 # Apliquem PCA
-pca_resultat <- prcomp(df_pca, center = TRUE, scale. = TRUE)
+pca_resultat <- prcomp(df_pca[, variables_continues], center = TRUE, scale. = TRUE)
 # Mostrem la importància de les components
 summary(pca_resultat)
 # Mostrem la relació entre variables i components (Rotation)
@@ -1326,44 +1328,111 @@ kable(
 
 PC1 explica la màxima variància del conjunt de dades.
 
-Els pesos més alts i significatius són:
+- HRM: -0.624 (Alt i negatiu)
+- VVX: +0.487 (Alt i positiu)
+- RS: +0.561 (Alt i positiu)
 
-- Latitud: +0.713 (Molt alt i positiu)
-- Altitud: +0.583 (Alt i positiu)
-- Longitud: +0.345 (Moderat)
-
-Aquesta component representa clarament la geografia. Un valor alt en PC1 indica
-una estació amb una Latitud alta (Nord) i Altitud alta (muntanya/interior).
- 
-#### Component Principal 2 (PC2)
-
-PC2 explica la següent major quantitat de variància independent de PC1.
-
-- VVX: +0.551 (Molt alt i positiu)
-- RS: +0.505 (Alt i positiu)
-- HRM: -0.485 (Alt i negatiu)
-- Longitud: -0.387 (Moderat i negatiu)
-
-Un valor alt en PC2 indica una estació amb molta Radiació Solar (RS) i Vent
+Un valor alt en PC1 indica una estació amb molta Radiació Solar (RS) i Vent
 Màxim (VVX), i baixa Humitat Relativa (HRM). Això es podria interpretar com a
 condicions de temps assolellat, sec i ventós.
 
-#### Component Principal 3 (PC3)
+#### Component Principal 2 (PC2)
 
-- Longitud: +0.630 (Molt alt i positiu)
-- RS: +0.501 (Alt i positiu)
-- PPT: -0.342 (Moderat i negatiu)
-- Altitud: -0.467 (Alt i negatiu)
+PC2 explica la següent major quantitat de variància independent de PC2. Els pesos més alts i significatius són:
 
-Un valor alt en PC3 representa una estació situada a l'Est (Longitud alta) amb
-alta Radiació Solar, sovint a baixa Altitud (negatiu) i amb menys Precipitació.
+- Latitud: +0.718 (Molt alt i positiu)
+- Altitud: +0.538 (Alt i positiu)
+- Longitud: +0.396 (Moderat i positiu)
+
+Aquesta component representa clarament la geografia. Un valor alt en PC2 indica
+una estació amb una Latitud alta (Nord) i Altitud alta (muntanya/interior).
+ 
 
 #### Component Principal 4 (PC4)
-- PPT mm: +0.876 (Molt alt i dominant)
+- PPT mm: -0.895 (Molt alt, negatiu i dominant)
 
-Aquesta component està gairebé totalment dominada per la Precipitació (PPT mm).
+També cal destacar aquesta component, que està gairebé totalment dominada per la Precipitació (PPT mm).
 Essencialment, PC4 aïlla la variabilitat lligada als episodis de pluja del resta
 de factors climàtics.
+
+
+### Gràfiques
+
+Primer projectem la Temperatura Mitjana sobre els PCA1 i PCA2.
+
+```{r}
+# Gràfic d'estacions per la Temperatura Mitjana
+fviz_pca_ind(pca_resultat,
+             geom.ind = "point",             
+             col.ind = df_pca$`TM °C`,       # Pintem segons la temperatura
+             gradient.cols = c("cadetblue3", "bisque2", "salmon"), # Blau (fred) a Vermell (calent)
+             legend.title = "Temp. Mitjana (°C)",
+             title = "Mapa climàtic: PC1 (meteorologia) vs PC2 (geografia)") +
+  theme_minimal()
+```
+
+**PCA1**
+
+  - **Esquerre, valors negatius**: En aquesta zona hi bufa menys el vent, toca menys el sol i hi ha alta humitat. Predomina temperatures moderades (color groguenc).
+  
+  - **Dret, valors positius**: Bufa més el vent, hi ha més sol i hi ha menys humitat. 
+  
+Aquest eix separa les zones humides (esquerra) de zones assolellades i ventoses (dreta).
+  
+**PCA2**
+
+  - **Amunt, valors positius**: Els punts son majoritariament blaus (per sota dels 0 graus). Aquí és on l'Altitud i la Latitud pugen (nord, alta muntanya).
+  
+  - **Avall, valors negatius**:  Trobem una concentració de colors groguencs i taronja (més de 10ºC). Un PCA2 negatiu indica una Latitud i una l'Altitud més baixes. Són les zones principalment del sud i amb baixa altitud.
+
+Aquest eix és el que determina la temperatura segons la geografia: a més alçada i latitud hi ha més fred.
+
+  
+**Anàlisis per quadrants**
+
+- Superior esquerre:
+  - PC1 negatiu (alta humitat) i PC2 positiu (més altitud i latitud).
+  - Trobem punts de colors blavosos i groguencs.
+  - Zones de muntanya o del nord en dies humits o tapats.
+  
+- Inferior esquerre:
+  - PC1 negatiu (alta humitat) i PC2 negatiu (baixa altitud i latitud).
+  - Colors groguencs, que corresponen a temperatures moderades.
+  - Zones litorals o planes del sud amb humitat.
+  
+- Superior dret:
+  - PC1 positiu (molt sol i vent) i PC2 positiu (alta muntanya i nord).
+  - Trobem aquí la màxima concentració de punts blaus, per tant les temperatures es desplomen.
+  - Alta muntanya en dies clars i ventosos, on fa més fred.
+
+- Inferior dret:
+  - PC1 positiu (sol i vent) i PC2 negatiu (zones baixes i sud).
+  - Trobem aquí les temperatures més altes.
+  - Són les zones més planes i del sud en dies assolellats i secs.
+  
+
+**Gràfic Biplot**
+
+```{r}
+# Biplot de les variables i les observacions
+fviz_pca_biplot(pca_resultat, 
+                label = "var",              
+                col.var = "black",          
+                col.ind = df_pca$`TM °C`,
+                gradient.cols = c("cadetblue3", "bisque2", "salmon"),
+                repel = TRUE,
+                title = "Relació entre variables principals i la temperatura")
+
+```
+
+El *biplot* mostra com les variables influeixen en els dos primers eixos, explicant conjuntament gairebé un 50% de la variabilitat: 25.4% el PC1 i 24% el PC2 respectivament. Corrobora els anàlisis prèvis.
+
+- Eix PC1: Mostra el contrast entre la humitat i la radiació/vent. La fletxa de HRM apunta a l'esquerra, oposada a RS i VVX, que apunten a la dreta. Això indica que els dies assolellats i ventosos solen ser secs, mentre que els humits tenen menys radiació i vent.
+
+- Eix PC2: Aquest eix està dominat per la Latitud i l'Altitud, les fletxes apuntant cap amunt sobre l'eix. La Longitud també influeix positivament en aquest eix.
+
+- Temperatura: S'observa una transició clara de colors càlids a la part inferior del gràfic (que correspon amb baixa altitud/latitud) cap a colors blavosos a la part superior (alta altitud/latitud). 
+
 
 ## Contrast d'Hipòtesi
 
@@ -1375,22 +1444,22 @@ mediana_global_altitud
 ```
 
 Pregunta: Existeix una diferència significativa en la Humitat Relativa Mitjana
-(HRM %) entre les estacions de baixa altitud ($\le 350\text{m}$) i les de gran
-altitud ($\ge 1350\text{m}$)?
+(HRM %) entre les estacions de baixa altitud ($\le 325\text{m}$) i les d'alta
+altitud ($\ge 325\text{m}$)?
 
 - Hipòtesi Nul·la ($H_0$): La diferència real de mitjanes d'HRM entre el grup de
-  Baixa Altitud i el de Gran Altitud és igual a zero
-  ($\mu_{\text{Baixa}} - \mu_{\text{Gran}} = 0$).
+  Baixa Altitud i el d'Alta Altitud és igual a zero
+  ($\mu_{\text{Baixa}} - \mu_{\text{Alta}} = 0$).
 - Hipòtesi Alternativa ($H_a$): La diferència real de mitjanes d'HRM no és igual
-  a zero ($\mu_{\text{Baixa}} - \mu_{\text{Gran}} \neq 0$).
+  a zero ($\mu_{\text{Baixa}} - \mu_{\text{Alta}} \neq 0$).
 
 ```{r, attr.source='.numberLines'}
 dataset_grups <- dataset_numeric |>
     select(`Altitud (m)`, `HRM %`) |>
     na.omit() |>
     mutate(Grup_Altitud = case_when(
-        `Altitud (m)` <= 350 ~ "Baixa_Altitud",
-        `Altitud (m)` >= 350 ~ "Gran_Altitud",
+        `Altitud (m)` <= 325 ~ "Baixa_Altitud",
+        `Altitud (m)` >= 325 ~ "Alta_Altitud",
         TRUE ~ "Altres"
     )) |>
     filter(Grup_Altitud != "Altres")
@@ -1413,10 +1482,10 @@ print(prova_t)
   nivell de significació estàndard ($\alpha = 0.05$), es rebutja la hipòtesi
   nul·la. Per tant, establim que existeix una diferència estadísticament
   significativa en la Humitat Relativa Mitjana entre les estacions de Baixa
-  Altitud i les de Gran Altitud.
+  Altitud i les d'Alta Altitud.
 - Diferència de Mitjanes:
   - Mitjana HRM Baixa Altitud: `r format(prova_t$estimate["mean in group Baixa_Altitud"], decimal.mark = ",")`%
-  - Mitjana HRM Gran Altitud: `r format(prova_t$estimate["mean in group Gran_Altitud"], decimal.mark = ",")`%
+  - Mitjana HRM Alta Altitud: `r format(prova_t$estimate["mean in group Alta_Altitud"], decimal.mark = ",")`%
 
 # Resolució del problema
 
