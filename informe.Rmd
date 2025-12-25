@@ -1381,7 +1381,10 @@ table_missing_func <- function(missing, variable_name) {
         # Format dels nombres a la taula
         format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
         # Etiqueta de la taula
-        caption = paste("Núm. de valors NA de la variable", variable_name),
+        caption = paste(
+            "Núm. de valors NA de la variable",
+            gsub(" %", "", variable_name) # corregeix error al fitxer TeX
+        ),
         # Alineació de les columnes
         align = c("l", "r"),
         col.names = c("Codi estació", "# NA")

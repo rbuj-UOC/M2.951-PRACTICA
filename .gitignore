@@ -213,8 +213,9 @@ dataset/
 logs/
 .DS_Store
 .Rhistory
-informe.log
+informe.aux
 informe.html
+informe.log
 informe.pdf
 informe.tex
 tmp-*.tex
