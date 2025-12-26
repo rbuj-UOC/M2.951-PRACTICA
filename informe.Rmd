@@ -1489,6 +1489,29 @@ print(prova_t)
 
 # Resolució del problema
 
+
+# Contribucions
+
+```{r taula-contribucions, echo=FALSE, message=FALSE, warning=FALSE}
+dades_contribucions <- data.frame(
+  Contribucions = c(
+    "Investigació prèvia",
+    "Redacció de les respostes",
+    "Desenvolupament del codi",
+    "Participació al vídeo"
+  ),
+  Signatura = c(
+    "N.B., R.B.",
+    "N.B., R.B.",
+    "N.B., R.B.",
+    "N.B., R.B."
+  )
+)
+kable(dades_contribucions, 
+      caption = "Taula de contribucions i signatures del projecte",
+      align = "l", 
+      booktabs = TRUE)
+```
 \newpage
 
 # Annexos
