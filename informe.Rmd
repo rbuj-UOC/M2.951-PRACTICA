@@ -112,9 +112,9 @@ de dades:
 
 ```{r read-dataset, attr.source='.numberLines'}
 dataset_measurements <- fread(
-    "dataset/dataset.csv",
-    dec = ".",
-    na.strings = c("", "(s/d)"),
+    "dataset/dataset.csv", # Camí al fitxer
+    dec = ".", # Separador decimal
+    na.strings = c("", "(s/d)"), # Valors que representen NA
     data.table = FALSE # Retorna data.frame per compatibilitat
 )
 ```
@@ -278,18 +278,17 @@ unique_values_df <- dataset_measurements |>
     ) |>
     arrange(Unique_Values)
 kable(
-    unique_values_df,
+    unique_values_df, # Dades de la taula
     # Format dels nombres a la taula
     format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
     # Etiqueta de la taula
     caption = "Nombre de valors diferents per variable",
-    # Alineació de les columnes
-    align = c("l", "r"),
+    align = c("l", "r"), # Alineació de les columnes
     col.names = c("Variable", "Nombre de valors diferents")
 ) |>
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = FALSE
+        full_width = FALSE # Amplada completa desactivada
     )
 ```
 
@@ -327,8 +326,7 @@ innecessàries (`Període TU` i `date`) i s'haurà creat una nova variable
 `Data i hora`.
 
 ```{r, attr.source='.numberLines'}
-# Visualització dels tipus de dades originals
-glimpse(dataset_measurements)
+glimpse(dataset_measurements) # Mostra l'estructura del conjunt de dades inicial
 ```
 
 En la conversió del tipus de dades, s'han realitzat les següents accions:
@@ -398,8 +396,7 @@ A continuació es mostra un resum estadístic del conjunt de dades després de l
 conversió de tipus.
 
 ```{r, attr.source='.numberLines'}
-# Resum estadístic del conjunt de dades després de la conversió de tipus
-summary(dataset_measurements)
+summary(dataset_measurements) # Resum estadístic després de la conversió
 ```
 
 # Neteja de les dades
@@ -452,10 +449,10 @@ plot_boundaries_func <- function(
             ) +
             theme_minimal() +
             theme(
-                plot.title = element_text(size = 10, hjust = 0.5),
+                plot.title = element_text(size = 8, hjust = 0.5),
                 panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-                axis.title.y = element_blank(), axis.title.x = element_blank()
+                axis.title = element_blank(), axis.ticks = element_blank(),
+                axis.text = element_blank()
             ))
     }
     other_sf <- unique_stations |>
@@ -479,9 +476,9 @@ plot_boundaries_func <- function(
         )
     return(ggplot() +
         geom_sf(data = boundaries, fill = "grey95", color = "grey70", size = 0.2) +
-        geom_sf(data = other_sf, color = "green4", size = 1) +
-        geom_sf(data = missing_sf, color = "dodgerblue", size = 2) +
-        geom_sf(data = lost_sf, color = "magenta4", size = 3) +
+        geom_sf(data = other_sf, color = "green4", size = 0.5) +
+        geom_sf(data = missing_sf, color = "dodgerblue", size = 1) +
+        geom_sf(data = lost_sf, color = "magenta4", size = 1.5) +
         labs(
             title = title,
             x = "Longitud",
@@ -497,10 +494,12 @@ plot_boundaries_func <- function(
         ) +
         theme_minimal() +
         theme(
-            plot.title = element_text(size = 10, hjust = 0.5),
-            panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-            axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-            axis.title.y = element_blank(), axis.title.x = element_blank()
+            plot.title = element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.title = element_blank(),
+            axis.ticks = element_blank(),
+            axis.text = element_blank()
         ))
 }
 # Obté la grafica amb els límits de Catalunya
@@ -512,11 +511,6 @@ p1 <- plot_boundaries_func(
 p2 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions meteorològiques (comarques)"
-)
-# Obté la grafica amb els límits dels municipis de Catalunya
-p2 <- plot_boundaries_func(
-    administration = "municipis",
-    title = "Estacions meteorològiques (municipis)"
 )
 # Mostra les dues gràfiques en una sola figura
 grid.arrange(p1, p2, ncol = 2)
@@ -539,8 +533,8 @@ aggr(dataset_measurements,
 )
 ```
 
-Les variables següents no tenen valors perduts, amb un percentatge de valors
-perduts igual a $0.00000000$:
+Les variables amb un percentatge de valors perduts igual a $0.00000000$ no tenen
+valors perduts:
 
 ```{r, echo=FALSE}
 # Mostra una taula amb les variables que no tenen valors perduts
@@ -556,11 +550,10 @@ missing_values_none <- dataset_measurements |>
 missing_values_none
 ```
 
-En la següent gràfica i taula es mostra el recompte de valors no disponibles per
-variable. Anteriorment ja s'ha vist el percentatge de valors perduts $>0$.
-
-```{r, echo=FALSE, fig.align='center'}
-# Crea un dataset sense les variables de missing_values_none
+```{r, echo=FALSE, fig.align='center', eval = FALSE}
+# En la següent gràfica i taula es mostra el recompte de valors no disponibles
+# per variable. Anteriorment ja s'ha vist el percentatge de valors perduts
+# $>0$.
 dataset_na_measurements <- dataset_measurements |>
     select(-all_of(missing_values_none))
 missing_values_df <- dataset_na_measurements |>
@@ -587,18 +580,17 @@ ggplot(
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval = FALSE}
 # Taula amb el recompre de valors no disponibles sense les variables que
 # no en tenen
 kable(
-    missing_values_df,
+    missing_values_df, # Dades de la taula
     # Format dels nombres a la taula
     format.args = list(decimal.mark = ",", big.mark = ".", digits = 2),
     # Etiqueta de la taula
     caption = "Recompte de valors no disponibles per variable",
-    # Alineació de les columnes
-    align = c("l", "r"),
-    col.names = c("Variable", "# NA")
+    align = c("l", "r"), # Alineació de les columnes
+    col.names = c("Variable", "# NA") # Noms de les columnes
 ) |>
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
@@ -612,7 +604,7 @@ correlacionada que pugui ajudar en la imputació dels valors perduts. S'exclouen
 les variables categòriques i les variables que tenen més del 20% de valors
 perduts.
 
-```{r, echo=FALSE, fig.align='center'}
+```{r, echo=FALSE, fig.align='center', fig.height=2}
 dataset_measurements_cor <- dataset_measurements |>
     select(
         `Altitud (m)`,
@@ -632,14 +624,18 @@ correlation_matrix <- cor(
 )
 # Gràfica de la matriu de correlació
 corrplot(
-    correlation_matrix,
-    method = "color",
-    type = "upper",
-    tl.col = "black",
-    tl.srt = 45,
-    diag = FALSE,
-    title = "Matriu de correlació de les variables",
-    mar = c(0, 0, 1, 0)
+    correlation_matrix, # matriu de correlació
+    method = "color", # tipus de gràfica
+    type = "upper", # només mostra la meitat superior
+    tl.col = "black", # color de les etiquetes
+    tl.srt = 45, # gira les etiquetes
+    tl.cex = 0.4, # redueix la mida de les etiquetes
+    cl.cex = 0.4, # redueix la mida de la barra de colors
+    title.cex = 0.4, # redueix la mida del títol
+    legend.cex = 0.4, # redueix la mida de la llegenda
+    diag = FALSE, # no mostrar la diagonal
+    title = "Matriu de correlació de les variables", # títol de la gràfica
+    mar = c(0, 0, 1, 0) # marges de la gràfica
 )
 ```
 
@@ -700,7 +696,12 @@ plot_missing_sc_func <- function(
                 y = "# NA (escala logarítmica)"
             ) +
             theme_minimal() +
-            theme(axis.text.x = element_text(angle = 45, hjust = 1))
+            theme(
+                axis.title = element_text(size = 9),
+                plot.title = element_text(size = 10),
+                axis.axis.text.y = element_text(size = 8),
+                axis.text.x = element_text(angle = 45, hjust = 1, size = 8)
+            )
     } else {
         ggplot(
             missing_summary,
@@ -716,7 +717,12 @@ plot_missing_sc_func <- function(
                 y = "# valors no disponibles"
             ) +
             theme_minimal() +
-            theme(axis.text.x = element_text(angle = 45, hjust = 1))
+            theme(
+                axis.title = element_text(size = 9),
+                plot.title = element_text(size = 10),
+                axis.axis.text.y = element_text(size = 8),
+                axis.text.x = element_text(angle = 45, hjust = 1, size = 8)
+            )
     }
 }
 
@@ -798,9 +804,9 @@ table_missing_func <- function(missing, variable_name) {
 missing_ppt <- create_summary_func(variable_name = "PPT mm")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable PPT mm",
     missing_summary = missing_ppt,
@@ -808,25 +814,21 @@ plot_boundaries_func(
         variable_name = "PPT mm", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable PPT mm per
 # estació
-plot_missing_sc_func(missing_summary = missing_ppt, variable_name = "PPT mm")
+p2 <- plot_missing_sc_func(
+    missing_summary = missing_ppt, variable_name = "PPT mm"
+)
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
-Taula del recompte de valors perduts:
-
 ```{r, echo=FALSE, attr.source='.numberLines'}
-# Taula del recompte de valors perduts de la variable PPT mm per estació
+# Taula del recompte de valors perduts
 table_missing_func(missing_ppt, "PPT mm")
 ```
 
-Gràfiques dels valors perduts.
-
 ```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
-# Mostra les gràfiques per parelles
+# Gràfiques dels valors perduts
 plot_paired_func(missing = missing_ppt, variable_name = "PPT mm")
 ```
 
@@ -839,7 +841,7 @@ missing_tm <- create_summary_func(variable_name = "TM °C")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable TM °C",
     missing_summary = missing_tm,
@@ -847,12 +849,10 @@ plot_boundaries_func(
         variable_name = "TM °C", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable TM ºC per
 # estació
-plot_missing_sc_func(missing_summary = missing_tm, variable_name = "TM °C")
+p2 <- plot_missing_sc_func(missing_summary = missing_tm, variable_name = "TM °C")
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
@@ -878,7 +878,7 @@ missing_hrm <- create_summary_func(variable_name = "HRM %")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable HRM %",
     missing_summary = missing_hrm,
@@ -886,12 +886,10 @@ plot_boundaries_func(
         variable_name = "HRM %", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable HRM % per
 # estació
-plot_missing_sc_func(missing_summary = missing_hrm, variable_name = "HRM %")
+p2 <- plot_missing_sc_func(missing_summary = missing_hrm, variable_name = "HRM %")
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
@@ -917,7 +915,7 @@ missing_gn <- create_summary_func(variable_name = "GN cm")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable GN cm",
     missing_summary = missing_gn,
@@ -925,14 +923,12 @@ plot_boundaries_func(
         variable_name = "GN cm", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable GN cm per
 # estació
-plot_missing_sc_func(
+p2 <- plot_missing_sc_func(
     missing_summary = missing_gn, variable_name = "GN cm", log_scale = TRUE
 )
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
@@ -958,7 +954,7 @@ missing_pm <- create_summary_func(variable_name = "PM hPa")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable PM hPa",
     missing_summary = missing_pm,
@@ -966,14 +962,12 @@ plot_boundaries_func(
         variable_name = "PM hPa", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable PM hPa per
 # estació
-plot_missing_sc_func(
+p2 <- plot_missing_sc_func(
     missing_summary = missing_pm, variable_name = "PM hPa", log_scale = TRUE
 )
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
@@ -999,7 +993,7 @@ missing_vvm <- create_summary_func(variable_name = "VVM (10 m) km/h")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVM (10 m) km/h",
     missing_summary = missing_vvm,
@@ -1007,14 +1001,12 @@ plot_boundaries_func(
         variable_name = "VVM (10 m) km/h", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable VVM (10 m)
 # km/h per estació
-plot_missing_sc_func(
+p2 <- plot_missing_sc_func(
     missing_summary = missing_vvm, variable_name = "VVM (10 m) km/h", log_scale = TRUE
 )
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
@@ -1040,7 +1032,7 @@ missing_vvx <- create_summary_func(variable_name = "VVX (10 m) km/h")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable VVX (10 m) km/h",
     missing_summary = missing_vvx,
@@ -1048,14 +1040,12 @@ plot_boundaries_func(
         variable_name = "VVX (10 m) km/h", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable VVX (10 m)
 # km/h per estació
-plot_missing_sc_func(
+p2 <- plot_missing_sc_func(
     missing_summary = missing_vvx, variable_name = "VVX (10 m) km/h", log_scale = TRUE
 )
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
@@ -1081,7 +1071,7 @@ missing_rs <- create_summary_func(variable_name = "RS W/m2")
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
-plot_boundaries_func(
+p1 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions amb valors perduts a la variable RS W/m2",
     missing_summary = missing_rs,
@@ -1089,14 +1079,12 @@ plot_boundaries_func(
         variable_name = "RS W/m2", missing = FALSE
     )
 )
-```
-
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
 # Gràfica de barres del recompte de valors perduts de la variable RS W/m2 per
 # estació
-plot_missing_sc_func(
+p2 <- plot_missing_sc_func(
     missing_summary = missing_rs, variable_name = "RS W/m2", log_scale = TRUE
 )
+grid.arrange(p1, p2, ncol = 2, widths = c(1, 2), heights = c(2, 1))
 ```
 
 Taula del recompte de valors perduts:
