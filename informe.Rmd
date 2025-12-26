@@ -1489,6 +1489,17 @@ print(prova_t)
 
 # Resolució del problema
 
+- El nostre model de regressió lineal final aconsegueix explicar el 48% de la variabilitat de la temperatura mitjana, la qual cosa implica que gairebé la meitat dels canvis de temperatura es poden predir amb les variables seleccionades. D'una banda, l'altitud i la latitud són els factors amb més pes negatiu sobre la temperatura en contraposició a la radiació solar i a les variables temporals, que tenen un impacte positiu.
+
+- Hem realitzat un PCA, que ha aconseguit resumir set variables en dos components principals que expliquen el 44,4% de la variància total. El PC1 (25%) correspon a una component meteorològica, en contraposició al PC2 (24%), que s'identifica com una de geogràfica.
+
+- També ens hem preguntat per la humitat en altituds altes i baixes. Per fer-ho hem fet un Test T de Welch, que ha demostrat que les estacions situades a baixa altitud ($\le 325$ m) presenten una humitat mitjana significativament més alta, amb un valor del 80%. En canvi, les estacions d'alta altitud ($> 325$ m) tenen una humitat mitjana del 73%.
+
+# Codi
+Accés al repositori amb el codi disponible al següent enllaç: https://github.com/norabolivar/PRACT1_Tipologia.git 
+
+# Vídeo
+L'enllaç al vídeo: 
 
 # Contribucions
 
