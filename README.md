@@ -175,9 +175,10 @@ amb les següents ordres:
 ```sh
 conda create --prefix=./.conda
 conda activate ./.conda
-conda install pip pandas selenium r-base=4.5.2 r-car r-corrplot r-deoptimr \
-    r-ggplot2 r-dplyr r-kableextra r-knitr r-languageserver r-laeken r-ranger \
-    r-rmarkdown r-robustbase r-sp r-tidyverse r-vcd r-xgboost
+conda install pip pandas selenium r-base=4.5.2 r-car r-corrplot r-factoextra \
+    r-ggplot2 r-dplyr r-kableextra r-knitr r-languageserver r-rmarkdown \
+    r-tidyverse \
+    r-deoptimr r-laeken r-ranger r-robustbase r-sp r-vcd r-xgboost
 Rscript -e 'install.packages("VIM", repos="https://cloud.r-project.org")'
 ```
 
