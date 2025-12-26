@@ -3,17 +3,17 @@ title: Pràctica 2 - neteja i anàlisi de les dades
 author: "Nora Bolivar, Robert Buj"
 date: "07/01/2025"
 output:
-  html_document:
-    toc: true
-    toc_depth: 2
-    number_sections: true
-    highlight: tango
   pdf_document:
     includes:
       in_header: header.tex
     toc: true
     toc_depth: 2
     number_sections: true
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    highlight: tango
 toc-title: "Taula de continguts"
 ---
 
@@ -150,9 +150,6 @@ l'anàlisi de les dades, no obstant això no s'eliminen les variables
 innecessaries fins després d'haver fet la imputació dels valors perduts, ja que
 poden ser útils per a la imputació.
 
-Les dades meteorològiques es van recollir en un període d'un any, des del 4 de
-desembre de 2024 fins al 3 de desembre de 2025.
-
 ```{r, echo=FALSE}
 # Nombre d'estacions meteorològiques
 n_stations <- n_distinct(dataset_measurements$`Estació [Codi]`)
@@ -164,12 +161,12 @@ n_observations_per_day <- n_distinct(dataset_measurements$`Període TU`)
 max_rows_per_station <- n_days * n_observations_per_day
 ```
 
-El conjunt de dades inicial conté les dades meteorològiques de
-`r format(n_stations, big.mark = ".")` estacions meteorològiques, durant
-`r format(n_days, big.mark = ".")` dies, amb
-`r format(n_observations_per_day, big.mark = ".")` observacions per dia.
-
-Una estació estació meteorològica com a molt pot tenir
+Les dades meteorològiques es van recollir en un període d'un any, des del 4 de
+desembre de 2024 fins al 3 de desembre de 2025. El conjunt de dades recull les
+dades meteorològiques de `r format(n_stations, big.mark = ".")` estacions
+meteorològiques, durant `r format(n_days, big.mark = ".")` dies, amb
+`r format(n_observations_per_day, big.mark = ".")` observacions per dia. Per
+tant, una estació estació meteorològica com a molt pot tenir
 `r format(max_rows_per_station, big.mark = ".")` registres (files) o una
 variable d'una estació pot tenir com a molt
 `r format(max_rows_per_station, big.mark = ".")` observacions, corresponents a
@@ -187,15 +184,14 @@ stations_with_full_data <- dataset_measurements |>
 n_stations_with_full_data <- nrow(stations_with_full_data)
 ```
 
-Hi ha `r format(n_stations_with_full_data, big.mark = ".")` estacions
-meteorològiques que tenen exactament
-`r format(max_rows_per_station, big.mark = ".")` files.
+No totes les estacions tenen el matexi nombre de registres, de fet hi ha
+`r format(n_stations_with_full_data, big.mark = ".")` estacions meteorològiques
+que tenen exactament `r format(max_rows_per_station, big.mark = ".")` files. Hi
+ha diversos motius que expliquen aquest fet, com ara problemes tècnics en les
+estacions, errors en la transmissió de dades, o que les estacions es van donar
+d'alta després de l'inici del període de recollida de dades.
 
-En la següent taula es mostren les estacions meteorològiques que es van donar
-d'alta després del 4 de desembre de 2024, és a dir, estacions que no tenen totes
-les files en el conjunt de dades.
-
-```{r new-stations, attr.source='.numberLines'}
+```{r new-stations, echo=FALSE, attr.source='.numberLines'}
 # Converteix la variable Data alta a format data
 dataset_measurements$`data_alta` <- as.Date(
     dataset_measurements$`Data alta`,
@@ -227,18 +223,22 @@ dataset_measurements <- dataset_measurements |>
     select(-data_alta)
 ```
 
-En la taula següent es mosta un resum del nombre de registres de les estacions
-meteorològiques restants, on per temes d'espai, només es mostren les 5 primers
-i les últimes 5 estacions, ordenades per nombre de registres.
-
 ```{r, echo=FALSE}
 # Taula amb les estacions meteorològiques que no tenen totes les files,
 # ordenades de major a menor, i mostrant les primeres i últimes 5
 stations_incomplete_data <- dataset_measurements |>
     group_by(`Estació [Codi]`) |>
     summarise(Count = n()) |>
-    filter(Count < max_rows_per_station) |>
+    filter(Count < max_rows_per_station & !`Estació [Codi]` %in% new_stations$`Estació [Codi]`) |>
     arrange(desc(Count))
+```
+
+En la taula següent es mosta un resum del nombre de registres de les estacions
+meteorològiques restants (`r nrow(stations_incomplete_data)`), on per temes
+d'espai, només es mostren les 5 primers i les últimes 5, ordenades per nombre de
+registres.
+
+```{r, echo=FALSE}
 stations_incomplete_data_display <- rbind(
     head(stations_incomplete_data, 5),
     tail(stations_incomplete_data, 5)
@@ -508,15 +508,8 @@ p1 <- plot_boundaries_func(
     administration = "catalunya",
     title = "Estacions meteorològiques (Catalunya)"
 )
-# Obté la grafica amb els límits de les provincies de Catalunya
-p2 <- plot_boundaries_func(
-    administration = "provincies",
-    title = "Estacions meteorològiques (provincies)"
-)
-# Mostra les dues gràfiques en una sola figura
-grid.arrange(p1, p2, ncol = 2)
 # Obté la grafica amb els límits de les comarques de Catalunya
-p1 <- plot_boundaries_func(
+p2 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions meteorològiques (comarques)"
 )
@@ -655,10 +648,10 @@ per ordre de més a menys valors perduts. En el recompte s'han exclòs les
 estacions que tenen gairebé tots els valors perduts (>17.000) o bé no tenen
 cap valor perdut (0).
 
-Les funcions següents són útils per obtenir i mostrar els valors perduts de les
-variables:
+```{r, echo=FALSE, attr.source='.numberLines'}
+# Les funcions següents són útils per obtenir i mostrar els valors perduts de
+# les variables.
 
-```{r, attr.source='.numberLines'}
 # Funció per obtenir els valors perduts
 create_summary_func <- function(
   dataset = dataset_measurements, variable_name,
@@ -805,7 +798,7 @@ table_missing_func <- function(missing, variable_name) {
 missing_ppt <- create_summary_func(variable_name = "PPT mm")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -825,14 +818,14 @@ plot_missing_sc_func(missing_summary = missing_ppt, variable_name = "PPT mm")
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable PPT mm per estació
 table_missing_func(missing_ppt, "PPT mm")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_ppt, variable_name = "PPT mm")
 ```
@@ -844,7 +837,7 @@ plot_paired_func(missing = missing_ppt, variable_name = "PPT mm")
 missing_tm <- create_summary_func(variable_name = "TM °C")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -864,14 +857,14 @@ plot_missing_sc_func(missing_summary = missing_tm, variable_name = "TM °C")
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable TM ºC per estació
 table_missing_func(missing_tm, "TM °C")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_tm, variable_name = "TM °C")
 ```
@@ -883,7 +876,7 @@ plot_paired_func(missing = missing_tm, variable_name = "TM °C")
 missing_hrm <- create_summary_func(variable_name = "HRM %")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -903,14 +896,14 @@ plot_missing_sc_func(missing_summary = missing_hrm, variable_name = "HRM %")
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable HRM % per estació
 table_missing_func(missing_hrm, "HRM %")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_hrm, variable_name = "HRM %")
 ```
@@ -922,7 +915,7 @@ plot_paired_func(missing = missing_hrm, variable_name = "HRM %")
 missing_gn <- create_summary_func(variable_name = "GN cm")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -944,14 +937,14 @@ plot_missing_sc_func(
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable GN cm per estació
 table_missing_func(missing_gn, "GN cm")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_gn, variable_name = "GN cm")
 ```
@@ -963,7 +956,7 @@ plot_paired_func(missing = missing_gn, variable_name = "GN cm")
 missing_pm <- create_summary_func(variable_name = "PM hPa")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -985,14 +978,14 @@ plot_missing_sc_func(
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable PM hPa per estació
 table_missing_func(missing_pm, "PM hPa")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_pm, variable_name = "PM hPa")
 ```
@@ -1004,7 +997,7 @@ plot_paired_func(missing = missing_pm, variable_name = "PM hPa")
 missing_vvm <- create_summary_func(variable_name = "VVM (10 m) km/h")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -1026,14 +1019,14 @@ plot_missing_sc_func(
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable VVM (10 m) km/h per estació
 table_missing_func(missing_vvm, "VVM (10 m) km/h")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_vvm, variable_name = "VVM (10 m) km/h")
 ```
@@ -1045,7 +1038,7 @@ plot_paired_func(missing = missing_vvm, variable_name = "VVM (10 m) km/h")
 missing_vvx <- create_summary_func(variable_name = "VVX (10 m) km/h")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -1067,14 +1060,14 @@ plot_missing_sc_func(
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable VVX (10 m) km/h per estació
 table_missing_func(missing_vvx, "VVX (10 m) km/h")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_vvx, variable_name = "VVX (10 m) km/h")
 ```
@@ -1086,7 +1079,7 @@ plot_paired_func(missing = missing_vvx, variable_name = "VVX (10 m) km/h")
 missing_rs <- create_summary_func(variable_name = "RS W/m2")
 ```
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 plot_boundaries_func(
     administration = "comarques",
@@ -1108,14 +1101,14 @@ plot_missing_sc_func(
 
 Taula del recompte de valors perduts:
 
-```{r, attr.source='.numberLines'}
+```{r, echo=FALSE, attr.source='.numberLines'}
 # Taula del recompte de valors perduts de la variable RS W/m2 per estació
 table_missing_func(missing_rs, "RS W/m2")
 ```
 
 Gràfiques dels valors perduts.
 
-```{r, attr.source='.numberLines', fig.height=2, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center'}
 # Mostra les gràfiques per parelles
 plot_paired_func(missing = missing_rs, variable_name = "RS W/m2")
 ```
@@ -1404,7 +1397,7 @@ model de regressió lineal amb totes les variables numèriques i després veurem
 la multicol·linealitat entre les variables. Després crearem un segon model de
 regressió lineal amb menys predictors per evitar la multicol·linealitat. 
 
-```{r}
+```{r, attr.source='.numberLines'}
 # Dataset numèric, afegim mes i hora
 dataset_numeric <- dataset_measurements |>
     select(
@@ -1452,7 +1445,7 @@ Perquè les variables no presentin multicol·linealitat han de ser inferiors a 5
 Per tant, farem un segon model de regressió lineal amb menys predictors:
 eliminem la neu, vents (molts NA) i longitud.
 
-```{r, , attr.source='.numberLines'}
+```{r, attr.source='.numberLines'}
 # Creació del model de regressió més simple
 model_regressio_simple <- lm(
     `TM °C` ~ `Altitud (m)` + Latitud + Longitud + `HRM %` + `RS W/m2` +
@@ -1631,7 +1624,7 @@ de factors climàtics.
 
 Primer projectem la Temperatura Mitjana sobre els PCA1 i PCA2.
 
-```{r}
+```{r, attr.source='.numberLines'}
 # Gràfic d'estacions per la Temperatura Mitjana
 fviz_pca_ind(pca_resultat,
     geom.ind = "point",
@@ -1685,7 +1678,7 @@ Aquest eix és el que determina la temperatura segons la geografia: a més alça
 
 **Gràfic Biplot**
 
-```{r}
+```{r, attr.source='.numberLines'}
 # Biplot de les variables i les observacions
 fviz_pca_biplot(pca_resultat,
     label = "var",
@@ -1796,4 +1789,3 @@ kable(dades_contribucions,
     booktabs = TRUE
 )
 ```
-\newpage
