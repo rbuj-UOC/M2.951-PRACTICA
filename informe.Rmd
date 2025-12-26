@@ -145,6 +145,11 @@ Al final d'aquest apartat, s'hauran eliminat les variables innecessàries
 (`Estació [Codi]`, `code`, `Data baixa` i `Estat actual`) i s'hauran creat dues
 noves variables (`Nom estació` i `Codi estació`).
 
+El conjunt de dades final només tindrà les variables necessàries per fer
+l'anàlisi de les dades, no obstant això no s'eliminen les variables
+innecessaries fins després d'haver fet la imputació dels valors perduts, ja que
+poden ser útils per a la imputació.
+
 Les dades meteorològiques es van recollir en un període d'un any, des del 4 de
 desembre de 2024 fins al 3 de desembre de 2025.
 
@@ -1119,7 +1124,28 @@ p5 <- ggplot(
 grid.arrange(p1, p2, p3, p4, p5, nrow = 1)
 ```
 
-## Altres mètodes de neteja
+## Eliminació de variables innecessaries
+
+```{r, attr.source='.numberLines'}
+# Eliminem les variables innecessaries del dataset
+dataset_measurements_da <- dataset_measurements[, c(
+    "Codi estació", "Data i hora", "Altitud (m)", "Longitud", "Latitud",
+    "PPT mm", "TM °C", "HRM %", "RS W/m2", "PM hPa", "VVM (10 m) km/h",
+    "VVX (10 m) km/h", "GN cm"
+)]
+# Desem el conjunt de dades netejat en un fitxer CSV
+write.csv(
+    dataset_measurements_da,
+    file = "dataset/dataset_data_analysis.csv",
+    append = FALSE, # no afegim al final del fitxer
+    na = "NA", # com es representen els valors perduts
+    sep = ",", # separador de camps
+    dec = ".", # separador decimal
+    row.names = FALSE, # no escrivim els noms de les files
+    fileEncoding = "UTF-8", # codificació del fitxer
+    eol = "\n" # final de línia
+)
+```
 
 # Anàlisi de les dades
 
@@ -1363,12 +1389,13 @@ Primer projectem la Temperatura Mitjana sobre els PCA1 i PCA2.
 ```{r}
 # Gràfic d'estacions per la Temperatura Mitjana
 fviz_pca_ind(pca_resultat,
-             geom.ind = "point",             
-             col.ind = df_pca$`TM °C`,       # Pintem segons la temperatura
-             gradient.cols = c("cadetblue3", "bisque2", "salmon"), # Blau (fred) a Vermell (calent)
-             legend.title = "Temp. Mitjana (°C)",
-             title = "Mapa climàtic: PC1 (meteorologia) vs PC2 (geografia)") +
-  theme_minimal()
+    geom.ind = "point",
+    col.ind = df_pca$`TM °C`, # Pintem segons la temperatura
+    gradient.cols = c("cadetblue3", "bisque2", "salmon"), # Blau (fred) a Vermell (calent)
+    legend.title = "Temp. Mitjana (°C)",
+    title = "Mapa climàtic: PC1 (meteorologia) vs PC2 (geografia)"
+) +
+    theme_minimal()
 ```
 
 **PCA1**
@@ -1415,14 +1442,14 @@ Aquest eix és el que determina la temperatura segons la geografia: a més alça
 
 ```{r}
 # Biplot de les variables i les observacions
-fviz_pca_biplot(pca_resultat, 
-                label = "var",              
-                col.var = "black",          
-                col.ind = df_pca$`TM °C`,
-                gradient.cols = c("cadetblue3", "bisque2", "salmon"),
-                repel = TRUE,
-                title = "Relació entre variables principals i la temperatura")
-
+fviz_pca_biplot(pca_resultat,
+    label = "var",
+    col.var = "black",
+    col.ind = df_pca$`TM °C`,
+    gradient.cols = c("cadetblue3", "bisque2", "salmon"),
+    repel = TRUE,
+    title = "Relació entre variables principals i la temperatura"
+)
 ```
 
 El *biplot* mostra com les variables influeixen en els dos primers eixos, explicant conjuntament gairebé un 50% de la variabilitat: 25.4% el PC1 i 24% el PC2 respectivament. Corrobora els anàlisis prèvis.
@@ -1505,23 +1532,24 @@ L'enllaç al vídeo:
 
 ```{r taula-contribucions, echo=FALSE, message=FALSE, warning=FALSE}
 dades_contribucions <- data.frame(
-  Contribucions = c(
-    "Investigació prèvia",
-    "Redacció de les respostes",
-    "Desenvolupament del codi",
-    "Participació al vídeo"
-  ),
-  Signatura = c(
-    "N.B., R.B.",
-    "N.B., R.B.",
-    "N.B., R.B.",
-    "N.B., R.B."
-  )
+    Contribucions = c(
+        "Investigació prèvia",
+        "Redacció de les respostes",
+        "Desenvolupament del codi",
+        "Participació al vídeo"
+    ),
+    Signatura = c(
+        "N.B., R.B.",
+        "N.B., R.B.",
+        "N.B., R.B.",
+        "N.B., R.B."
+    )
 )
-kable(dades_contribucions, 
-      caption = "Taula de contribucions i signatures del projecte",
-      align = "l", 
-      booktabs = TRUE)
+kable(dades_contribucions,
+    caption = "Taula de contribucions i signatures del projecte",
+    align = "l",
+    booktabs = TRUE
+)
 ```
 \newpage
 
