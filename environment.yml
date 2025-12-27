@@ -9,6 +9,7 @@ dependencies:
   - selenium
   - r-base=4.5.2
   - r-car
+  - r-caret
   - r-corrplot
   - r-dplyr
   - r-factoextra
@@ -20,6 +21,7 @@ dependencies:
   - r-knitr
   - r-rmarkdown
   - r-ranger
+  - r-rann
   - r-robustbase
   - r-sf
   - r-sp
