@@ -21,7 +21,11 @@ toc-title: "Taula de continguts"
 \newpage
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, error = FALSE, message = FALSE, cache = TRUE)
+knitr::opts_chunk$set(
+    warning = FALSE, error = FALSE, message = FALSE, cache = TRUE,
+    # Opcions per a les figures
+    fig.align = "center"
+)
 library(car)
 library(corrplot)
 library(data.table)
@@ -519,7 +523,7 @@ plot_boundaries_func <- function(
 }
 ```
 
-```{r plot-stations-on-map, echo=FALSE, fig.align='center'}
+```{r plot-stations-on-map, echo=FALSE}
 # Obté la grafica amb els límits de Catalunya
 p1 <- plot_boundaries_func(
     administration = "catalunya",
@@ -539,7 +543,7 @@ grid.arrange(p1, p2, ncol = 2)
 En la següent gràfica es mostra un mapa de calor dels valors perduts en el
 conjunt de dades.
 
-```{r missing-values-heatmap, echo=FALSE, fig.align='center', fig.height=5}
+```{r missing-values-heatmap, echo=FALSE, fig.height=5}
 aggr(dataset_measurements,
     col = c("lightblue", "red"),
     numbers = TRUE,
@@ -568,7 +572,7 @@ missing_values_none <- dataset_measurements |>
 missing_values_none
 ```
 
-```{r missing-values-count-plot, echo=FALSE, fig.align='center', eval = FALSE}
+```{r missing-values-count-plot, echo=FALSE, eval = FALSE}
 # En la següent gràfica i taula es mostra el recompte de valors no disponibles
 # per variable. Anteriorment ja s'ha vist el percentatge de valors perduts
 # $>0$.
@@ -619,7 +623,7 @@ kable(
 :::::: {.cols data-latex=""}
 
 ::: {.col data-latex="{0.35\textwidth}"}
-```{r, echo=FALSE, fig.align='center', fig.height=2}
+```{r, echo=FALSE, fig.height=2}
 dataset_measurements_cor <- dataset_measurements |>
     select(
         `Altitud (m)`,
@@ -835,12 +839,12 @@ table_missing_func <- function(missing, variable_name) {
 
 ### Valors perduts de la variable `PPT mm`
 
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
+```{r, echo=FALSE, fig.height=3}
 # Recompte de valors perduts de la variable PPT mm per estació
 missing_ppt <- create_summary_func(variable_name = "PPT mm")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -863,12 +867,12 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_ppt, "PPT mm")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_ppt, variable_name = "PPT mm")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # gràfica de la variable PPT mm del 10, 11 i  12 de juny de 2025 per l'estació YV
 ggplot(
     dataset_measurements |>
@@ -967,12 +971,12 @@ dataset_measurements$`PPT mm`[na_rows] <- 0
 
 ### Valors perduts de la variable `TM ºC`
 
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
+```{r, echo=FALSE, fig.height=3}
 # Recompte de valors perduts de la variable TM ºC per estació
 missing_tm <- create_summary_func(variable_name = "TM °C")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -993,7 +997,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_tm, "TM °C")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_tm, variable_name = "TM °C")
 ```
@@ -1002,7 +1006,7 @@ En la variable `TM °C`, s'utilitza la imputació amb interpolació estacional p
 als valors perduts, ja que aquesta tècnica és adequada per a sèries temporals
 amb patrons estacionals, com és el cas de les dades de temperatura.
 
-```{r, echo=FALSE, fig.align='center', fig.height=3, eval=TRUE}
+```{r, echo=FALSE, fig.height=3, eval=TRUE}
 p1 <- ggplot(
     dataset_measurements |>
         filter(
@@ -1043,7 +1047,7 @@ for (station in missing_tm$`Codi estació`) {
 Exemple: gràfica amb valors imputats de la variable `TM °C` per l'estació D4
 del 4 a l'11 de juny de 2025.
 
-```{r, echo=FALSE, fig.align='center', fig.height=3, eval=TRUE}
+```{r, echo=FALSE, fig.height=3, eval=TRUE}
 # gràfica dels dies amb valors perduts de la variable TM °C del dia 4 a l'11 de
 # juny de 2025 per l'estació D4 després de la imputació
 p2 <- ggplot(
@@ -1068,12 +1072,12 @@ grid.arrange(p1, p2, ncol = 1)
 
 ### Valors perduts de la variable `HRM %`
 
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
+```{r, echo=FALSE, fig.height=3}
 # Recompte de valors perduts de la variable HRM % per estació
 missing_hrm <- create_summary_func(variable_name = "HRM %")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -1094,7 +1098,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_hrm, "HRM %")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_hrm, variable_name = "HRM %")
 ```
@@ -1103,7 +1107,7 @@ En la variable `HRM %`, s'utilitza la imputació interpolació estacional per al
 valors perduts, ja que aquesta tècnica és adequada per a sèries temporals
 amb patrons estacionals, com és el cas de les dades d'humitat relativa.
 
-```{r, fig.align='center', fig.height=3, eval=TRUE, echo=FALSE}
+```{r, fig.height=3, eval=TRUE, echo=FALSE}
 # gràfica dels dies amb valors perduts de la variable HRM % del dia 5 al 12 de
 # juny de 2025 per l'estació D4 després de la imputació
 p1 <- ggplot(
@@ -1146,7 +1150,7 @@ for (station in missing_hrm$`Codi estació`) {
 Exemple: gràfica amb valors imputats de la variable `HRM %` per l'estació D4
 del 5 al 12 de juny de 2025.
 
-```{r, fig.align='center', fig.height=3, eval=TRUE, echo=FALSE}
+```{r, fig.height=3, eval=TRUE, echo=FALSE}
 # gràfica dels dies amb valors perduts de la variable HRM % del dia 5 al 12 de
 # juny de 2025 per l'estació D4 després de la imputació
 p2 <- ggplot(
@@ -1176,7 +1180,7 @@ grid.arrange(p1, p2, ncol = 1)
 missing_gn <- create_summary_func(variable_name = "GN cm")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -1199,7 +1203,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_gn, "GN cm")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_gn, variable_name = "GN cm")
 ```
@@ -1208,7 +1212,7 @@ En la variable `GN cm`, els valors perduts s'imputen mitjançant la interpolaci�
 no estacional, ja que aquesta tècnica d'imputació és adequada per a sèries
 temporals sense patrons estacionals.
 
-```{r, fig.align='center', fig.height=3, eval=TRUE, echo=FALSE}
+```{r, fig.height=3, eval=TRUE, echo=FALSE}
 # gràfica de la variable GN cm per a l'estació XK
 p1 <- ggplot(
     dataset_measurements |>
@@ -1255,7 +1259,7 @@ for (station in missing_stations_gn) {
 
 Exemple: gràfica amb valors perduts de la variable `GN cm` per l'estació XK.
 
-```{r, fig.align='center', fig.height=3, eval=TRUE, echo=FALSE}
+```{r, fig.height=3, eval=TRUE, echo=FALSE}
 # gràfica de la variable GN cm per a l'estació XK
 p2 <- ggplot(
     dataset_measurements |>
@@ -1277,12 +1281,12 @@ grid.arrange(p1, p2, ncol = 1)
 
 ### Valors perduts de la variable `PM hPa`
 
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
+```{r, echo=FALSE, fig.height=3}
 # Recompte de valors perduts de la variable PM hPa per estació
 missing_pm <- create_summary_func(variable_name = "PM hPa")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -1305,7 +1309,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_pm, "PM hPa")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_pm, variable_name = "PM hPa")
 ```
@@ -1321,7 +1325,7 @@ plot_paired_func(missing = missing_pm, variable_name = "PM hPa")
 missing_vvm <- create_summary_func(variable_name = "VVM (10 m) km/h")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -1344,7 +1348,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_vvm, "VVM (10 m) km/h")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_vvm, variable_name = "VVM (10 m) km/h")
 ```
@@ -1356,7 +1360,7 @@ plot_paired_func(missing = missing_vvm, variable_name = "VVM (10 m) km/h")
 missing_vvx <- create_summary_func(variable_name = "VVX (10 m) km/h")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -1379,19 +1383,19 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_vvx, "VVX (10 m) km/h")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_vvx, variable_name = "VVX (10 m) km/h")
 ```
 
 ### Valors perduts de la variable `RS W/m2`
 
-```{r, echo=FALSE, fig.height=3, fig.align='center'}
+```{r, echo=FALSE, fig.height=3}
 # Recompte de valors perduts de la variable RS W/m2 per estació
 missing_rs <- create_summary_func(variable_name = "RS W/m2")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=3, fig.align='center'}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=3}
 # Mostra les estacions amb valors perduts al mapa de comarques de Catalunya
 p1 <- plot_boundaries_func(
     administration = "comarques",
@@ -1414,7 +1418,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1, 2))
 table_missing_func(missing_rs, "RS W/m2")
 ```
 
-```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, fig.align='center', eval=FALSE}
+```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_rs, variable_name = "RS W/m2")
 ```
@@ -1426,7 +1430,7 @@ No s'han detectat valors anòmals en les variables numèriques.
 Les velocitats del vent, les direccions del vent i les temperatures no presenten
 valors extrems segons els criteris establerts.
 
-```{r, echo=FALSE, fig.height=3, fig.width=4, fig.align='center'}
+```{r, echo=FALSE, fig.height=3, fig.width=4}
 # diagrama de caixa de totes les variables numèriques amb velocitats del vent
 numeric_vars <- c(
     "VVM (2 m) km/h", "VVM (6 m) km/h", "VVM (10 m) km/h",
@@ -1505,7 +1509,7 @@ grid.arrange(p1, p2, p3, ncol = 3, widths = c(2, 1, 1))
 Les variables geogràfiques no presenten valors extrems segons els criteris
 establerts.
 
-```{r, echo=FALSE, fig.align='center', fig.height=3, fig.width=2}
+```{r, echo=FALSE, fig.height=3, fig.width=2}
 # diagrama de caixa de totes les variables numèriques geogràfiques
 p1 <- ggplot(
     dataset_measurements,
@@ -1570,7 +1574,7 @@ grid.arrange(p1, p2, p3, nrow = 1)
 Les altres variables numèriques no presenten valors extrems segons els criteris
 establerts.
 
-```{r, echo=FALSE, fig.align='center', fig.height=3, fig.width=4}
+```{r, echo=FALSE, fig.height=3, fig.width=4}
 p1 <- ggplot(
     dataset_measurements[!is.na(dataset_measurements$`GN cm`), ],
     aes(y = `GN cm`)
@@ -1852,7 +1856,7 @@ pca_resultat$rotation
 :::::: {.cols data-latex=""}
 
 ::: {.col data-latex="{0.25\textwidth}"}
-```{r, echo=FALSE, fig.align='center', fig.height=2, fig.width=2}
+```{r, echo=FALSE, fig.height=2, fig.width=2}
 # Gràfica de Scree Plot
 scree_data <- data.frame(
     Component = 1:length(pca_resultat$sdev),
