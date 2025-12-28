@@ -23,26 +23,30 @@ toc-title: "Taula de continguts"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-    warning = FALSE, error = FALSE, message = FALSE, cache = TRUE,
+    warning = FALSE, error = FALSE, message = FALSE,
+    cache = TRUE, # Activa la memòria cau
+    cache.lazy = FALSE, # Desactiva la càrrega diferida de la memòria cau
     # Opcions per a les figures
     fig.align = "center"
 )
-library(car)
-library(corrplot)
-library(data.table)
-library(dplyr)
-library(factoextra)
-library(forecast)
-library(ggplot2)
-library(gridExtra)
-library(kableExtra)
-library(knitr)
-library(lubridate)
-library(tidyr)
-library(sf)
-library(stats)
-library(VIM)
-library(zoo)
+suppressPackageStartupMessages({
+    library(car)
+    library(corrplot)
+    library(data.table)
+    library(dplyr)
+    library(factoextra)
+    library(forecast)
+    library(ggplot2)
+    library(gridExtra)
+    library(kableExtra)
+    library(knitr)
+    library(lubridate)
+    library(tidyr)
+    library(sf)
+    library(stats)
+    library(VIM)
+    library(zoo)
+})
 ```
 
 # Descripció del dataset
@@ -544,7 +548,7 @@ grid.arrange(p1, p2, ncol = 2)
 Abans de tot, eliminen els valors inicials i finals de les estacions quan són
 NA.
 
-```{r, attr.source='.numberLines'}
+```{r, attr.source='.numberLines', echo=FALSE}
 station_codes <- dataset_measurements$`Codi estació` |> unique()
 # Elimina els valors NA inicials per a cadascuna de les estacions
 for (code in station_codes) {
@@ -967,7 +971,7 @@ table_missing_func(missing_ppt, "PPT mm")
 plot_paired_func(missing = missing_ppt, variable_name = "PPT mm")
 ```
 
-```{r, echo=FALSE, fig.height=3, eval=TRUE}
+```{r, echo=FALSE, fig.height=2, eval=TRUE}
 # Comparació de valors reals i imputats de la variable PPT mm per l'estació YV
 station_data <- dataset_measurements |>
     filter(`Codi estació` == "YV") |>
@@ -1061,7 +1065,7 @@ En la variable `TM °C`, s'utilitza la imputació amb interpolació estacional p
 als valors perduts, ja que aquesta tècnica és adequada per a sèries temporals
 amb patrons estacionals, com és el cas de les dades de temperatura.
 
-```{r, echo=FALSE, fig.height=3, eval=TRUE}
+```{r, echo=FALSE, fig.height=2, eval=TRUE}
 # Comparació de valors reals i imputats de la variable TM °C per l'estació D4
 station_data <- dataset_measurements |>
     filter(`Codi estació` == "D4") |>
@@ -1100,7 +1104,14 @@ ggplot(
         color = "Llegenda"
     ) +
     scale_color_manual(values = c("Real" = "purple4", "Imputada" = "orange")) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
 ```
 
 ```{r, attr.source='.numberLines', echo=FALSE}
@@ -1162,7 +1173,7 @@ En la variable `HRM %`, s'utilitza la imputació interpolació estacional per al
 valors perduts, ja que aquesta tècnica és adequada per a sèries temporals
 amb patrons estacionals, com és el cas de les dades d'humitat relativa.
 
-```{r, echo=FALSE, fig.height=3, eval=TRUE}
+```{r, echo=FALSE, fig.height=2, eval=TRUE}
 # Comparació de valors reals i imputats de la variable HRM % per l'estació D4
 station_data <- dataset_measurements |>
     filter(`Codi estació` == "D4") |>
@@ -1201,7 +1212,14 @@ ggplot(
         color = "Llegenda"
     ) +
     scale_color_manual(values = c("Real" = "purple4", "Imputada" = "orange")) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
 ```
 
 ```{r, attr.source='.numberLines', echo=FALSE}
@@ -1265,7 +1283,7 @@ En la variable `GN cm`, els valors perduts s'imputen mitjançant la interpolaci�
 no estacional, ja que aquesta tècnica d'imputació és adequada per a sèries
 temporals sense patrons estacionals.
 
-```{r, echo=FALSE, fig.height=3, eval=TRUE}
+```{r, echo=FALSE, fig.height=2, eval=TRUE}
 # Comparació de valors reals i imputats de la variable GN cm per l'estació XK
 station_data <- dataset_measurements |>
     filter(`Codi estació` == "XK") |>
@@ -1304,7 +1322,14 @@ ggplot(
         color = "Llegenda"
     ) +
     scale_color_manual(values = c("Real" = "purple4", "Imputat" = "orange")) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
 ```
 
 ```{r imputed-snow, attr.source='.numberLines', echo=FALSE}
@@ -1443,7 +1468,7 @@ dataset_measurements <- dataset_measurements |>
     select(-PM_imputed)
 ```
 
-```{r, echo=FALSE, eval=TRUE}
+```{r, echo=FALSE, eval=TRUE, fig.height=2}
 # grafica amb els valor de les variables PM hPa per a l'estació YU
 ggplot(
     dataset_measurements |>
@@ -1461,7 +1486,14 @@ ggplot(
         x = "Data i hora",
         y = "PM hPa"
     ) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
 ```
 
 ### Valors perduts de la variable `VVM (10 m) km/h`
