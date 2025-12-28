@@ -541,6 +541,63 @@ grid.arrange(p1, p2, ncol = 2)
 
 ## Gestió dels valors perduts
 
+Abans de tot, eliminen els valors finals de les cada estacions quan són NA.
+
+```{r, attr.source='.numberLines'}
+# Elimina els valors finals per a cada codi d'estació quan tots els valors són
+# NA, per a cada codi d'estació
+station_codes <- dataset_measurements$`Codi estació` |> unique()
+for (code in station_codes) {
+    s <- dataset_measurements |>
+        filter(`Codi estació` == code) |>
+        arrange(`Data i hora`)
+    # Troba l'índex de l'últim valor no NA per a les variables `TM °C`,
+    # `PM hPa`, `HRM %`, `RS W/m2`, `PPT mm`, `RS W/m2` i `GN cm`
+    last_non_na_index <- max(
+        which(
+            !is.na(s$`TM °C`) |
+                !is.na(s$`PM hPa`) |
+                !is.na(s$`HRM %`) |
+                !is.na(s$`RS W/m2`) |
+                !is.na(s$`PPT mm`) |
+                !is.na(s$`RS W/m2`) |
+                !is.na(s$`GN cm`)
+        ),
+        na.rm = TRUE
+    )
+    if (!is.infinite(last_non_na_index)) {
+        # Comprova que no hi ha cap valor NA de les variables seleccionades
+        # després de l'últim valor no NA
+        all_na_after <- all(
+            is.na(s$`TM °C`[(last_non_na_index + 1):nrow(s)]) &
+                is.na(s$`PM hPa`[(last_non_na_index + 1):nrow(s)]) &
+                is.na(s$`HRM %`[(last_non_na_index + 1):nrow(s)]) &
+                is.na(s$`RS W/m2`[(last_non_na_index + 1):nrow(s)]) &
+                is.na(s$`PPT mm`[(last_non_na_index + 1):nrow(s)]) &
+                is.na(s$`RS W/m2`[(last_non_na_index + 1):nrow(s)]) &
+                is.na(s$`GN cm`[(last_non_na_index + 1):nrow(s)])
+        )
+        if (all_na_after) {
+            print(paste("Removing trailing NAs for station code:", code))
+            dataset_measurements <- dataset_measurements |>
+                filter(
+                    !(
+                        `Codi estació` == code &
+                            row_number() > last_non_na_index &
+                            is.na(`TM °C`) &
+                            is.na(`PM hPa`) &
+                            is.na(`HRM %`) &
+                            is.na(`RS W/m2`) &
+                            is.na(`PPT mm`) &
+                            is.na(`RS W/m2`) &
+                            is.na(`GN cm`)
+                    )
+                )
+        }
+    }
+}
+```
+
 En la següent gràfica es mostra un mapa de calor dels valors perduts en el
 conjunt de dades.
 
@@ -995,22 +1052,44 @@ als valors perduts, ja que aquesta tècnica és adequada per a sèries temporals
 amb patrons estacionals, com és el cas de les dades de temperatura.
 
 ```{r, echo=FALSE, fig.height=3, eval=TRUE}
-p1 <- ggplot(
-    dataset_measurements |>
+# Comparació de valors reals i imputats de la variable TM °C per l'estació D4
+station_data <- dataset_measurements |>
+    filter(`Codi estació` == "D4") |>
+    arrange(`Data i hora`) |>
+    pull(`TM °C`)
+ts_data <- ts(
+    station_data,
+    frequency = 48 # mostres per dia (cada 30 minuts)
+)
+imputed_data <- na.interp(ts_data)
+comparison_data <- data.frame(
+    Timestamp = dataset_measurements$`Data i hora`[
+        dataset_measurements$`Codi estació` == "D4"
+    ],
+    Real = dataset_measurements$`TM °C`[
+        dataset_measurements$`Codi estació` == "D4"
+    ],
+    Imputada = as.numeric(imputed_data)
+)
+ggplot(
+    comparison_data |>
         filter(
-            `Codi estació` == "D4",
-            as.Date(`Data i hora`) >= as.Date("2025-06-04") &
-                as.Date(`Data i hora`) <= as.Date("2025-06-11")
+            as.Date(Timestamp) >= as.Date("2025-06-04") &
+                as.Date(Timestamp) <= as.Date("2025-06-11")
         ),
-    aes(x = `Data i hora`, y = `TM °C`)
+    aes(x = Timestamp)
 ) +
-    geom_line(color = "darkgreen") +
-    geom_point(color = "darkgreen") +
+    geom_line(aes(y = Imputada, color = "Imputada"), linetype = "dashed") +
+    geom_point(aes(y = Imputada, color = "Imputada")) +
+    geom_line(aes(y = Real, color = "Real")) +
+    geom_point(aes(y = Real, color = "Real")) +
     labs(
-        title = "Abans de la imputació",
+        title = "Comparació de valors reals i imputats de la variable TM °C per l'estació D4",
         x = "Data i hora",
-        y = "TM °C"
+        y = "TM °C",
+        color = "Llegenda"
     ) +
+    scale_color_manual(values = c("Real" = "purple4", "Imputada" = "orange")) +
     theme_minimal()
 ```
 
@@ -1021,6 +1100,10 @@ for (station in missing_tm$`Codi estació`) {
         filter(`Codi estació` == station) |>
         arrange(`Data i hora`) |>
         pull(`TM °C`)
+    n_not_na <- sum(!is.na(station_data))
+    if (n_not_na < 2 || length(station_data) == 0) {
+        next
+    }
     ts_data <- ts(
         station_data,
         frequency = 48 # mostres per dia (cada 30 minuts)
@@ -1030,32 +1113,6 @@ for (station in missing_tm$`Codi estació`) {
         dataset_measurements$`Codi estació` == station
     ] <- as.numeric(imputed_data)
 }
-```
-
-Exemple: gràfica amb valors imputats de la variable `TM °C` per l'estació D4
-del 4 a l'11 de juny de 2025.
-
-```{r, echo=FALSE, fig.height=3, eval=TRUE}
-# gràfica dels dies amb valors perduts de la variable TM °C del dia 4 a l'11 de
-# juny de 2025 per l'estació D4 després de la imputació
-p2 <- ggplot(
-    dataset_measurements |>
-        filter(
-            `Codi estació` == "D4",
-            as.Date(`Data i hora`) >= as.Date("2025-06-04") &
-                as.Date(`Data i hora`) <= as.Date("2025-06-11")
-        ),
-    aes(x = `Data i hora`, y = `TM °C`)
-) +
-    geom_line(color = "purple4") +
-    geom_point(color = "purple4") +
-    labs(
-        title = "Després de la imputació",
-        x = "Data i hora",
-        y = "TM °C"
-    ) +
-    theme_minimal()
-grid.arrange(p1, p2, ncol = 1)
 ```
 
 ### Valors perduts de la variable `HRM %`
@@ -1095,25 +1152,45 @@ En la variable `HRM %`, s'utilitza la imputació interpolació estacional per al
 valors perduts, ja que aquesta tècnica és adequada per a sèries temporals
 amb patrons estacionals, com és el cas de les dades d'humitat relativa.
 
-```{r, fig.height=3, eval=TRUE, echo=FALSE}
-# gràfica dels dies amb valors perduts de la variable HRM % del dia 5 al 12 de
-# juny de 2025 per l'estació D4 després de la imputació
-p1 <- ggplot(
-    dataset_measurements |>
+```{r, echo=FALSE, fig.height=3, eval=TRUE}
+# Comparació de valors reals i imputats de la variable HRM % per l'estació D4
+station_data <- dataset_measurements |>
+    filter(`Codi estació` == "D4") |>
+    arrange(`Data i hora`) |>
+    pull(`HRM %`)
+ts_data <- ts(
+    station_data,
+    frequency = 48 # mostres per dia (cada 30 minuts)
+)
+imputed_data <- na.interp(ts_data)
+comparison_data <- data.frame(
+    Timestamp = dataset_measurements$`Data i hora`[
+        dataset_measurements$`Codi estació` == "D4"
+    ],
+    Real = dataset_measurements$`HRM %`[
+        dataset_measurements$`Codi estació` == "D4"
+    ],
+    Imputada = as.numeric(imputed_data)
+)
+ggplot(
+    comparison_data |>
         filter(
-            `Codi estació` == "D4",
-            as.Date(`Data i hora`) >= as.Date("2025-06-05") &
-                as.Date(`Data i hora`) <= as.Date("2025-06-12")
+            as.Date(Timestamp) >= as.Date("2025-06-05") &
+                as.Date(Timestamp) <= as.Date("2025-06-12")
         ),
-    aes(x = `Data i hora`, y = `HRM %`)
+    aes(x = Timestamp)
 ) +
-    geom_line(color = "darkgreen") +
-    geom_point(color = "darkgreen") +
+    geom_line(aes(y = Imputada, color = "Imputada"), linetype = "dashed") +
+    geom_point(aes(y = Imputada, color = "Imputada")) +
+    geom_line(aes(y = Real, color = "Real")) +
+    geom_point(aes(y = Real, color = "Real")) +
     labs(
-        title = "Abans de la imputació",
+        title = "Comparació de valors reals i imputats de la variable HRM % per l'estació D4",
         x = "Data i hora",
-        y = "HRM %"
+        y = "HRM %",
+        color = "Llegenda"
     ) +
+    scale_color_manual(values = c("Real" = "purple4", "Imputada" = "orange")) +
     theme_minimal()
 ```
 
@@ -1124,6 +1201,10 @@ for (station in missing_hrm$`Codi estació`) {
         filter(`Codi estació` == station) |>
         arrange(`Data i hora`) |>
         pull(`HRM %`)
+    n_not_na <- sum(!is.na(station_data))
+    if (n_not_na < 2 || length(station_data) == 0) {
+        next
+    }
     ts_data <- ts(
         station_data,
         frequency = 48 # mostres per dia (cada 30 minuts)
@@ -1133,32 +1214,6 @@ for (station in missing_hrm$`Codi estació`) {
         dataset_measurements$`Codi estació` == station
     ] <- as.numeric(imputed_data)
 }
-```
-
-Exemple: gràfica amb valors imputats de la variable `HRM %` per l'estació D4
-del 5 al 12 de juny de 2025.
-
-```{r, fig.height=3, eval=TRUE, echo=FALSE}
-# gràfica dels dies amb valors perduts de la variable HRM % del dia 5 al 12 de
-# juny de 2025 per l'estació D4 després de la imputació
-p2 <- ggplot(
-    dataset_measurements |>
-        filter(
-            `Codi estació` == "D4",
-            as.Date(`Data i hora`) >= as.Date("2025-06-05") &
-                as.Date(`Data i hora`) <= as.Date("2025-06-12")
-        ),
-    aes(x = `Data i hora`, y = `HRM %`)
-) +
-    geom_line(color = "purple4") +
-    geom_point(color = "purple4") +
-    labs(
-        title = "Després de la imputació",
-        x = "Data i hora",
-        y = "HRM %"
-    ) +
-    theme_minimal()
-grid.arrange(p1, p2, ncol = 1)
 ```
 
 ### Valors perduts de la variable `GN cm`
@@ -1200,22 +1255,45 @@ En la variable `GN cm`, els valors perduts s'imputen mitjançant la interpolaci�
 no estacional, ja que aquesta tècnica d'imputació és adequada per a sèries
 temporals sense patrons estacionals.
 
-```{r, fig.height=3, eval=TRUE, echo=FALSE}
-# gràfica de la variable GN cm per a l'estació XK
-p1 <- ggplot(
-    dataset_measurements |>
+```{r, echo=FALSE, fig.height=3, eval=TRUE}
+# Comparació de valors reals i imputats de la variable GN cm per l'estació XK
+station_data <- dataset_measurements |>
+    filter(`Codi estació` == "XK") |>
+    arrange(`Data i hora`) |>
+    pull(`GN cm`)
+ts_data <- ts(
+    station_data,
+    frequency = 48 # mostres per dia (cada 30 minuts)
+)
+imputed_data <- na.interp(ts_data, lambda = NULL)
+comparison_data <- data.frame(
+    Timestamp = dataset_measurements$`Data i hora`[
+        dataset_measurements$`Codi estació` == "XK"
+    ],
+    Real = dataset_measurements$`GN cm`[
+        dataset_measurements$`Codi estació` == "XK"
+    ],
+    Imputat = as.numeric(imputed_data, lambda = NULL)
+)
+ggplot(
+    comparison_data |>
         filter(
-            `Codi estació` == "XK"
+            as.Date(Timestamp) >= as.Date("2025-02-07") &
+                as.Date(Timestamp) <= as.Date("2025-02-17")
         ),
-    aes(x = `Data i hora`, y = `GN cm`)
+    aes(x = Timestamp)
 ) +
-    geom_line(color = "darkorange2") +
-    geom_point(color = "darkorange2") +
+    geom_line(aes(y = Imputat, color = "Imputat"), linetype = "dashed") +
+    geom_point(aes(y = Imputat, color = "Imputat")) +
+    geom_line(aes(y = Real, color = "Real")) +
+    geom_point(aes(y = Real, color = "Real")) +
     labs(
-        title = "Abans de la imputació",
+        title = "Comparació de valors reals i imputats de la variable GN cm per l'estació XK",
         x = "Data i hora",
-        y = "GN cm"
+        y = "GN cm",
+        color = "Llegenda"
     ) +
+    scale_color_manual(values = c("Real" = "purple4", "Imputat" = "orange")) +
     theme_minimal()
 ```
 
@@ -1231,7 +1309,7 @@ for (station in missing_stations_gn) {
         arrange(`Data i hora`) |>
         pull(`GN cm`)
     n_not_na <- sum(!is.na(station_data))
-    if (n_not_na < 2) {
+    if (n_not_na < 2 || length(station_data) == 0) {
         next
     }
     ts_data <- ts(
@@ -1243,28 +1321,6 @@ for (station in missing_stations_gn) {
         dataset_measurements$`Codi estació` == station
     ] <- as.numeric(imputed_data)
 }
-```
-
-Exemple: gràfica amb valors perduts de la variable `GN cm` per l'estació XK.
-
-```{r, fig.height=3, eval=TRUE, echo=FALSE}
-# gràfica de la variable GN cm per a l'estació XK
-p2 <- ggplot(
-    dataset_measurements |>
-        filter(
-            `Codi estació` == "XK"
-        ),
-    aes(x = `Data i hora`, y = `GN cm`)
-) +
-    geom_line(color = "purple4") +
-    geom_point(color = "purple4") +
-    labs(
-        title = "Després de la imputació",
-        x = "Data i hora",
-        y = "GN cm"
-    ) +
-    theme_minimal()
-grid.arrange(p1, p2, ncol = 1)
 ```
 
 ### Valors perduts de la variable `PM hPa`
@@ -1300,10 +1356,6 @@ table_missing_func(missing_pm, "PM hPa")
 ```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_pm, variable_name = "PM hPa")
-```
-
-```{r, attr.source='.numberLines'}
-# Imputació dels valors perduts de la variable PM hPa amb KNN (k=5)
 ```
 
 ### Valors perduts de la variable `VVM (10 m) km/h`
