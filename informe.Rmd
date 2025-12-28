@@ -1531,6 +1531,89 @@ table_missing_func(missing_vvm, "VVM (10 m) km/h")
 plot_paired_func(missing = missing_vvm, variable_name = "VVM (10 m) km/h")
 ```
 
+En la variable `VVM (10 m) km/h`, s'utilitza la imputació basada en interpolació
+estacional per a les estacions amb menys de 500 valors perduts.
+
+```{r, echo=FALSE, fig.height=2, eval=TRUE}
+# grafica amb els valor de les variables VVM (10 m) km/h per a l'estació CL
+p1 <- ggplot(
+    dataset_measurements |>
+        filter(
+            `Codi estació` == "CL",
+            as.Date(`Data i hora`) == as.Date("2024-12-30")
+        ),
+    aes(x = `Data i hora`, y = `VVM (10 m) km/h`)
+) +
+    geom_line(color = "purple4") +
+    geom_point(color = "purple4") +
+    labs(
+        title = "Valors de la variable VVM (10 m) km/h per l'estació CL abans de la imputació",
+        x = "Data i hora",
+        y = "VVM (10 m) km/h"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
+```
+
+```{r, echo=FALSE, attr.source='.numberLines'}
+for (station_code in missing_vvm$`Codi estació`) {
+    station_data_vvm <- dataset_measurements |>
+        filter(`Codi estació` == station_code) |>
+        arrange(`Data i hora`) |>
+        pull(`VVM (10 m) km/h`)
+    n_na_vvm <- sum(is.na(station_data_vvm))
+    if (n_na_vvm > 500) {
+        next
+    }
+    n_not_na_vvm <- sum(!is.na(station_data_vvm))
+    if (n_not_na_vvm < 2 || length(station_data_vvm) == 0) {
+        next
+    }
+    ts_data_vvm <- ts(
+        station_data_vvm,
+        frequency = 48 # mostres per dia (cada 30 minuts)
+    )
+    imputed_data_vvm <- na.interp(ts_data_vvm)
+    dataset_measurements$`VVM (10 m) km/h`[
+        dataset_measurements$`Codi estació` == station_code
+    ] <- as.numeric(imputed_data_vvm)
+}
+```
+
+```{r, echo=FALSE, fig.height=3, eval=TRUE}
+# grafica amb els valor de les variables VVM (10 m) km/h per a l'estació CL
+p2 <- ggplot(
+    dataset_measurements |>
+        filter(
+            `Codi estació` == "CL",
+            as.Date(`Data i hora`) == as.Date("2024-12-30")
+        ),
+    aes(x = `Data i hora`, y = `VVM (10 m) km/h`)
+) +
+    geom_line(color = "orange") +
+    geom_point(color = "orange") +
+    labs(
+        title = "Valors de la variable VVM (10 m) km/h per l'estació CL després de la imputació",
+        x = "Data i hora",
+        y = "VVM (10 m) km/h"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
+grid.arrange(p1, p2, ncol = 1)
+```
+
 ### Valors perduts de la variable `VVX (10 m) km/h`
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
@@ -1564,6 +1647,89 @@ table_missing_func(missing_vvx, "VVX (10 m) km/h")
 ```{r, echo=FALSE, attr.source='.numberLines', fig.height=2, eval=FALSE}
 # Gràfiques dels valors perduts
 plot_paired_func(missing = missing_vvx, variable_name = "VVX (10 m) km/h")
+```
+
+En la variable `VVM (10 m) km/h`, s'utilitza la imputació basada en interpolació
+estacional per a les estacions amb menys de 500 valors perduts.
+
+```{r, echo=FALSE, fig.height=2, eval=TRUE}
+# grafica amb els valor de les variables VVX (10 m) km/h per a l'estació CL
+p1 <- ggplot(
+    dataset_measurements |>
+        filter(
+            `Codi estació` == "CL",
+            as.Date(`Data i hora`) == as.Date("2024-12-30")
+        ),
+    aes(x = `Data i hora`, y = `VVX (10 m) km/h`)
+) +
+    geom_line(color = "purple4") +
+    geom_point(color = "purple4") +
+    labs(
+        title = "Valors de la variable VVX (10 m) km/h per l'estació CL abans de la imputació",
+        x = "Data i hora",
+        y = "VVX (10 m) km/h"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
+```
+
+```{r, echo=FALSE, attr.source='.numberLines'}
+for (station_code in missing_vvm$`Codi estació`) {
+    station_data_vvx <- dataset_measurements |>
+        filter(`Codi estació` == station_code) |>
+        arrange(`Data i hora`) |>
+        pull(`VVX (10 m) km/h`)
+    n_na_vvx <- sum(is.na(station_data_vvx))
+    if (n_na_vvx > 500) {
+        next
+    }
+    n_not_na_vvx <- sum(!is.na(station_data_vvx))
+    if (n_not_na_vvx < 2 || length(station_data_vvx) == 0) {
+        next
+    }
+    ts_data_vvx <- ts(
+        station_data_vvx,
+        frequency = 48 # mostres per dia (cada 30 minuts)
+    )
+    imputed_data_vvx <- na.interp(ts_data_vvx)
+    dataset_measurements$`VVX (10 m) km/h`[
+        dataset_measurements$`Codi estació` == station_code
+    ] <- as.numeric(imputed_data_vvx)
+}
+```
+
+```{r, echo=FALSE, fig.height=3, eval=TRUE}
+# grafica amb els valor de les variables VVX (10 m) km/h per a l'estació CL
+p2 <- ggplot(
+    dataset_measurements |>
+        filter(
+            `Codi estació` == "CL",
+            as.Date(`Data i hora`) == as.Date("2024-12-30")
+        ),
+    aes(x = `Data i hora`, y = `VVX (10 m) km/h`)
+) +
+    geom_line(color = "orange") +
+    geom_point(color = "orange") +
+    labs(
+        title = "Valors de la variable VVX (10 m) km/h per l'estació CL després de la imputació",
+        x = "Data i hora",
+        y = "VVX (10 m) km/h"
+    ) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
+grid.arrange(p1, p2, ncol = 1)
 ```
 
 ### Valors perduts de la variable `RS W/m2`
@@ -1621,7 +1787,14 @@ p1 <- ggplot(
         x = "Data i hora",
         y = "RS W/m2"
     ) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
 ```
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
@@ -1665,7 +1838,14 @@ p2 <- ggplot(
         x = "Data i hora",
         y = "RS W/m2"
     ) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8)
+    )
 grid.arrange(p1, p2, ncol = 1)
 ```
 
