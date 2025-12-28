@@ -9,6 +9,7 @@ output:
     toc: true
     toc_depth: 2
     number_sections: true
+    dev: png
   html_document:
     css: columns.css
     toc: true

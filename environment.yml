@@ -16,12 +16,13 @@ dependencies:
   - r-ggplot2
   - r-gridextra
   - r-kableextra
+  - r-knitr
   - r-languageserver
   - r-laeken
-  - r-knitr
-  - r-rmarkdown
+  - r-magick
   - r-ranger
   - r-rann
+  - r-rmarkdown
   - r-robustbase
   - r-sf
   - r-sp
