@@ -10,6 +10,7 @@ output:
     toc_depth: 2
     number_sections: true
   html_document:
+    css: columns.css
     toc: true
     toc_depth: 2
     number_sections: true
@@ -255,12 +256,12 @@ kable(
     align = c("l", "r"),
     col.names = c("Estació [Codi]", "Nombre de files")
 ) |>
+    pack_rows("Primeres 5 estacions", 1, 5) |>
+    pack_rows("Últimes 5 estacions", 6, 10, latex_gap_space = "2em") |>
     kable_styling(
         bootstrap_options = c("striped", "hover", "condensed"),
         full_width = FALSE
-    ) |>
-    pack_rows("Primeres 5 estacions", 1, 5) |>
-    pack_rows("Últimes 5 estacions", 6, 10, latex_gap_space = "2em")
+    )
 ```
 
 En el conjunt de dades hi ha un total de `r n_distinct(dataset_measurements$Municipi)` municipis
@@ -427,6 +428,10 @@ plot_boundaries_func <- function(
   missing_summary = NULL, lost_summary = NULL
 ) {
     unique_stations <- unique(dataset[, c("Codi estació", "Longitud", "Latitud")])
+    # Remove rows with missing coordinates
+    unique_stations <- unique_stations[
+        !is.na(unique_stations$Longitud) & !is.na(unique_stations$Latitud),
+    ]
     file_name <- paste("divisions-administratives-v2r1",
         administration, "1000000-20250730.json",
         sep = "-"
@@ -442,7 +447,10 @@ plot_boundaries_func <- function(
             crs = 4326
         )
         return(ggplot() +
-            geom_sf(data = boundaries, fill = "grey95", color = "grey60", size = 0.2) +
+            geom_sf(
+                data = boundaries, fill = "grey95",
+                color = "grey60", size = 0.2
+            ) +
             geom_sf(data = stations_sf, color = "blue", size = 0.5) +
             labs(
                 title = title,
@@ -452,8 +460,10 @@ plot_boundaries_func <- function(
             theme_minimal() +
             theme(
                 plot.title = element_text(size = 8, hjust = 0.5),
-                panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                axis.title = element_blank(), axis.ticks = element_blank(),
+                panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                axis.title = element_blank(),
+                axis.ticks = element_blank(),
                 axis.text = element_blank()
             ))
     }
@@ -477,7 +487,10 @@ plot_boundaries_func <- function(
             crs = 4326
         )
     return(ggplot() +
-        geom_sf(data = boundaries, fill = "grey95", color = "grey70", size = 0.2) +
+        geom_sf(
+            data = boundaries, fill = "grey95",
+            color = "grey70", size = 0.2
+        ) +
         geom_sf(data = other_sf, color = "green4", size = 0.5) +
         geom_sf(data = missing_sf, color = "dodgerblue", size = 1) +
         geom_sf(data = lost_sf, color = "magenta4", size = 1.5) +
@@ -603,12 +616,9 @@ kable(
     )
 ```
 
-En la següent gràfica es mostra la matriu de correlació entre les variables
-numèriques del conjunt de dades, per tal de veure si hi ha alguna variable
-correlacionada que pugui ajudar en la imputació dels valors perduts. S'exclouen
-les variables categòriques i les variables que tenen més del 20% de valors
-perduts.
+:::::: {.cols data-latex=""}
 
+::: {.col data-latex="{0.35\textwidth}"}
 ```{r, echo=FALSE, fig.align='center', fig.height=2}
 dataset_measurements_cor <- dataset_measurements |>
     select(
@@ -636,13 +646,28 @@ corrplot(
     tl.srt = 45, # gira les etiquetes
     tl.cex = 0.4, # redueix la mida de les etiquetes
     cl.cex = 0.4, # redueix la mida de la barra de colors
-    title.cex = 0.4, # redueix la mida del títol
+    title.cex = 0.2, # redueix la mida del títol
     legend.cex = 0.4, # redueix la mida de la llegenda
     diag = FALSE, # no mostrar la diagonal
-    title = "Matriu de correlació de les variables", # títol de la gràfica
+    title = NULL, # no mostrar el títol de la gràfica
+    # title = "Matriu de correlació de les variables", # títol de la gràfica
     mar = c(0, 0, 1, 0) # marges de la gràfica
 )
 ```
+:::
+
+::: {.col data-latex="{0.05\textwidth}"}
+\ 
+<!-- an empty Div (with a white space), serving as a column separator -->
+:::
+
+::: {.col data-latex="{0.6\textwidth}"}
+En la gràfica es mostra la matriu de correlació entre les variables numèriques
+del conjunt de dades, per tal de veure si hi ha alguna variable correlacionada
+que pugui ajudar en la imputació dels valors perduts. S'exclouen les variables
+categòriques i les variables que tenen més del 20% de valors perduts.
+:::
+::::::
 
 En els següents subapartats s'analitzaran el valors perduts de cada variable,
 per ordre de més a menys valors perduts. En el recompte s'han exclòs les
@@ -662,7 +687,9 @@ create_summary_func <- function(
         return(
             dataset |>
                 group_by(`Codi estació`) |>
-                summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
+                summarise(Missing = sum(
+                    is.na(!!sym(variable_name))
+                ), .groups = "drop") |>
                 filter(Missing > minimum, Missing < threshold) |>
                 arrange(desc(Missing))
         )
@@ -670,7 +697,9 @@ create_summary_func <- function(
     return(
         dataset |>
             group_by(`Codi estació`) |>
-            summarise(Missing = sum(is.na(!!sym(variable_name))), .groups = "drop") |>
+            summarise(Missing = sum(
+                is.na(!!sym(variable_name))
+            ), .groups = "drop") |>
             filter(Missing >= threshold) |>
             arrange(desc(Missing))
     )
@@ -682,7 +711,9 @@ plot_missing_sc_func <- function(
   threshold = 17000, log_scale = FALSE
 ) {
     if (is.null(missing_summary)) {
-        missing_summary <- create_summary_func(dataset, variable_name, threshold)
+        missing_summary <- create_summary_func(
+            dataset, variable_name, threshold
+        )
     }
     if (log_scale) {
         ggplot(
@@ -1808,19 +1839,20 @@ df_pca <- dataset_numeric[, c(variables_continues, "TM °C")]
 df_pca <- na.omit(df_pca)
 
 # Apliquem PCA
-pca_resultat <- prcomp(df_pca[, variables_continues], center = TRUE, scale. = TRUE)
-# Mostrem la importància de les components
+pca_resultat <- prcomp(
+    df_pca[, variables_continues],
+    center = TRUE, scale. = TRUE
+)
+# Mostrem la importància dels components
 summary(pca_resultat)
 # Mostrem la relació entre variables i components (Rotation)
 pca_resultat$rotation
 ```
 
-En el diagrama de colze (Scree Plot) podem observar la variància explicada per
-cada component principal. Les dues primeres components principals expliquen una
-gran part de la variància total (gairebé el 50%), i les següents components
-explicaran menys variància.
+:::::: {.cols data-latex=""}
 
-```{r, echo=FALSE, fig.align='center'}
+::: {.col data-latex="{0.25\textwidth}"}
+```{r, echo=FALSE, fig.align='center', fig.height=2, fig.width=2}
 # Gràfica de Scree Plot
 scree_data <- data.frame(
     Component = 1:length(pca_resultat$sdev),
@@ -1834,10 +1866,29 @@ ggplot(scree_data, aes(x = Component, y = Variancia)) +
         x = "Component Principal",
         y = "Variància Explicada"
     ) +
-    theme_minimal()
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 10, hjust = 0.5),
+        axis.text = element_text(size = 8),
+        axis.title = element_text(size = 9)
+    )
 ```
+:::
 
-```{r, echo=FALSE, fig.align='center'}
+::: {.col data-latex="{0.05\textwidth}"}
+\ 
+<!-- an empty Div (with a white space), serving as a column separator -->
+:::
+
+::: {.col data-latex="{0.7\textwidth}"}
+En el diagrama de colze (Scree Plot) podem observar la variància explicada per
+cada component principal. Els dos primers components principals expliquen una
+gran part de la variància total (gairebé el 50%), i les següents components
+explicaran menys variància.
+:::
+::::::
+
+```{r, echo=FALSE}
 # Percentatges de variància explicada per cada component
 variancia_explicada <- (pca_resultat$sdev)^2
 percentatge_variancia <- variancia_explicada / sum(variancia_explicada) * 100
@@ -1877,23 +1928,22 @@ condicions de temps assolellat, sec i ventós.
 
 #### Component Principal 2 (PC2)
 
-PC2 explica la següent major quantitat de variància independent de PC2. Els pesos més alts i significatius són:
+PC2 explica la següent major quantitat de variància independent de PC2. Els
+pesos més alts i significatius són:
 
 - Latitud: +0.718 (Molt alt i positiu)
 - Altitud: +0.538 (Alt i positiu)
 - Longitud: +0.396 (Moderat i positiu)
 
-Aquesta component representa clarament la geografia. Un valor alt en PC2 indica
+Aquest component representa clarament la geografia. Un valor alt en PC2 indica
 una estació amb una Latitud alta (Nord) i Altitud alta (muntanya/interior).
- 
 
 #### Component Principal 4 (PC4)
 - PPT mm: -0.895 (Molt alt, negatiu i dominant)
 
-També cal destacar aquesta component, que està gairebé totalment dominada per la Precipitació (PPT mm).
-Essencialment, PC4 aïlla la variabilitat lligada als episodis de pluja del resta
-de factors climàtics.
-
+També cal destacar aquest component, que està gairebé totalment dominat per la
+Precipitació (PPT mm). Essencialment, PC4 aïlla la variabilitat lligada als
+episodis de pluja del resta de factors climàtics.
 
 ### Gràfiques
 
@@ -1904,7 +1954,8 @@ Primer projectem la Temperatura Mitjana sobre els PCA1 i PCA2.
 fviz_pca_ind(pca_resultat,
     geom.ind = "point",
     col.ind = df_pca$`TM °C`, # Pintem segons la temperatura
-    gradient.cols = c("cadetblue3", "bisque2", "salmon"), # Blau (fred) a Vermell (calent)
+    # Blau (fred) a Vermell (calent)
+    gradient.cols = c("cadetblue3", "bisque2", "salmon"),
     legend.title = "Temp. Mitjana (°C)",
     title = "Mapa climàtic: PC1 (meteorologia) vs PC2 (geografia)"
 ) +
@@ -1913,21 +1964,27 @@ fviz_pca_ind(pca_resultat,
 
 **PCA1**
 
-  - **Esquerre, valors negatius**: En aquesta zona hi bufa menys el vent, toca menys el sol i hi ha alta humitat. Predomina temperatures moderades (color groguenc).
+  - **Esquerre, valors negatius**: En aquesta zona hi bufa menys el vent, toca
+    menys el sol i hi ha alta humitat. Predomina temperatures moderades (color
+    groguenc).
+  - **Dret, valors positius**: Bufa més el vent, hi ha més sol i hi ha menys
+    humitat. 
   
-  - **Dret, valors positius**: Bufa més el vent, hi ha més sol i hi ha menys humitat. 
-  
-Aquest eix separa les zones humides (esquerra) de zones assolellades i ventoses (dreta).
+Aquest eix separa les zones humides (esquerra) de zones assolellades i ventoses
+(dreta).
   
 **PCA2**
 
-  - **Amunt, valors positius**: Els punts son majoritariament blaus (per sota dels 0 graus). Aquí és on l'Altitud i la Latitud pugen (nord, alta muntanya).
-  
-  - **Avall, valors negatius**:  Trobem una concentració de colors groguencs i taronja (més de 10ºC). Un PCA2 negatiu indica una Latitud i una l'Altitud més baixes. Són les zones principalment del sud i amb baixa altitud.
+  - **Amunt, valors positius**: Els punts son majoritariament blaus (per sota
+    dels 0 graus). Aquí és on l'Altitud i la Latitud pugen (nord, alta
+    muntanya).  
+  - **Avall, valors negatius**:  Trobem una concentració de colors groguencs i
+    taronja (més de 10ºC). Un PCA2 negatiu indica una Latitud i una l'Altitud
+    més baixes. Són les zones principalment del sud i amb baixa altitud.
 
-Aquest eix és el que determina la temperatura segons la geografia: a més alçada i latitud hi ha més fred.
+Aquest eix és el que determina la temperatura segons la geografia: a més alçada
+i latitud hi ha més fred.
 
-  
 **Anàlisis per quadrants**
 
 - Superior esquerre:
@@ -1942,14 +1999,14 @@ Aquest eix és el que determina la temperatura segons la geografia: a més alça
   
 - Superior dret:
   - PC1 positiu (molt sol i vent) i PC2 positiu (alta muntanya i nord).
-  - Trobem aquí la màxima concentració de punts blaus, per tant les temperatures es desplomen.
+  - Trobem aquí la màxima concentració de punts blaus, per tant les temperatures
+    es desplomen.
   - Alta muntanya en dies clars i ventosos, on fa més fred.
 
 - Inferior dret:
   - PC1 positiu (sol i vent) i PC2 negatiu (zones baixes i sud).
   - Trobem aquí les temperatures més altes.
   - Són les zones més planes i del sud en dies assolellats i secs.
-  
 
 **Gràfic Biplot**
 
@@ -1965,14 +2022,20 @@ fviz_pca_biplot(pca_resultat,
 )
 ```
 
-El *biplot* mostra com les variables influeixen en els dos primers eixos, explicant conjuntament gairebé un 50% de la variabilitat: 25.4% el PC1 i 24% el PC2 respectivament. Corrobora els anàlisis prèvis.
+El *biplot* mostra com les variables influeixen en els dos primers eixos,
+explicant conjuntament gairebé un 50% de la variabilitat: 25.4% el PC1 i 24% el
+PC2 respectivament. Corrobora els anàlisis prèvis.
 
-- Eix PC1: Mostra el contrast entre la humitat i la radiació/vent. La fletxa de HRM apunta a l'esquerra, oposada a RS i VVX, que apunten a la dreta. Això indica que els dies assolellats i ventosos solen ser secs, mentre que els humits tenen menys radiació i vent.
-
-- Eix PC2: Aquest eix està dominat per la Latitud i l'Altitud, les fletxes apuntant cap amunt sobre l'eix. La Longitud també influeix positivament en aquest eix.
-
-- Temperatura: S'observa una transició clara de colors càlids a la part inferior del gràfic (que correspon amb baixa altitud/latitud) cap a colors blavosos a la part superior (alta altitud/latitud). 
-
+- Eix PC1: Mostra el contrast entre la humitat i la radiació/vent. La fletxa
+  d'HRM apunta a l'esquerra, oposada a RS i VVX, que apunten a la dreta. Això
+  indica que els dies assolellats i ventosos solen ser secs, mentre que els
+  humits tenen menys radiació i vent.
+- Eix PC2: Aquest eix està dominat per la Latitud i l'Altitud, les fletxes
+  apuntant cap amunt sobre l'eix. La Longitud també influeix positivament en
+  aquest eix.
+- Temperatura: S'observa una transició clara de colors càlids a la part inferior
+  del gràfic (que correspon amb baixa altitud/latitud) cap a colors blavosos a
+  la part superior (alta altitud/latitud). 
 
 ## Contrast d'Hipòtesi
 
@@ -2029,14 +2092,25 @@ print(prova_t)
 
 # Resolució del problema
 
-- El nostre model de regressió lineal final aconsegueix explicar el 48% de la variabilitat de la temperatura mitjana, la qual cosa implica que gairebé la meitat dels canvis de temperatura es poden predir amb les variables seleccionades. D'una banda, l'altitud i la latitud són els factors amb més pes negatiu sobre la temperatura en contraposició a la radiació solar i a les variables temporals, que tenen un impacte positiu.
-
-- Hem realitzat un PCA, que ha aconseguit resumir set variables en dos components principals que expliquen el 44,4% de la variància total. El PC1 (25%) correspon a una component meteorològica, en contraposició al PC2 (24%), que s'identifica com una de geogràfica.
-
-- També ens hem preguntat per la humitat en altituds altes i baixes. Per fer-ho hem fet un Test T de Welch, que ha demostrat que les estacions situades a baixa altitud ($\le 325$ m) presenten una humitat mitjana significativament més alta, amb un valor del 80%. En canvi, les estacions d'alta altitud ($> 325$ m) tenen una humitat mitjana del 73%.
+- El nostre model de regressió lineal final aconsegueix explicar el 48% de la
+  variabilitat de la temperatura mitjana, la qual cosa implica que gairebé la
+  meitat dels canvis de temperatura es poden predir amb les variables
+  seleccionades. D'una banda, l'altitud i la latitud són els factors amb més pes
+  negatiu sobre la temperatura en contraposició a la radiació solar i a les
+  variables temporals, que tenen un impacte positiu.
+- Hem realitzat un PCA, que ha aconseguit resumir set variables en dos
+  components principals que expliquen el 44,4% de la variància total. El PC1
+  (25%) correspon a un component meteorològic, en contraposició al PC2 (24%),
+  que s'identifica com una de geogràfica.
+- També ens hem preguntat per la humitat en altituds altes i baixes. Per fer-ho
+  hem fet un Test T de Welch, que ha demostrat que les estacions situades a
+  baixa altitud ($\le 325$ m) presenten una humitat mitjana significativament
+  més alta, amb un valor del 80%. En canvi, les estacions d'alta altitud
+  ($> 325$ m) tenen una humitat mitjana del 73%.
 
 # Codi
-Accés al repositori amb el codi disponible al següent enllaç: https://github.com/norabolivar/PRACT1_Tipologia.git 
+Accés al repositori amb el codi disponible al següent enllaç:
+https://github.com/norabolivar/PRACT1_Tipologia.git 
 
 # Vídeo
 L'enllaç al vídeo: 
