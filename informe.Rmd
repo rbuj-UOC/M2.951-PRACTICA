@@ -541,12 +541,62 @@ grid.arrange(p1, p2, ncol = 2)
 
 ## Gestió dels valors perduts
 
-Abans de tot, eliminen els valors finals de les cada estacions quan són NA.
+Abans de tot, eliminen els valors inicials i finals de les estacions quan són
+NA.
 
 ```{r, attr.source='.numberLines'}
-# Elimina els valors finals per a cada codi d'estació quan tots els valors són
-# NA, per a cada codi d'estació
 station_codes <- dataset_measurements$`Codi estació` |> unique()
+# Elimina els valors NA inicials per a cadascuna de les estacions
+for (code in station_codes) {
+    s <- dataset_measurements |>
+        filter(`Codi estació` == code) |>
+        arrange(`Data i hora`)
+    # Troba l'índex del primer valor no NA per a les variables `TM °C`,
+    # `PM hPa`, `HRM %`, `RS W/m2`, `PPT mm`, `RS W/m2` i `GN cm`
+    first_non_na_index <- min(
+        which(
+            !is.na(s$`TM °C`) |
+                !is.na(s$`PM hPa`) |
+                !is.na(s$`HRM %`) |
+                !is.na(s$`RS W/m2`) |
+                !is.na(s$`PPT mm`) |
+                !is.na(s$`RS W/m2`) |
+                !is.na(s$`GN cm`)
+        ),
+        na.rm = TRUE
+    )
+    if (!is.infinite(first_non_na_index)) {
+        # Comprova que no hi ha cap valor NA de les variables seleccionades
+        # abans del primer valor no NA
+        all_na_before <- all(
+            is.na(s$`TM °C`[1:(first_non_na_index - 1)]) &
+                is.na(s$`PM hPa`[1:(first_non_na_index - 1)]) &
+                is.na(s$`HRM %`[1:(first_non_na_index - 1)]) &
+                is.na(s$`RS W/m2`[1:(first_non_na_index - 1)]) &
+                is.na(s$`PPT mm`[1:(first_non_na_index - 1)]) &
+                is.na(s$`RS W/m2`[1:(first_non_na_index - 1)]) &
+                is.na(s$`GN cm`[1:(first_non_na_index - 1)])
+        )
+        if (all_na_before) {
+            print(paste("Removing leading NAs for station code:", code))
+            dataset_measurements <- dataset_measurements |>
+                filter(
+                    !(
+                        `Codi estació` == code &
+                            row_number() < first_non_na_index &
+                            is.na(`TM °C`) &
+                            is.na(`PM hPa`) &
+                            is.na(`HRM %`) &
+                            is.na(`RS W/m2`) &
+                            is.na(`PPT mm`) &
+                            is.na(`RS W/m2`) &
+                            is.na(`GN cm`)
+                    )
+                )
+        }
+    }
+}
+# Elimina els valors NA finals per a cadascuna de les estacions
 for (code in station_codes) {
     s <- dataset_measurements |>
         filter(`Codi estació` == code) |>
