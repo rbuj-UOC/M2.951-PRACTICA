@@ -621,10 +621,7 @@ kable(
     )
 ```
 
-:::::: {.cols data-latex=""}
-
-::: {.col data-latex="{0.35\textwidth}"}
-```{r, echo=FALSE, fig.height=2}
+```{r, echo=FALSE, fig.height=3}
 dataset_measurements_cor <- dataset_measurements |>
     select(
         `Altitud (m)`,
@@ -654,25 +651,15 @@ corrplot(
     title.cex = 0.2, # redueix la mida del títol
     legend.cex = 0.4, # redueix la mida de la llegenda
     diag = FALSE, # no mostrar la diagonal
-    title = NULL, # no mostrar el títol de la gràfica
-    # title = "Matriu de correlació de les variables", # títol de la gràfica
+    title = "Matriu de correlació de les variables", # títol de la gràfica
     mar = c(0, 0, 1, 0) # marges de la gràfica
 )
 ```
-:::
 
-::: {.col data-latex="{0.05\textwidth}"}
-\ 
-<!-- an empty Div (with a white space), serving as a column separator -->
-:::
-
-::: {.col data-latex="{0.6\textwidth}"}
 En la gràfica es mostra la matriu de correlació entre les variables numèriques
 del conjunt de dades, per tal de veure si hi ha alguna variable correlacionada
 que pugui ajudar en la imputació dels valors perduts. S'exclouen les variables
 categòriques i les variables que tenen més del 20% de valors perduts.
-:::
-::::::
 
 En els següents subapartats s'analitzaran el valors perduts de cada variable,
 per ordre de més a menys valors perduts. En el recompte s'han exclòs les
