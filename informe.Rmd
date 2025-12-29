@@ -113,7 +113,7 @@ python3 source/main.py -w
 
 En cas que es vulguin baixar les dades més recents, cal executar els següents
 ordres en la terminal. En l'exemple, s'obté el fitxer `dataset.csv` amb les
-dades de les estacions de l'ultim any fins al 3 de desembre de 2025:
+dades de les estacions de l'últim any fins al 3 de desembre de 2025:
 
 ```
 python3 source/main.py -d 365 -b 03.12.2025
@@ -136,7 +136,7 @@ El conjunt de dades té `r format(ncol(dataset_measurements), big.mark = ".")` v
 
 # Integració i selecció
 
-La integració propiament dita es realitza durant el procés de web scraping, on
+La integració pròpiament dita es realitza durant el procés de web scraping, on
 es recullen les dades de les dues pàgines web i es combinen en un únic conjunt
 de dades. En aquest cas, no és necessari realitzar una integració addicional
 ja que les dades ja estan integrades en el fitxer `dataset.csv`.
@@ -151,15 +151,15 @@ Aquest canvi ha permès una millor gestió de les dades numèriques, evitar
 problemes de conversió de tipus de dades i utilitzar la funció `fread` de la
 biblioteca `data.table` per carregar el conjunt de dades de manera eficient.
 
-En aquest apartat, un cop carregades les dades, es realitza una anàlisi
+En aquest apartat, un cop carregades les dades, es du a terme una anàlisi
 preliminar del conjunt de dades per conèixer millor les seves característiques.
 Al final d'aquest apartat, s'hauran eliminat les variables innecessàries
 (`Estació [Codi]`, `code`, `Data baixa` i `Estat actual`) i s'hauran creat dues
 noves variables (`Nom estació` i `Codi estació`).
 
 El conjunt de dades final només tindrà les variables necessàries per fer
-l'anàlisi de les dades, no obstant això no s'eliminen les variables
-innecessaries fins després d'haver fet la imputació dels valors perduts, ja que
+l'anàlisi de les dades; no obstant això, no s'eliminen les variables
+innecessàries fins després d'haver fet la imputació dels valors perduts, ja que
 poden ser útils per a la imputació.
 
 ```{r data-numbers-overview, echo=FALSE}
@@ -178,7 +178,7 @@ desembre de 2024 fins al 3 de desembre de 2025. El conjunt de dades recull les
 dades meteorològiques de `r format(n_stations, big.mark = ".")` estacions
 meteorològiques, durant `r format(n_days, big.mark = ".")` dies, amb
 `r format(n_observations_per_day, big.mark = ".")` observacions per dia. Per
-tant, una estació estació meteorològica com a molt pot tenir
+tant, una estació meteorològica com a molt pot tenir
 `r format(max_rows_per_station, big.mark = ".")` registres (files) o una
 variable d'una estació pot tenir com a molt
 `r format(max_rows_per_station, big.mark = ".")` observacions, corresponents a
@@ -196,7 +196,7 @@ stations_with_full_data <- dataset_measurements |>
 n_stations_with_full_data <- nrow(stations_with_full_data)
 ```
 
-No totes les estacions tenen el matexi nombre de registres, de fet hi ha
+No totes les estacions tenen el mateix nombre de registres, de fet hi ha
 `r format(n_stations_with_full_data, big.mark = ".")` estacions meteorològiques
 que tenen exactament `r format(max_rows_per_station, big.mark = ".")` files. Hi
 ha diversos motius que expliquen aquest fet, com ara problemes tècnics en les
@@ -247,8 +247,8 @@ stations_incomplete_data <- dataset_measurements |>
 
 En la taula següent es mosta un resum del nombre de registres de les estacions
 meteorològiques restants (`r nrow(stations_incomplete_data)`), on per temes
-d'espai, només es mostren les 5 primers i les últimes 5, ordenades per nombre de
-registres.
+d'espai, només es mostren les 5 primeres i les 5 últimes estacions, ordenades
+pel nombre de registres.
 
 ```{r stations-incomplete-data-display, echo=FALSE}
 stations_incomplete_data_display <- rbind(
@@ -413,7 +413,7 @@ summary(dataset_measurements) # Resum estadístic després de la conversió
 
 # Neteja de les dades
 
-A causa de que les estacions meteorològiques són dispositius electrònics que
+A causa que les estacions meteorològiques són dispositius electrònics que
 poden fallar o tenir problemes tècnics, és comú trobar valors perduts en els
 conjunts de dades meteorològiques. Aquests valors perduts poden ser deguts a
 diversos motius, com ara errors en la transmissió de dades, problemes amb els
@@ -529,12 +529,12 @@ plot_boundaries_func <- function(
 ```
 
 ```{r plot-stations-on-map, echo=FALSE}
-# Obté la grafica amb els límits de Catalunya
+# Obté la gràfica amb els límits de Catalunya
 p1 <- plot_boundaries_func(
     administration = "catalunya",
     title = "Estacions meteorològiques (Catalunya)"
 )
-# Obté la grafica amb els límits de les comarques de Catalunya
+# Obté la gràfica amb els límits de les comarques de Catalunya
 p2 <- plot_boundaries_func(
     administration = "comarques",
     title = "Estacions meteorològiques (comarques)"
@@ -686,7 +686,7 @@ missing_values_none
 
 ```{r missing-values-count-plot, echo=FALSE, eval = FALSE}
 # En la següent gràfica i taula es mostra el recompte de valors no disponibles
-# per variable. Anteriorment ja s'ha vist el percentatge de valors perduts
+# per variable. Anteriorment, ja s'ha vist el percentatge de valors perduts
 # $>0$.
 dataset_na_measurements <- dataset_measurements |>
     select(-all_of(missing_values_none))
@@ -977,7 +977,7 @@ station_data <- dataset_measurements |>
     filter(`Codi estació` == "YV") |>
     arrange(`Data i hora`) |>
     pull(`PPT mm`)
-# assigna el valor zsero als valors perduts
+# assigna el valor zero als valors perduts
 imputed_data <- zoo::na.fill(station_data, fill = 0)
 comparison_data <- data.frame(
     Timestamp = dataset_measurements$`Data i hora`[
@@ -1469,7 +1469,7 @@ dataset_measurements <- dataset_measurements |>
 ```
 
 ```{r, echo=FALSE, eval=TRUE, fig.height=2}
-# grafica amb els valor de les variables PM hPa per a l'estació YU
+# gràfica amb els valors de la variable PM hPa per a l'estació YU
 ggplot(
     dataset_measurements |>
         filter(
@@ -1535,7 +1535,7 @@ En la variable `VVM (10 m) km/h`, s'utilitza la imputació basada en interpolaci
 estacional per a les estacions amb menys de 500 valors perduts.
 
 ```{r, echo=FALSE, fig.height=2, eval=TRUE}
-# grafica amb els valor de les variables VVM (10 m) km/h per a l'estació CL
+# gràfica amb els valors de la variable VVM (10 m) km/h per a l'estació CL
 p1 <- ggplot(
     dataset_measurements |>
         filter(
@@ -1587,7 +1587,7 @@ for (station_code in missing_vvm$`Codi estació`) {
 ```
 
 ```{r, echo=FALSE, fig.height=3, eval=TRUE}
-# grafica amb els valor de les variables VVM (10 m) km/h per a l'estació CL
+# gràfica amb els valors de la variable VVM (10 m) km/h per a l'estació CL
 p2 <- ggplot(
     dataset_measurements |>
         filter(
@@ -1653,7 +1653,7 @@ En la variable `VVM (10 m) km/h`, s'utilitza la imputació basada en interpolaci
 estacional per a les estacions amb menys de 500 valors perduts.
 
 ```{r, echo=FALSE, fig.height=2, eval=TRUE}
-# grafica amb els valor de les variables VVX (10 m) km/h per a l'estació CL
+# gràfica amb els valors de la variable VVX (10 m) km/h per a l'estació CL
 p1 <- ggplot(
     dataset_measurements |>
         filter(
@@ -1705,7 +1705,7 @@ for (station_code in missing_vvm$`Codi estació`) {
 ```
 
 ```{r, echo=FALSE, fig.height=3, eval=TRUE}
-# grafica amb els valor de les variables VVX (10 m) km/h per a l'estació CL
+# gràfica amb els valors de la variable VVX (10 m) km/h per a l'estació CL
 p2 <- ggplot(
     dataset_measurements |>
         filter(
@@ -2098,10 +2098,10 @@ p5 <- ggplot(
 grid.arrange(p1, p2, p3, p4, p5, nrow = 1)
 ```
 
-## Eliminació de variables innecessaries
+## Eliminació de variables innecessàries
 
 ```{r, attr.source='.numberLines'}
-# Eliminem les variables innecessaries del dataset
+# Eliminem les variables innecessàries del dataset
 dataset_measurements <- dataset_measurements[, c(
     "Codi estació", "Data i hora", "Altitud (m)", "Longitud", "Latitud",
     "PPT mm", "TM °C", "HRM %", "RS W/m2", "PM hPa", "VVM (10 m) km/h",
@@ -2174,9 +2174,9 @@ Perquè les variables no presentin multicol·linealitat han de ser inferiors a 5
   respectivament.
   que estan molt correlacionades entre si.
 - **Latitud**: Té un VIF de `r format(vif_model_regressio["Latitud"], digits = 2, decimal.mark = ",")`,
-  que és alt degut a la seva correlació amb l'Altitud (les zones més altes
+  que és alt a causa de la seva correlació amb l'Altitud (les zones més altes
   solen estar més al nord).
-- **Variables Temporals**: L'hora i i el mes tenen valors VIF molt baixos.
+- **Variables Temporals**: L'hora i el mes tenen valors VIF molt baixos.
 
 Per tant, farem un segon model de regressió lineal amb menys predictors:
 eliminem la neu, vents (molts NA) i longitud.
@@ -2227,7 +2227,7 @@ sort(vif_model_regressio_simple, decreasing = TRUE)
   temperatura disminueix.
 - **Latitud**: Té un valor de `r format(coef_model_regressio_simple["Latitud"], digits = 4, decimal.mark = ",")`
   i un valor-p $<2e-16$. Això indica que per cada grau cap al nord, la
-  temperatura baixa 2.2ºC, el que és coherent amb el clima (als pirineus fa més
+  temperatura baixa 2.2ºC, el que és coherent amb el clima (als Pirineus fa més
   fred en general).
 - **Longitud**: Té un valor de `r format(coef_model_regressio_simple["Longitud"], digits = 4, decimal.mark = ",")`
   i un valor-p $<2e-16$. Això indica que per cap a l'est, la temperatura
@@ -2247,7 +2247,7 @@ sort(vif_model_regressio_simple, decreasing = TRUE)
 - **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
   el model és significatiu.
 - Ara no s'han exclòs tantes dades.
-- La multicolinearitat és correcta.
+- La multicol·linealitat és correcta.
 
 ### Model No Supervisat
 
@@ -2373,7 +2373,7 @@ una estació amb una Latitud alta (Nord) i Altitud alta (muntanya/interior).
 
 També cal destacar aquest component, que està gairebé totalment dominat per la
 Precipitació (PPT mm). Essencialment, PC4 aïlla la variabilitat lligada als
-episodis de pluja del resta de factors climàtics.
+episodis de pluja de la resta de factors climàtics.
 
 ### Gràfiques
 
@@ -2454,7 +2454,7 @@ fviz_pca_biplot(pca_resultat,
 
 El *biplot* mostra com les variables influeixen en els dos primers eixos,
 explicant conjuntament gairebé un 50% de la variabilitat: 25.4% el PC1 i 24% el
-PC2 respectivament. Corrobora els anàlisis prèvis.
+PC2 respectivament. Corrobora els anàlisis previs.
 
 - Eix PC1: Mostra el contrast entre la humitat i la radiació/vent. La fletxa
   d'HRM apunta a l'esquerra, oposada a RS i VVX, que apunten a la dreta. Això
@@ -2499,7 +2499,7 @@ dataset_grups <- dataset_numeric |>
 ```
 
 Fem servir la Prova T de Welch per seguretat, que és robusta davant la
-no-normalitat i la possible manca d'homocedasticitat.
+no-normalitat i la possible manca d'homoscedasticitat.
 
 ```{r, attr.source='.numberLines'}
 # Prova T de Welch
