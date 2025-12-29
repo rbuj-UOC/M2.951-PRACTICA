@@ -13,29 +13,35 @@
 - `dataset/`: carpeta que conté els fitxers de dades.
   - `station_list.csv`: fitxer CSV amb la llista d’estacions meteorològiques.
   - `[CODI]_[DIA].csv`: fitxer CSV amb les mesures per a l'estació, identificada
-  amb el codi de dos dígits [CODI], amb dades del dia [DIA] en format `dd.mm.yyyy`.
+    amb el codi de dos dígits [CODI], amb dades del dia [DIA] en format
+    `dd.mm.yyyy`.
 - `source/`: carpeta amb el codi font del projecte.
   - `main.py`: punt d’entrada del programa. Inicia el procés de web scraping.
   - `scraper.py`: implementa la classe `MeteoScraper`, que genera el conjunt de
-  dades a partir de les [dades observades](https://www.meteo.cat/observacions/xema/dades)
-  i les [estacions disponibles](https://www.meteo.cat//observacions/llistat-xema).
+    dades a partir de les [dades observades](https://www.meteo.cat/observacions/xema/dades)
+    i les [estacions disponibles](https://www.meteo.cat//observacions/llistat-xema).
   - `simple_analysis.py`: primer anàlisi del conjunt de dades recollit.
 - `.gitignore`: especifica els fitxers i directoris que Git ha d’ignorar en els
-commits.
+  commits.
 - `.editorconfig`: fitxer de configuració per a editors de text compatibles
-amb EditorConfig com ara Visual Studio Code.
+  amb EditorConfig com ara Visual Studio Code.
 - `LICENSE`: fitxer amb la llicència amb la que es publica el codi.
 - `README.md`: fitxer amb la documentació general del projecte.
 - `boost.sh`: script per executar el procés de scraping en paral·lel.
-- `compress.sh`: script per comprimir el directori de treball, el dataset o els registres.
+- `columns.css`: full d'estil per al fitxer `informe.Rmd`.
+- `compress.sh`: script per comprimir el directori de treball, el dataset o els
+  registres.
 - `dataset.tar.xz`: arxiu del dataset sense cap preprocessament, que s'ha
-obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
+  obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
 - `environment.yml`: fitxer per crear un entorn virtual amb conda i instal·lar
-les dependències.
+  les dependències.
+- `header.tex`: fitxer amb codi TeX per al fitxer `informe.Rmd`.
+- `informe.Rmd`: fitxer R Markdown per fer la neteja i l'anàlisi del conjunt de
+   dades.
 - `init.sh`: script per preparar l'entorn virtual amb venv i instal·lar les
-dependències.
+  dependències.
 - `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
-`boost.sh`.
+  `boost.sh`.
 - `requirements.txt`: fitxer amb les dependències del projecte.
 
 ## Requisits
@@ -269,6 +275,39 @@ optional arguments:
                         Output CSV file
 ```
 
+## Neteja i anàlisi del conjunt de dades
+
+Per obtenir el conjunt de dades que s'ha utilitzat en la realització d'aquest
+informe, un cop activat l'entorn virtual conda, executeu les ordres següents:
+
+```sh
+tar xzvf dataset.tar.xz
+python3 source/main.py -w
+```
+
+Per obtenir l'informe en format pdf, executeu la següent ordre:
+
+```sh
+Rscript -e "rmarkdown::render('informe.Rmd', output_format = 'pdf_document')"
+```
+
+o bé, aquesta altra ordre per obtenir l'enforme en format html:
+
+```sh
+Rscript -e "rmarkdown::render('informe.Rmd', output_format = 'html_document')"
+```
+
+> [!TIP]
+> En MacOS, per renderitzar el fitxer R Markdown a PDF, cal instal·lar
+> [MacTeX](https://www.tug.org/mactex/) i [pandoc](https://pandoc.org/). pandoc
+> es pot instal·lar amb Homebrew:
+
+```sh
+brew install pandoc
+```
+
 ## DOI de Zenodo
 
-Bolivar, N. i Buj, R. (2025) «Dades recollides per la xarxa d'estacions meteorològiques automàtiques del servei meteorològic de Catalunya de l'últim any». Zenodo. doi:[10.5281/zenodo.17505763](https://doi.org/10.5281/zenodo.17505763)
+Bolivar, N. i Buj, R. (2025) «Dades recollides per la xarxa d'estacions
+meteorològiques automàtiques del servei meteorològic de Catalunya de l'últim
+any». Zenodo. doi:[10.5281/zenodo.17505763](https://doi.org/10.5281/zenodo.17505763)
