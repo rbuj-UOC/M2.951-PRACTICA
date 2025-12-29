@@ -449,7 +449,7 @@ plot_boundaries_func <- function(
         sep = "/"
     )
     boundaries <- st_read(file_path, quiet = TRUE)
-    if (is.null(missing_summary) & is.null(lost_summary)) {
+    if (is.null(missing_summary) && is.null(lost_summary)) {
         stations_sf <- st_as_sf(
             unique_stations,
             coords = c("Longitud", "Latitud"),
