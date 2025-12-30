@@ -41,6 +41,7 @@ suppressPackageStartupMessages({
     library(kableExtra)
     library(knitr)
     library(lubridate)
+    library(moments)
     library(tidyr)
     library(sf)
     library(stats)
@@ -2165,15 +2166,15 @@ sort(vif_model_regressio, decreasing = TRUE)
 
 Perquè les variables no presentin multicol·linealitat han de ser inferiors a 5.
 
-- **Altitud i Pressió**: L'Altitud presenta un VIF de `r format(vif_model_regressio["Altitud"], digits = 2, decimal.mark = ",")`
-  i la Pressió de `r format(vif_model_regressio["PM"], digits = 2, decimal.mark = ",")`.
+- **Altitud i Pressió**: L'Altitud presenta un VIF de `r format(round(vif_model_regressio["Altitud"], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`
+  i la Pressió de `r format(round(vif_model_regressio["PM"], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`.
   Aquests valors són molt alts, indicant que la forta relació física inversa
   entre pressió i altitud genera multicol·linealitat en el model.
-- **Variables del Vent**: VVM i VVX tenen VIF alts, `r format(vif_model_regressio["VVM"], digits = 2, decimal.mark = ",")`
-  i `r format(vif_model_regressio["VVX"], digits = 2, decimal.mark = ",")`,
+- **Variables del Vent**: VVM i VVX tenen VIF alts, `r format(round(vif_model_regressio["VVM"], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`
+  i `r format(round(vif_model_regressio["VVX"], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`,
   respectivament.
   que estan molt correlacionades entre si.
-- **Latitud**: Té un VIF de `r format(vif_model_regressio["Latitud"], digits = 2, decimal.mark = ",")`,
+- **Latitud**: Té un VIF de `r format(round(vif_model_regressio["Latitud"], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`,
   que és alt a causa de la seva correlació amb l'Altitud (les zones més altes
   solen estar més al nord).
 - **Variables Temporals**: L'hora i el mes tenen valors VIF molt baixos.
@@ -2209,39 +2210,39 @@ sort(vif_model_regressio_simple, decreasing = TRUE)
 ```
 
 - **Capacitat explicativa ($R^2$)**: El model aconsegueix un $R^2$ ajustat de
-  `r format(resum_model_regressio_simple$adj.r.squared, digits = 4, decimal.mark = ",")`.
-  Això significa que explica el `r format(resum_model_regressio_simple$adj.r.squared * 100, digits = 2, decimal.mark = ",")` %
+  `r format(round(resum_model_regressio_simple$adj.r.squared, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`.
+  Això significa que explica el `r format(round(resum_model_regressio_simple$adj.r.squared * 100, 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)` %
   de la variància en la Temperatura Mitjana. En l'anterior model era del
-  `r format(summary(model_regressio)$adj.r.squared, digits = 4, decimal.mark = ",")`.
+  `r format(round(summary(model_regressio)$adj.r.squared, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`.
 - **Error estàndard de la regressió**: L'error estàndard és de
-  `r format(resum_model_regressio_simple$sigma, digits = 4, decimal.mark = ",")` ºC.
+  `r format(round(resum_model_regressio_simple$sigma, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)` ºC.
   Això indica que les prediccions del model tenen un error mitjà d'aproximadament
   aquesta quantitat respecte als valors reals. En l'anterior model era de
-  `r format(summary(model_regressio)$sigma, digits = 4, decimal.mark = ",")` ºC.
-- **Intercept**: Té un valor de `r format(coef(model_regressio_simple)[1], digits = 2, decimal.mark = ",")`.
+  `r format(round(summary(model_regressio)$sigma, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)` ºC.
+- **Intercept**: Té un valor de `r format(round(coef(model_regressio_simple)[1], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`.
   Aquesta és la temperatura mitjana estimada (en ºC) quan tots els predictors
   són zero. En aquest cas no té un significat físic directe.
-- **Altitud**: El coeficient té un valor de `r format(coef_model_regressio_simple["Altitud"], digits = 4, decimal.mark = ",")`
+- **Altitud**: El coeficient té un valor de `r format(round(coef_model_regressio_simple["Altitud"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p $<2e-16$. Aquests resultats indiquen que aquest coeficient és
   significatiu. A més, el signe és coherent, ja que a major altitud, la
   temperatura disminueix.
-- **Latitud**: Té un valor de `r format(coef_model_regressio_simple["Latitud"], digits = 4, decimal.mark = ",")`
+- **Latitud**: Té un valor de `r format(round(coef_model_regressio_simple["Latitud"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p $<2e-16$. Això indica que per cada grau cap al nord, la
   temperatura baixa 2.2ºC, el que és coherent amb el clima (als Pirineus fa més
   fred en general).
-- **Longitud**: Té un valor de `r format(coef_model_regressio_simple["Longitud"], digits = 4, decimal.mark = ",")`
+- **Longitud**: Té un valor de `r format(round(coef_model_regressio_simple["Longitud"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p $<2e-16$. Això indica que per cap a l'est, la temperatura
   augmenta una mica, però no afecta tant com la latitud.
-- **HRM %**: El coeficient té un valor de `r format(coef_model_regressio_simple["HRM"], digits = 4, decimal.mark = ",")`
+- **HRM %**: El coeficient té un valor de `r format(round(coef_model_regressio_simple["HRM"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p $<2e-16$. Més humitat relativa implica un descens en la
   temperatura.
-- **RS W/M2**: Té un valor de `r format(coef_model_regressio_simple["RS"], digits = 4, decimal.mark = ",")`
+- **RS W/M2**: Té un valor de `r format(round(coef_model_regressio_simple["RS"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p $<2e-16$. El seu valor positiu indica que per cada unitat
   d'augment en la radiació solar, la temperatura augmenta. Coherent físicament.
-- **PPT mm**: Té un valor de `r format(coef_model_regressio_simple["PPT"], digits = 4, decimal.mark = ",")`
+- **PPT mm**: Té un valor de `r format(round(coef_model_regressio_simple["PPT"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p de 0.008442. El seu valor negatiu indica que un augment en la
   precipitació s'associa a una temperatura mitjana més baixa segons el model.
-- **VVX (10 m) km/h**: Té un valor de `r format(coef_model_regressio_simple["VVX"], digits = 4, decimal.mark = ",")`
+- **VVX (10 m) km/h**: Té un valor de `r format(round(coef_model_regressio_simple["VVX"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
   i un valor-p $<2e-16$. El seu signe ha canviat respecte l'anterior model.
 - **Variables temporals (Mes i Hora)**: Són altament significatives ($<2e-16$).
 - **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
@@ -2480,45 +2481,95 @@ Pregunta: Existeix una diferència significativa en la Humitat Relativa Mitjana
 (HRM %) entre les estacions de baixa altitud ($\le 325\text{m}$) i les d'alta
 altitud ($\ge 325\text{m}$)?
 
-- Hipòtesi Nul·la ($H_0$): La diferència real de mitjanes d'HRM entre el grup de
-  Baixa Altitud i el d'Alta Altitud és igual a zero
-  ($\mu_{\text{Baixa}} - \mu_{\text{Alta}} = 0$).
-- Hipòtesi Alternativa ($H_a$): La diferència real de mitjanes d'HRM no és igual
-  a zero ($\mu_{\text{Baixa}} - \mu_{\text{Alta}} \neq 0$).
+- Hipòtesi Nul·la ($H_0$): $\mu_{\text{Alta}} = \mu_{\text{Baixa}}$. Les
+  mitjanes d'HRM entre el grup d'alta i baixa altitud són iguals.
+- Hipòtesi Alternativa ($H_a$): $\mu_{\text{Alta}} > \mu_{\text{Baixa}}$. La
+  mitjana d'HRM del grup d'alta altitud és més gran que la del grup de baixa
+  altitud.
 
 ```{r, attr.source='.numberLines'}
 dataset_grups <- dataset_numeric |>
     select(`Altitud (m)`, `HRM %`) |>
     na.omit() |>
     mutate(Grup_Altitud = case_when(
-        `Altitud (m)` <= 325 ~ "Baixa_Altitud",
-        `Altitud (m)` >= 325 ~ "Alta_Altitud",
+        `Altitud (m)` < 325 ~ "Baixa",
+        `Altitud (m)` >= 325 ~ "Alta",
         TRUE ~ "Altres"
     )) |>
     filter(Grup_Altitud != "Altres")
 ```
 
-Fem servir la Prova T de Welch per seguretat, que és robusta davant la
-no-normalitat i la possible manca d'homoscedasticitat.
+En una població de 189 individus, no podem aplicar el teorema del límit central,
+en el qual podem assumir una distrubució normal de les mitjanes en poblacions
+grans.
 
 ```{r, attr.source='.numberLines'}
-# Prova T de Welch
-prova_t <- t.test(`HRM %` ~ Grup_Altitud,
-    data = dataset_grups,
-    var.equal = FALSE
+# Separa les dades en dos grups segons l'altitud
+hrm_alta_altitud <- dataset_grups$`HRM %`[dataset_grups$Grup_Altitud == "Alta"]
+hrm_baixa_altitud <- dataset_grups$`HRM %`[dataset_grups$Grup_Altitud == "Baixa"]
+# Mostra la normalitat de les mostres en la mateixa gràfica
+par(mfrow = c(1, 2))
+qqnorm(hrm_alta_altitud, main = "Q-Q Plot HRM Alta Altitud")
+qqline(hrm_alta_altitud, col = "red")
+qqnorm(hrm_baixa_altitud, main = "Q-Q Plot HRM Baixa Altitud")
+qqline(hrm_baixa_altitud, col = "red")
+par(mfrow = c(1, 1))
+# Calcula asimetria i curtosi
+c(skewness(hrm_alta_altitud), skewness(hrm_baixa_altitud))
+c(kurtosis(hrm_alta_altitud), kurtosis(hrm_baixa_altitud))
+```
+
+```{r, eval=FALSE, echo=FALSE, attr.source='.numberLines'}
+# No es pot aplicar el test de Shapiro-Wilk per a la normalitat (n > 5000)
+shapiro_alta <- shapiro.test(hrm_alta_altitud)
+shapiro_baixa <- shapiro.test(hrm_baixa_altitud)
+print(shapiro_alta)
+print(shapiro_baixa)
+```
+
+Un cop comprovada la normalitat de les mostres (visualment amb els
+**gràfics Q-Q**; numericament amb l'**asimetria**: la normal té una asimetria
+de 0, una asimetria entre -0.5 i +0.5 s'acostuma a considerar simètrica en la
+pràctica, -0,53 indica una lleugera cua més llarga cap a l'esquerra, però res
+dramàtic; numèricament amb la **curtosi**: la normal té curtosi igual a 3, 2.30
+és una mica més baixa, distribució lleugerament platicúrtica, però continua sent
+molt propera a la normal), abans d'aplicar el test d'hipòtesi de dues mostres
+independents sobre la humitat d'estacions d'alta i baixa altitud amb variàncies
+desconegudes, comprovem l'**homoscedasticitat** amb la prova d'igualtat de
+variàncies.
+
+```{r, attr.source='.numberLines'}
+# Test d'homoscedasticitat
+var_test <- var.test(
+    hrm_alta_altitud, hrm_baixa_altitud,
+    alternative = "two.sided"
+)
+if (var_test$p.value < 0.05) {
+    print("Les variàncies no són iguals, s'utilitza el test de Welch")
+    var_equal <- FALSE
+} else {
+    print("Les variàncies són iguals, s'utilitza el test de Student")
+    var_equal <- TRUE
+}
+print(var_test)
+# Prova T de Welch o Student segons homoscedasticitat
+prova_t <- t.test(
+    hrm_alta_altitud, hrm_baixa_altitud,
+    alternative = "greater",
+    var.equal = var_equal
 )
 print(prova_t)
 ``` 
 
 - **Significació Estadística**: Atès que el valor de p és
-  `r format(prova_t$p.value, decimal.mark = ",")` menor que el
+  `r format(prova_t$p.value, decimal.mark = ",")`, que és menor que el
   nivell de significació estàndard ($\alpha = 0.05$), es rebutja la hipòtesi
-  nul·la. Per tant, establim que existeix una diferència estadísticament
-  significativa en la Humitat Relativa Mitjana entre les estacions de Baixa
-  Altitud i les d'Alta Altitud.
+  nul·la. Per tant, establim que hi ha una diferència significativa en la
+  humitat relativa mitjana entre les estacions de baixa i alta altitud, on les
+  estacions d'alta altitud tenen una humitat mitjana més alta.
 - Diferència de Mitjanes:
-  - Mitjana HRM Baixa Altitud: `r format(prova_t$estimate["mean in group Baixa_Altitud"], decimal.mark = ",")`%
-  - Mitjana HRM Alta Altitud: `r format(prova_t$estimate["mean in group Alta_Altitud"], decimal.mark = ",")`%
+  - Mitjana HRM Baixa Altitud: `r format(round(prova_t$estimate["mean of y"], 2), decimal.mark = ",", nsmall = 2, scientific = FALSE)`%
+  - Mitjana HRM Alta Altitud: `r format(round(prova_t$estimate["mean of x"], 2), decimal.mark = ",", nsmall = 2, scientific = FALSE)`%
 
 # Resolució del problema
 
@@ -2534,9 +2585,10 @@ print(prova_t)
   que s'identifica com una de geogràfica.
 - També ens hem preguntat per la humitat en altituds altes i baixes. Per fer-ho
   hem fet un Test T de Welch, que ha demostrat que les estacions situades a
-  baixa altitud ($\le 325$ m) presenten una humitat mitjana significativament
-  més alta, amb un valor del 80%. En canvi, les estacions d'alta altitud
-  ($> 325$ m) tenen una humitat mitjana del 73%.
+  alta altitud ($\le 325$ m) presenten una humitat mitjana més alta, amb un
+  valor del `r format(round(prova_t$estimate["mean of x"], 2), decimal.mark = ",", nsmall = 2, scientific = FALSE)`%.
+  En canvi, les estacions de baixa altitud ($> 325$ m) tenen una humitat mitjana del
+  `r format(round(prova_t$estimate["mean of y"], 2), decimal.mark = ",", nsmall=2, scientific = FALSE)`%.
 
 # Codi
 Accés al repositori amb el codi disponible al següent enllaç:

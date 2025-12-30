@@ -20,6 +20,7 @@ dependencies:
   - r-languageserver
   - r-laeken
   - r-magick
+  - r-moments
   - r-ranger
   - r-rann
   - r-rmarkdown
