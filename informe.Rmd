@@ -108,7 +108,7 @@ comprimit en aquest repositori, cal descomprimir-lo i executar l'script per
 generar el fitxer `dataset.csv`:
 
 ```
-tar xvfa dataset.tar.xz
+tar xvfa ./backup/dataset.tar.xz
 python3 source/main.py -w
 ```
 

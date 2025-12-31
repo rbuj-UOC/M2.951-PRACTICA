@@ -10,7 +10,7 @@ compress_folder() {
     # Set the working directory and folder name
     WORK_DIR=${PWD}
     FOLDER=$(basename "${WORK_DIR}")
-    ARCHIVE=${FOLDER}.tar.zst
+    ARCHIVE="backup/${FOLDER}.tar.zst"
     # Remove .DS_Store
     find . -name ".DS_Store" -exec rm "{}" \;
     # Change to the parent directory to create the compressed file
@@ -24,8 +24,8 @@ compress_folder() {
         --exclude="${FOLDER}/.git" \
         --exclude="${FOLDER}/.venv" \
         --exclude="${FOLDER}/__pycache__" \
-        --exclude="${FOLDER}/*.tar.zst" \
-        --exclude="${FOLDER}/*.tar.xz" \
+        --exclude="${FOLDER}/backup/*.tar.zst" \
+        --exclude="${FOLDER}/backup/*.tar.xz" \
         --exclude="${FOLDER}/logs" \
         --exclude="${FOLDER}/dataset" \
         "${FOLDER}"
@@ -36,7 +36,7 @@ compress_folder() {
 # function to compress the logs folder
 compress_logs() {
     FOLDER=logs
-    ARCHIVE=${FOLDER}.tar.xz
+    ARCHIVE="backup/${FOLDER}.tar.xz"
     # Remove .DS_Store
     find . -name ".DS_Store" -exec rm "{}" \;
     # Remove the file if it already exists
@@ -52,7 +52,7 @@ compress_logs() {
 # function to compress the dataset folder
 compress_dataset() {
     FOLDER=dataset
-    ARCHIVE=${FOLDER}.tar.xz
+    ARCHIVE="backup/${FOLDER}.tar.xz"
     # Remove .DS_Store
     find . -name ".DS_Store" -exec rm "{}" \;
     # Remove the file if it already exists

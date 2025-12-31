@@ -10,11 +10,11 @@
 - `.vscode/`: carpeta amb la configuració de Visual Studio Code.
   - `extensions.json`: llista d’extensions recomanades.
   - `settings.json`: preferències personalitzades de l’entorn de desenvolupament.
-- `dataset/`: carpeta que conté els fitxers de dades.
-  - `station_list.csv`: fitxer CSV amb la llista d’estacions meteorològiques.
-  - `[CODI]_[DIA].csv`: fitxer CSV amb les mesures per a l'estació, identificada
-    amb el codi de dos dígits [CODI], amb dades del dia [DIA] en format
-    `dd.mm.yyyy`.
+- `backup/`
+  - `dataset.tar.xz`: arxiu del dataset sense cap preprocessament, que s'ha
+    obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
+  - `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
+    `boost.sh`.
 - `source/`: carpeta amb el codi font del projecte.
   - `main.py`: punt d’entrada del programa. Inicia el procés de web scraping.
   - `scraper.py`: implementa la classe `MeteoScraper`, que genera el conjunt de
@@ -31,8 +31,6 @@
 - `columns.css`: full d'estil per al fitxer `informe.Rmd`.
 - `compress.sh`: script per comprimir el directori de treball, el dataset o els
   registres.
-- `dataset.tar.xz`: arxiu del dataset sense cap preprocessament, que s'ha
-  obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
 - `environment.yml`: fitxer per crear un entorn virtual amb conda i instal·lar
   les dependències.
 - `header.tex`: fitxer amb codi TeX per al fitxer `informe.Rmd`.
@@ -41,9 +39,21 @@
 - `informe.sh`: script per generar l'informe en format pdf o html, o bé ambdós.
 - `init.sh`: script per preparar l'entorn virtual amb venv i instal·lar les
   dependències.
-- `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
-  `boost.sh`.
 - `requirements.txt`: fitxer amb les dependències del projecte.
+
+## Conjunts de dades
+
+Tots els fitxers dels conjunts de dades estan a la carpeta dataset.
+
+Els fitxers `station_list.csv` i `[CODI]_[DIA].csv` s'obtenen en l'etapa de
+web scraping. També es poden obtenir de la carpeta backup.
+
+El fitxer `dataset.csv` es pot obtenir amb el web scraping o bé, amb l'execució
+de `python3 source/main.py -w`una vegada descomprimit l'arxiu
+backup/dataset.tar.xz.
+
+El fitxer `dataset_data_analysis.csv` s'obté en renderitzar el fitxer
+`informe.Rmd`.
 
 ## Requisits
 
@@ -253,7 +263,7 @@ En cas que no es vulguin baixar les dades i es desitgi utilitzar el dataset
 comprimit:
 
 ```sh
-tar xvfa dataset.tar.xz
+tar xvfa ./backup/dataset.tar.xz
 python3 source/main.py -w
 ```
 
@@ -282,7 +292,7 @@ Per obtenir el conjunt de dades que s'ha utilitzat en la realització d'aquest
 informe, un cop activat l'entorn virtual conda, executeu les ordres següents:
 
 ```sh
-tar xzvf dataset.tar.xz
+tar xzvf ./backup/dataset.tar.xz
 python3 source/main.py -w
 ```
 
