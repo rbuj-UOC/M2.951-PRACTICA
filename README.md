@@ -15,6 +15,11 @@
     obtingut amb l'execució de l'script `boost.sh`. Veure fitxer logs.tar.zst.
   - `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
     `boost.sh`.
+- `report/`
+  - `columns.css`: full d'estil per al fitxer `informe.Rmd`.
+  - `header.tex`: fitxer amb codi TeX per al fitxer `informe.Rmd`.
+  - `informe.Rmd`: fitxer R Markdown per fer la neteja i l'anàlisi del conjunt de
+     dades.
 - `scripts/`
   - `boost.sh`: script per executar el procés de scraping en paral·lel.
   - `compress.sh`: script per comprimir el directori de treball, el dataset o els
@@ -34,12 +39,8 @@
   amb EditorConfig com ara Visual Studio Code.
 - `LICENSE`: fitxer amb la llicència amb la que es publica el codi.
 - `README.md`: fitxer amb la documentació general del projecte.
-- `columns.css`: full d'estil per al fitxer `informe.Rmd`.
 - `environment.yml`: fitxer per crear un entorn virtual amb conda i instal·lar
   les dependències.
-- `header.tex`: fitxer amb codi TeX per al fitxer `informe.Rmd`.
-- `informe.Rmd`: fitxer R Markdown per fer la neteja i l'anàlisi del conjunt de
-   dades.
 - `requirements.txt`: fitxer amb les dependències del projecte.
 
 ## Conjunts de dades

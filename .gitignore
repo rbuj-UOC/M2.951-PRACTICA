@@ -207,16 +207,16 @@ marimo/_lsp/
 __marimo__/
 
 .conda/
-informe_cache/
-informe_files/
 dataset/
 logs/
+report/informe.aux
+report/informe.html
+report/informe.html.zip
+report/informe.log
+report/informe.pdf
+report/informe.tex
+report/informe_cache/
+report/informe_files/
 .DS_Store
 .Rhistory
-informe.aux
-informe.html
-informe.html.zip
-informe.log
-informe.pdf
-informe.tex
 tmp-*.tex

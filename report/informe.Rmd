@@ -125,7 +125,7 @@ de dades:
 
 ```{r read-dataset, attr.source='.numberLines'}
 dataset_measurements <- fread(
-    "dataset/dataset.csv", # Camí al fitxer
+    "../dataset/dataset.csv", # Camí al fitxer
     dec = ".", # Separador decimal
     na.strings = c("", "(s/d)"), # Valors que representen NA
     data.table = FALSE # Retorna data.frame per compatibilitat
@@ -2111,7 +2111,7 @@ dataset_measurements <- dataset_measurements[, c(
 # Desem el conjunt de dades netejat en un fitxer CSV
 write.csv(
     dataset_measurements,
-    file = "dataset/dataset_data_analysis.csv",
+    file = "../dataset/dataset_data_analysis.csv",
     append = FALSE, # no afegim al final del fitxer
     na = "NA", # com es representen els valors perduts
     sep = ",", # separador de camps
