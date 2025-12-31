@@ -38,6 +38,7 @@
 - `header.tex`: fitxer amb codi TeX per al fitxer `informe.Rmd`.
 - `informe.Rmd`: fitxer R Markdown per fer la neteja i l'anàlisi del conjunt de
    dades.
+- `informe.sh`: script per generar l'informe en format pdf o html, o bé ambdós.
 - `init.sh`: script per preparar l'entorn virtual amb venv i instal·lar les
   dependències.
 - `logs.tar.zst`: arxiu amb registres de l'execució de l'scrapper amb l'script
