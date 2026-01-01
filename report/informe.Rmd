@@ -2595,7 +2595,7 @@ Accés al repositori amb el codi disponible al següent enllaç:
 https://github.com/norabolivar/PRACT1_Tipologia.git 
 
 # Vídeo
-L'enllaç al vídeo: [Google Drive](https://drive.google.com/file/d/1qjzu_-EV4Vp6W4wudKJFeF0ib3fVDbsQ/view?usp=sharing)
+L'enllaç al vídeo: [Google Drive](https://drive.google.com/file/d/1StF6tUfhHguhVK7boFnL5MQR41TnhMIe/view?usp=sharing)
 
 # Contribucions
 
