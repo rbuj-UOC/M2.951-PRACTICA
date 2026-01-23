@@ -8,7 +8,6 @@
 # parse command line options
 GENERATE_PDF=true
 GENERATE_HTML=true
-UPDATE_ONLY=false
 while getopts "h-:" opt; do
     case "$opt" in
         -)

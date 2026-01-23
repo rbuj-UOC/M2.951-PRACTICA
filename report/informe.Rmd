@@ -2209,46 +2209,72 @@ names(vif_model_regressio_simple) <- c(
 sort(vif_model_regressio_simple, decreasing = TRUE)
 ```
 
-- **Capacitat explicativa ($R^2$)**: El model aconsegueix un $R^2$ ajustat de
-  `r format(round(resum_model_regressio_simple$adj.r.squared, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`.
-  Això significa que explica el `r format(round(resum_model_regressio_simple$adj.r.squared * 100, 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)` %
-  de la variància en la Temperatura Mitjana. En l'anterior model era del
-  `r format(round(summary(model_regressio)$adj.r.squared, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`.
-- **Error estàndard de la regressió**: L'error estàndard és de
-  `r format(round(resum_model_regressio_simple$sigma, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)` ºC.
-  Això indica que les prediccions del model tenen un error mitjà d'aproximadament
-  aquesta quantitat respecte als valors reals. En l'anterior model era de
-  `r format(round(summary(model_regressio)$sigma, 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)` ºC.
-- **Intercept**: Té un valor de `r format(round(coef(model_regressio_simple)[1], 2), nsmall = 2, decimal.mark = ",", scientific = FALSE)`.
-  Aquesta és la temperatura mitjana estimada (en ºC) quan tots els predictors
-  són zero. En aquest cas no té un significat físic directe.
-- **Altitud**: El coeficient té un valor de `r format(round(coef_model_regressio_simple["Altitud"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p $<2e-16$. Aquests resultats indiquen que aquest coeficient és
-  significatiu. A més, el signe és coherent, ja que a major altitud, la
-  temperatura disminueix.
-- **Latitud**: Té un valor de `r format(round(coef_model_regressio_simple["Latitud"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p $<2e-16$. Això indica que per cada grau cap al nord, la
-  temperatura baixa 2.2ºC, el que és coherent amb el clima (als Pirineus fa més
-  fred en general).
-- **Longitud**: Té un valor de `r format(round(coef_model_regressio_simple["Longitud"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p $<2e-16$. Això indica que per cap a l'est, la temperatura
-  augmenta una mica, però no afecta tant com la latitud.
-- **HRM %**: El coeficient té un valor de `r format(round(coef_model_regressio_simple["HRM"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p $<2e-16$. Més humitat relativa implica un descens en la
-  temperatura.
-- **RS W/M2**: Té un valor de `r format(round(coef_model_regressio_simple["RS"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p $<2e-16$. El seu valor positiu indica que per cada unitat
-  d'augment en la radiació solar, la temperatura augmenta. Coherent físicament.
-- **PPT mm**: Té un valor de `r format(round(coef_model_regressio_simple["PPT"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p de 0.008442. El seu valor negatiu indica que un augment en la
-  precipitació s'associa a una temperatura mitjana més baixa segons el model.
-- **VVX (10 m) km/h**: Té un valor de `r format(round(coef_model_regressio_simple["VVX"], 4), nsmall = 4, decimal.mark = ",", scientific = FALSE)`
-  i un valor-p $<2e-16$. El seu signe ha canviat respecte l'anterior model.
-- **Variables temporals (Mes i Hora)**: Són altament significatives ($<2e-16$).
-- **Significació Global**: El valor-p de la prova és $<2e-16$, que indica que
-  el model és significatiu.
-- Ara no s'han exclòs tantes dades.
-- La multicol·linealitat és correcta.
+#### Avaluació del model supervisat
+
+Per avaluar el rendiment del model de regressió lineal, analitzem els residus
+i calculem les mètriques de rendiment.
+
+```{r, attr.source='.numberLines'}
+# Prediccions del model
+prediccions <- predict(model_regressio_simple, newdata = dataset_numeric)
+
+# Càlcul de mètriques de rendiment
+valors_reals <- dataset_numeric$`TM °C`[!is.na(prediccions)]
+prediccions_valides <- prediccions[!is.na(prediccions)]
+
+# Eliminació de NA dels valors reals corresponents
+mask <- !is.na(valors_reals)
+valors_reals <- valors_reals[mask]
+prediccions_valides <- prediccions_valides[mask]
+
+# Mètriques
+mae <- mean(abs(valors_reals - prediccions_valides))
+rmse <- sqrt(mean((valors_reals - prediccions_valides)^2))
+r2 <- cor(valors_reals, prediccions_valides)^2
+
+cat("Mean Absolute Error (MAE):", round(mae, 4), "°C\n")
+cat("Root Mean Square Error (RMSE):", round(rmse, 4), "°C\n")
+cat("R² (coeficient de determinació):", round(r2, 4), "\n")
+```
+
+```{r, fig.height=4, fig.width=6}
+# Gràfics de diagnòstic del model
+par(mfrow = c(2, 2))
+plot(model_regressio_simple)
+par(mfrow = c(1, 1))
+```
+
+Els gràfics de diagnòstic mostren:
+
+- **Residuals vs Fitted**: Lleu no-linealitat - la línia vermella mostra una
+  lleugera curvatura, això suggereix que hi ha una lleu no-linealitat.
+- **Normal Q-Q**: Heterocedasticitat moderada - els residus segueixen
+  aproximadament una distribució normal, hi ha desviacions lleus als extrems.
+- **Scale-Location**: Residus no perfectament normals - hi ha una lleugera
+  tendència ascendent, indicant que la variància dels errors podria augmentar
+  amb el valor ajustat.
+- **Residuals vs Leverage**: Algunes observacions influents (com 698086 i
+  1584299).
+
+```{r, fig.height=5, fig.width=6}
+# Gràfic de prediccions vs valors reals
+ggplot(
+    data.frame(Real = valors_reals, Prediccio = prediccions_valides),
+    aes(x = Real, y = Prediccio)
+) +
+    geom_point(alpha = 0.3, color = "steelblue") +
+    geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+    labs(
+        title = "Prediccions vs Valors Reals - Model de Regressió",
+        x = "Temperatura Real (°C)",
+        y = "Temperatura Predita (°C)"
+    ) +
+    theme_minimal() +
+    coord_fixed()
+```
+
+El gràfic mostra una bona correlació entre les prediccions i els valors reals,
+amb les dades concentrades al voltant de la línia ideal (línia vermella).
 
 ### Model No Supervisat
 
@@ -2279,45 +2305,6 @@ summary(pca_resultat)
 # Mostrem la relació entre variables i components (Rotation)
 pca_resultat$rotation
 ```
-
-:::::: {.cols data-latex=""}
-
-::: {.col data-latex="{0.25\textwidth}"}
-```{r, echo=FALSE, fig.height=2, fig.width=2}
-# Gràfica de Scree Plot
-scree_data <- data.frame(
-    Component = 1:length(pca_resultat$sdev),
-    Variancia = (pca_resultat$sdev)^2
-)
-ggplot(scree_data, aes(x = Component, y = Variancia)) +
-    geom_line(color = "blue") +
-    geom_point(color = "red") +
-    labs(
-        title = "Scree Plot",
-        x = "Component Principal",
-        y = "Variància Explicada"
-    ) +
-    theme_minimal() +
-    theme(
-        plot.title = element_text(size = 10, hjust = 0.5),
-        axis.text = element_text(size = 8),
-        axis.title = element_text(size = 9)
-    )
-```
-:::
-
-::: {.col data-latex="{0.05\textwidth}"}
-\ 
-<!-- an empty Div (with a white space), serving as a column separator -->
-:::
-
-::: {.col data-latex="{0.7\textwidth}"}
-En el diagrama de colze (Scree Plot) podem observar la variància explicada per
-cada component principal. Els dos primers components principals expliquen una
-gran part de la variància total (gairebé el 50%), i les següents components
-explicaran menys variància.
-:::
-::::::
 
 ```{r, echo=FALSE}
 # Percentatges de variància explicada per cada component
@@ -2466,7 +2453,105 @@ PC2 respectivament. Corrobora els anàlisis previs.
   aquest eix.
 - Temperatura: S'observa una transició clara de colors càlids a la part inferior
   del gràfic (que correspon amb baixa altitud/latitud) cap a colors blavosos a
-  la part superior (alta altitud/latitud). 
+  la part superior (alta altitud/latitud).
+
+### Clustering amb K-means
+
+Apliquem un algoritme de K-means als dos primers components principals (PC1 i PC2) per identificar grups naturals en els dades. Els dos primers components expliquen aproximadament el 49% de la variància total, fent-los adequats per al clustering.
+
+```{r, attr.source='.numberLines'}
+# Extreure els dos primers components principals
+pca_scores <- as.data.frame(pca_resultat$x[, 1:2])
+
+# Determinar el nombre òptim de clusters amb el mètode del colze
+inertia <- numeric(10)
+for (k in 1:10) {
+    kmeans_temp <- kmeans(pca_scores, centers = k, nstart = 20)
+    inertia[k] <- kmeans_temp$tot.withinss
+}
+
+# Gràfic del mètode del colze
+plot(1:10, inertia,
+    type = "b",
+    main = "Mètode del Colze per determinar k òptim",
+    xlab = "Nombre de clusters (k)",
+    ylab = "Inèrcia (Within-cluster sum of squares)",
+    pch = 19, col = "blue"
+)
+```
+
+Observant el gràfic, identificarem el nombre òptim de clusters. A continuació, apliquem K-means amb el nombre de clusters seleccionat.
+
+```{r, attr.source='.numberLines'}
+# Aplicar K-means amb k=3 (seleccionat segons el mètode del colze)
+set.seed(42)
+kmeans_resultat <- kmeans(pca_scores, centers = 3, nstart = 20)
+
+# Afegir els clusters als scores de PCA
+pca_scores$Cluster <- as.factor(kmeans_resultat$cluster)
+```
+
+```{r, echo=FALSE, fig.width=6}
+# Visualitzar els clusters en l'espai PC1-PC2
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = Cluster, fill = Cluster)) +
+    geom_point(size = 3, alpha = 0.6) +
+    # Marcar els centroides
+    geom_point(
+        data = as.data.frame(kmeans_resultat$centers),
+        aes(x = PC1, y = PC2),
+        color = "black", size = 5, shape = 23, fill = "yellow",
+        inherit.aes = FALSE
+    ) +
+    labs(
+        title = "Clustering amb K-means: Clusters en l'espai PC1-PC2",
+        x = paste0("PC1 (", round(pca_resultat$sdev[1]^2 / sum(pca_resultat$sdev^2) * 100, 1), "% variància)"),
+        y = paste0("PC2 (", round(pca_resultat$sdev[2]^2 / sum(pca_resultat$sdev^2) * 100, 1), "% variància)"),
+        color = "Cluster",
+        fill = "Cluster"
+    ) +
+    scale_color_manual(values = c("#FF6B6B", "#4ECDC4", "#45B7D1")) +
+    scale_fill_manual(values = c("#FF6B6B", "#4ECDC4", "#45B7D1")) +
+    theme_minimal() +
+    theme(
+        plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 12),
+        legend.position = "right",
+        panel.grid.major = element_line(color = "gray90"),
+        panel.grid.minor = element_blank()
+    )
+```
+
+#### Interpretació dels clusters
+
+```{r, echo=FALSE}
+# Resum dels clusters
+cluster_summary <- data.frame(
+    Cluster = 1:3,
+    Observacions = table(kmeans_resultat$cluster),
+    PC1_promig = round(kmeans_resultat$centers[, 1], 3),
+    PC2_promig = round(kmeans_resultat$centers[, 2], 3)
+)
+
+names(cluster_summary) <- c("Cluster", "Nombre obs.", "PC1 (mitjana)", "PC2 (mitjana)")
+
+kable(cluster_summary,
+    format.args = list(decimal.mark = ",", big.mark = ".", digits = 3),
+    caption = "Resum dels clusters K-means",
+    align = c("c", "c", "r", "r")
+) |>
+    kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE
+    )
+```
+
+**Interpretació per cluster:**
+
+- **Cluster 1 (Vermell)**: Ubicat a la dreta (PC1 positiu), representant estacions amb condicions assolellades, ventoses i seques. Aquestes són les zones més àrides.
+
+- **Cluster 2 (Verd/Turquesa)**: Ubicat en el centre, representant estacions amb condicions meteorològiques intermèdies.
+
+- **Cluster 3 (Blau)**: Ubicat a dalt (PC2 positiu), representant estacions d'alta altitud i latitud (muntanyoses i del nord).
 
 ## Contrast d'Hipòtesi
 
@@ -2499,9 +2584,10 @@ dataset_grups <- dataset_numeric |>
     filter(Grup_Altitud != "Altres")
 ```
 
-En una població de 189 individus, no podem aplicar el teorema del límit central,
-en el qual podem assumir una distrubució normal de les mitjanes en poblacions
-grans.
+Podem considerar que la població és prou gran per aplicar el teorema del límit
+central (TLC) i assumir una distribució normal de les mitjanes. No obstant això,
+comprovarem igualment la normalitat amb les gràfiques de diagnòstic i els
+paràmetres d'asimetria i curtosi.
 
 ```{r, attr.source='.numberLines'}
 # Separa les dades en dos grups segons l'altitud
