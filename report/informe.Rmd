@@ -25,10 +25,11 @@ toc-title: "Taula de continguts"
 knitr::opts_chunk$set(
     warning = FALSE, error = FALSE, message = FALSE,
     cache = TRUE, # Activa la memòria cau
-    cache.lazy = FALSE, # Desactiva la càrrega diferida de la memòria cau
+    cache.lazy = TRUE, # Carrega la memòria cau quan es necessiti
     # Opcions per a les figures
     fig.align = "center"
 )
+knitr::opts_knit$set(autodep = TRUE) # Detecta dependències per al cache
 suppressPackageStartupMessages({
     library(car)
     library(corrplot)
@@ -48,6 +49,16 @@ suppressPackageStartupMessages({
     library(VIM)
     library(zoo)
 })
+```
+
+```{r dataset-path-check, include=FALSE}
+# Comprova que el fitxer del dataset existeix abans de continuar
+dataset_path <- "../dataset/dataset.csv"
+if (!file.exists(dataset_path)) {
+    cat("ATENCIÓ: No s'ha trobat el fitxer '../dataset/dataset.csv'.\n")
+    cat("Si us plau, genera'l amb 'python3 source/main.py -w'.\n")
+    knitr::knit_exit()
+}
 ```
 
 # Descripció del dataset
@@ -125,10 +136,11 @@ de dades:
 
 ```{r read-dataset, attr.source='.numberLines'}
 dataset_measurements <- fread(
-    "../dataset/dataset.csv", # Camí al fitxer
+    dataset_path, # Camí al fitxer
     dec = ".", # Separador decimal
     na.strings = c("", "(s/d)"), # Valors que representen NA
-    data.table = FALSE # Retorna data.frame per compatibilitat
+    data.table = FALSE, # Retorna data.frame per compatibilitat
+    showProgress = FALSE
 )
 ```
 
