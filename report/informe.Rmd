@@ -371,7 +371,7 @@ En la conversió del tipus de dades, s'han realitzat les següents accions:
   `PPT mm` i `RS W/m2` al tipus de dada Numeric.
 - S'elimina la variable `Període TU` i la variable `date` del conjunt de dades.
 
-```{r datatype-conversion, attr.source='.numberLines'}
+```{r datatype-conversion, attr.source='.numberLines', echo=FALSE}
 setDT(dataset_measurements)
 # Conversió del tipus de dades de les variables (vectoritzat amb data.table)
 # Variables de dates (2)
