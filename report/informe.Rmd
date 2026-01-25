@@ -139,7 +139,7 @@ dataset_measurements <- fread(
     dataset_path, # Camí al fitxer
     dec = ".", # Separador decimal
     na.strings = c("", "(s/d)"), # Valors que representen NA
-    data.table = FALSE, # Retorna data.frame per compatibilitat
+    data.table = TRUE, # Retorna data.table en comptes de data.frame
     showProgress = FALSE
 )
 ```
@@ -201,11 +201,10 @@ variable d'una estació pot tenir com a molt
 
 ```{r stations-with-full-data, echo=FALSE}
 # Nombre d'estacions meteorològiques que tenen el nombre màxim de files
-stations_with_full_data <- dataset_measurements |>
-    group_by(`Estació [Codi]`) |>
-    summarise(Count = n()) |>
-    filter(Count == max_rows_per_station) |>
-    ungroup()
+setDT(dataset_measurements)
+stations_with_full_data <- dataset_measurements[, .N, by = `Estació [Codi]`][
+    N == max_rows_per_station
+]
 n_stations_with_full_data <- nrow(stations_with_full_data)
 ```
 
@@ -217,17 +216,14 @@ estacions, errors en la transmissió de dades, o que les estacions es van donar
 d'alta després de l'inici del període de recollida de dades.
 
 ```{r new-stations, echo=FALSE, attr.source='.numberLines'}
-# Converteix la variable Data alta a format data
-dataset_measurements$`data_alta` <- as.Date(
-    dataset_measurements$`Data alta`,
-    format = "%d.%m.%Y"
-)
+setDT(dataset_measurements)
+# Converteix la variable Data alta a format data (vectoritzat)
+dataset_measurements[, data_alta := as.Date(`Data alta`, format = "%d.%m.%Y")]
 # Estacions que es van donar d'alta després del 04/12/2024
-new_stations <- dataset_measurements |>
-    filter(data_alta >= as.Date("2024-12-04")) |>
-    select(`Estació [Codi]`, data_alta) |>
-    distinct() |>
-    arrange(data_alta)
+new_stations <- unique(dataset_measurements[
+    data_alta >= as.Date("2024-12-04"),
+    .(`Estació [Codi]`, data_alta)
+][order(data_alta)])
 # Taula amb les estacions donades d'alta aquest any
 kable(
     new_stations,
@@ -244,18 +240,17 @@ kable(
         full_width = FALSE
     )
 # Elimina la variable temporal data_alta
-dataset_measurements <- dataset_measurements |>
-    select(-data_alta)
+dataset_measurements[, data_alta := NULL]
 ```
 
 ```{r stations-incomplete-data, echo=FALSE}
+setDT(dataset_measurements)
 # Taula amb les estacions meteorològiques que no tenen totes les files,
 # ordenades de major a menor, i mostrant les primeres i últimes 5
-stations_incomplete_data <- dataset_measurements |>
-    group_by(`Estació [Codi]`) |>
-    summarise(Count = n()) |>
-    filter(Count < max_rows_per_station & !`Estació [Codi]` %in% new_stations$`Estació [Codi]`) |>
-    arrange(desc(Count))
+stations_incomplete_data <- dataset_measurements[, .N, by = `Estació [Codi]`][
+    N < max_rows_per_station & !`Estació [Codi]` %in% new_stations$`Estació [Codi]`
+][order(-N)]
+setnames(stations_incomplete_data, "N", "Count")
 ```
 
 En la taula següent es mosta un resum del nombre de registres de les estacions
@@ -293,15 +288,15 @@ En la següent taula es mostra el nombre de valors diferents per cada variable
 del conjunt de dades.
 
 ```{r unique-values, echo=FALSE}
-# Nombre de valors diferents en la variable
-unique_values_df <- dataset_measurements |>
-    summarise(across(everything(), ~ dplyr::n_distinct(.))) |>
-    tidyr::pivot_longer(
-        cols = everything(),
-        names_to = "Variable",
-        values_to = "Unique_Values"
-    ) |>
-    arrange(Unique_Values)
+setDT(dataset_measurements)
+# Nombre de valors diferents en la variable (vectoritzat amb data.table)
+unique_values_df <- data.frame(
+    Variable = names(dataset_measurements),
+    Unique_Values = vapply(dataset_measurements, uniqueN, integer(1))
+)
+unique_values_df <- unique_values_df[order(unique_values_df$Unique_Values), ]
+rownames(unique_values_df) <- NULL
+
 kable(
     unique_values_df, # Dades de la taula
     # Format dels nombres a la taula
@@ -322,9 +317,9 @@ A partir dels valors observats en la taula anterior, s'eliminen les variables
 estacions estan operatives.
 
 ```{r remove-unused-variables, attr.source='.numberLines'}
+setDT(dataset_measurements)
 # Elimina les variables del conjunt de dades
-dataset_measurements <- dataset_measurements |>
-    select(-`Data baixa`, -`Estat actual`)
+dataset_measurements[, c("Data baixa", "Estat actual") := NULL]
 ```
 
 Per facilitar la visualització de les gràfiques i taules, es creen dues
@@ -332,13 +327,15 @@ variables noves `Nom estació` i `Codi estació` a partir de la variable
 `Estació [Codi]`.
 
 ```{r split-field, attr.source='.numberLines'}
-dataset_measurements <- dataset_measurements |>
-    mutate(
-        `Nom estació` = sub("(.*) \\[.*\\]", "\\1", `Estació [Codi]`),
-        `Codi estació` = sub(".*\\[(.*)\\]", "\\1", `Estació [Codi]`)
-    ) |>
-    select(-`Estació [Codi]`, -code) |>
-    select(`Nom estació`, `Codi estació`, everything())
+setDT(dataset_measurements)
+# Crea noves variables i elimina les antigues (tot en una sola operació)
+dataset_measurements[, c("Nom estació", "Codi estació") := .(
+    sub("(.*) \\[.*\\]", "\\1", `Estació [Codi]`),
+    sub(".*\\[(.*)\\]", "\\1", `Estació [Codi]`)
+)]
+dataset_measurements[, c("Estació [Codi]", "code") := NULL]
+# Reordena les columnes
+setcolorder(dataset_measurements, c("Nom estació", "Codi estació"))
 ```
 
 # Conversió de tipus de dades
@@ -375,46 +372,46 @@ En la conversió del tipus de dades, s'han realitzat les següents accions:
 - S'elimina la variable `Període TU` i la variable `date` del conjunt de dades.
 
 ```{r datatype-conversion, attr.source='.numberLines'}
-# Conversió del tipus de dades de les variables i eliminació
-dataset_measurements <- dataset_measurements |>
-    mutate(
-        # Variables de dates (2)
-        `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
-        `Data i hora` = as.POSIXct(
-            paste(date, substr(`Període TU`, 1, 5)),
-            format = "%d.%m.%Y %H:%M", tz = "UTC"
-        ),
-        # Variables categòriques (5)
-        `Codi estació` = as.factor(`Codi estació`),
-        `Nom estació` = as.factor(`Nom estació`),
-        Comarca = as.factor(Comarca),
-        Municipi = as.factor(Municipi),
-        # Variables numèriques geogràfiques (3)
-        `Altitud (m)` = as.numeric(`Altitud (m)`),
-        Longitud = as.numeric(Longitud),
-        Latitud = as.numeric(Latitud),
-        # Variables numèriques de temperatura (3)
-        `TM °C` = as.numeric(`TM °C`),
-        `TX °C` = as.numeric(`TX °C`),
-        `TN °C` = as.numeric(`TN °C`),
-        # Variables numèriques de direcció del vent (3)
-        `DVM (2 m) graus` = as.numeric(`DVM (2 m) graus`),
-        `DVM (6 m) graus` = as.numeric(`DVM (6 m) graus`),
-        `DVM (10 m) graus` = as.numeric(`DVM (10 m) graus`),
-        # Variables numèriques de velocitat del vent (5)
-        `VVM (2 m) km/h` = as.numeric(`VVM (2 m) km/h`),
-        `VVM (6 m) km/h` = as.numeric(`VVM (6 m) km/h`),
-        `VVM (10 m) km/h` = as.numeric(`VVM (10 m) km/h`),
-        `VVX (2 m) km/h` = as.numeric(`VVX (2 m) km/h`),
-        `VVX (10 m) km/h` = as.numeric(`VVX (10 m) km/h`),
-        # Altres variables numèriques (5)
-        `GN cm` = as.numeric(`GN cm`),
-        `HRM %` = as.numeric(`HRM %`),
-        `PM hPa` = as.numeric(`PM hPa`),
-        `PPT mm` = as.numeric(`PPT mm`),
-        `RS W/m2` = as.numeric(`RS W/m2`)
-    ) |>
-    select(-`Període TU`, -date)
+setDT(dataset_measurements)
+# Conversió del tipus de dades de les variables (vectoritzat amb data.table)
+# Variables de dates (2)
+dataset_measurements[, `:=`(
+    `Data alta` = as.Date(`Data alta`, format = "%d.%m.%Y"),
+    `Data i hora` = as.POSIXct(
+        paste(date, substr(`Període TU`, 1, 5)),
+        format = "%d.%m.%Y %H:%M", tz = "UTC"
+    )
+)]
+
+# Variables categòriques (4)
+cols_factor <- c("Codi estació", "Nom estació", "Comarca", "Municipi")
+dataset_measurements[, (cols_factor) := lapply(.SD, as.factor), .SDcols = cols_factor]
+
+# Variables numèriques geogràfiques (3)
+cols_geo <- c("Altitud (m)", "Longitud", "Latitud")
+dataset_measurements[, (cols_geo) := lapply(.SD, as.numeric), .SDcols = cols_geo]
+
+# Variables numèriques de temperatura (3)
+cols_temp <- c("TM °C", "TX °C", "TN °C")
+dataset_measurements[, (cols_temp) := lapply(.SD, as.numeric), .SDcols = cols_temp]
+
+# Variables numèriques de direcció del vent (3)
+cols_dir <- c("DVM (2 m) graus", "DVM (6 m) graus", "DVM (10 m) graus")
+dataset_measurements[, (cols_dir) := lapply(.SD, as.numeric), .SDcols = cols_dir]
+
+# Variables numèriques de velocitat del vent (5)
+cols_vel <- c(
+    "VVM (2 m) km/h", "VVM (6 m) km/h", "VVM (10 m) km/h",
+    "VVX (2 m) km/h", "VVX (10 m) km/h"
+)
+dataset_measurements[, (cols_vel) := lapply(.SD, as.numeric), .SDcols = cols_vel]
+
+# Altres variables numèriques (5)
+cols_other <- c("GN cm", "HRM %", "PM hPa", "PPT mm", "RS W/m2")
+dataset_measurements[, (cols_other) := lapply(.SD, as.numeric), .SDcols = cols_other]
+
+# Elimina variables innecessàries
+dataset_measurements[, c("Període TU", "date") := NULL]
 ```
 
 A continuació es mostra un resum estadístic del conjunt de dades després de la
@@ -449,7 +446,14 @@ plot_boundaries_func <- function(
   administration, title, dataset = dataset_measurements,
   missing_summary = NULL, lost_summary = NULL
 ) {
-    unique_stations <- unique(dataset[, c("Codi estació", "Longitud", "Latitud")])
+    # Detecta el nom de la columna d'estació
+    station_col <- if ("Codi estació" %in% names(dataset)) {
+        "Codi estació"
+    } else {
+        "Estació [Codi]"
+    }
+
+    unique_stations <- unique(dataset[, c(station_col, "Longitud", "Latitud"), with = FALSE])
     # Remove rows with missing coordinates
     unique_stations <- unique_stations[
         !is.na(unique_stations$Longitud) & !is.na(unique_stations$Latitud),
@@ -489,25 +493,21 @@ plot_boundaries_func <- function(
                 axis.text = element_blank()
             ))
     }
-    other_sf <- unique_stations |>
-        filter(!`Codi estació` %in% missing_summary$`Codi estació`) |>
-        filter(!`Codi estació` %in% lost_summary$`Codi estació`) |>
-        st_as_sf(
-            coords = c("Longitud", "Latitud"),
-            crs = 4326
-        )
-    missing_sf <- unique_stations |>
-        filter(`Codi estació` %in% missing_summary$`Codi estació`) |>
-        st_as_sf(
-            coords = c("Longitud", "Latitud"),
-            crs = 4326
-        )
-    lost_sf <- unique_stations |>
-        filter(`Codi estació` %in% lost_summary$`Codi estació`) |>
-        st_as_sf(
-            coords = c("Longitud", "Latitud"),
-            crs = 4326
-        )
+    other_stations <- unique_stations[
+        !(unique_stations[[station_col]] %in% missing_summary[[station_col]] |
+            unique_stations[[station_col]] %in% lost_summary[[station_col]]),
+    ]
+    other_sf <- st_as_sf(other_stations, coords = c("Longitud", "Latitud"), crs = 4326)
+
+    missing_stations <- unique_stations[
+        unique_stations[[station_col]] %in% missing_summary[[station_col]],
+    ]
+    missing_sf <- st_as_sf(missing_stations, coords = c("Longitud", "Latitud"), crs = 4326)
+
+    lost_stations <- unique_stations[
+        unique_stations[[station_col]] %in% lost_summary[[station_col]],
+    ]
+    lost_sf <- st_as_sf(lost_stations, coords = c("Longitud", "Latitud"), crs = 4326)
     return(ggplot() +
         geom_sf(
             data = boundaries, fill = "grey95",
@@ -562,107 +562,40 @@ Abans de tot, eliminen els valors inicials i finals de les estacions quan són
 NA.
 
 ```{r, attr.source='.numberLines', echo=FALSE}
-station_codes <- dataset_measurements$`Codi estació` |> unique()
-# Elimina els valors NA inicials per a cadascuna de les estacions
-for (code in station_codes) {
-    s <- dataset_measurements |>
-        filter(`Codi estació` == code) |>
-        arrange(`Data i hora`)
-    # Troba l'índex del primer valor no NA per a les variables `TM °C`,
-    # `PM hPa`, `HRM %`, `RS W/m2`, `PPT mm`, `RS W/m2` i `GN cm`
-    first_non_na_index <- min(
-        which(
-            !is.na(s$`TM °C`) |
-                !is.na(s$`PM hPa`) |
-                !is.na(s$`HRM %`) |
-                !is.na(s$`RS W/m2`) |
-                !is.na(s$`PPT mm`) |
-                !is.na(s$`RS W/m2`) |
-                !is.na(s$`GN cm`)
-        ),
-        na.rm = TRUE
-    )
-    if (!is.infinite(first_non_na_index)) {
-        # Comprova que no hi ha cap valor NA de les variables seleccionades
-        # abans del primer valor no NA
-        all_na_before <- all(
-            is.na(s$`TM °C`[1:(first_non_na_index - 1)]) &
-                is.na(s$`PM hPa`[1:(first_non_na_index - 1)]) &
-                is.na(s$`HRM %`[1:(first_non_na_index - 1)]) &
-                is.na(s$`RS W/m2`[1:(first_non_na_index - 1)]) &
-                is.na(s$`PPT mm`[1:(first_non_na_index - 1)]) &
-                is.na(s$`RS W/m2`[1:(first_non_na_index - 1)]) &
-                is.na(s$`GN cm`[1:(first_non_na_index - 1)])
-        )
-        if (all_na_before) {
-            print(paste("Removing leading NAs for station code:", code))
-            dataset_measurements <- dataset_measurements |>
-                filter(
-                    !(
-                        `Codi estació` == code &
-                            row_number() < first_non_na_index &
-                            is.na(`TM °C`) &
-                            is.na(`PM hPa`) &
-                            is.na(`HRM %`) &
-                            is.na(`RS W/m2`) &
-                            is.na(`PPT mm`) &
-                            is.na(`RS W/m2`) &
-                            is.na(`GN cm`)
-                    )
-                )
-        }
-    }
-}
-# Elimina els valors NA finals per a cadascuna de les estacions
-for (code in station_codes) {
-    s <- dataset_measurements |>
-        filter(`Codi estació` == code) |>
-        arrange(`Data i hora`)
-    # Troba l'índex de l'últim valor no NA per a les variables `TM °C`,
-    # `PM hPa`, `HRM %`, `RS W/m2`, `PPT mm`, `RS W/m2` i `GN cm`
-    last_non_na_index <- max(
-        which(
-            !is.na(s$`TM °C`) |
-                !is.na(s$`PM hPa`) |
-                !is.na(s$`HRM %`) |
-                !is.na(s$`RS W/m2`) |
-                !is.na(s$`PPT mm`) |
-                !is.na(s$`RS W/m2`) |
-                !is.na(s$`GN cm`)
-        ),
-        na.rm = TRUE
-    )
-    if (!is.infinite(last_non_na_index)) {
-        # Comprova que no hi ha cap valor NA de les variables seleccionades
-        # després de l'últim valor no NA
-        all_na_after <- all(
-            is.na(s$`TM °C`[(last_non_na_index + 1):nrow(s)]) &
-                is.na(s$`PM hPa`[(last_non_na_index + 1):nrow(s)]) &
-                is.na(s$`HRM %`[(last_non_na_index + 1):nrow(s)]) &
-                is.na(s$`RS W/m2`[(last_non_na_index + 1):nrow(s)]) &
-                is.na(s$`PPT mm`[(last_non_na_index + 1):nrow(s)]) &
-                is.na(s$`RS W/m2`[(last_non_na_index + 1):nrow(s)]) &
-                is.na(s$`GN cm`[(last_non_na_index + 1):nrow(s)])
-        )
-        if (all_na_after) {
-            print(paste("Removing trailing NAs for station code:", code))
-            dataset_measurements <- dataset_measurements |>
-                filter(
-                    !(
-                        `Codi estació` == code &
-                            row_number() > last_non_na_index &
-                            is.na(`TM °C`) &
-                            is.na(`PM hPa`) &
-                            is.na(`HRM %`) &
-                            is.na(`RS W/m2`) &
-                            is.na(`PPT mm`) &
-                            is.na(`RS W/m2`) &
-                            is.na(`GN cm`)
-                    )
-                )
-        }
-    }
-}
+# Converteix a data.table si no ho és ja
+setDT(dataset_measurements)
+
+# Ordena per estació i data i hora
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+# Marca les files amb algun valor no NA en les variables clau
+dataset_measurements[, has_value := !is.na(`TM °C`) | !is.na(`PM hPa`) |
+    !is.na(`HRM %`) | !is.na(`RS W/m2`) |
+    !is.na(`PPT mm`) | !is.na(`GN cm`)]
+
+# Calcula el primer i últim índex amb valor per cada estació
+station_ranges <- dataset_measurements[, .(
+    first_valid = {
+        idx <- which(has_value)
+        if (length(idx) > 0) min(idx) else 1L
+    },
+    last_valid = {
+        idx <- which(has_value)
+        if (length(idx) > 0) max(idx) else .N
+    },
+    n_rows = .N
+), by = `Codi estació`]
+
+# Marca les files a mantenir
+dataset_measurements[, row_idx := seq_len(.N), by = `Codi estació`]
+dataset_measurements <- dataset_measurements[
+    station_ranges,
+    on = "Codi estació"
+][
+    row_idx >= first_valid & row_idx <= last_valid
+][
+    , c("has_value", "row_idx", "first_valid", "last_valid", "n_rows") := NULL
+]
 ```
 
 En la següent gràfica es mostra un mapa de calor dels valors perduts en el
@@ -684,34 +617,30 @@ Les variables amb un percentatge de valors perduts igual a $0.00000000$ no tenen
 valors perduts:
 
 ```{r missing-values-none-table, echo=FALSE}
-# Mostra una taula amb les variables que no tenen valors perduts
-missing_values_none <- dataset_measurements |>
-    summarise(across(everything(), ~ sum(is.na(.)))) |>
-    tidyr::pivot_longer(
-        cols = everything(),
-        names_to = "Variable",
-        values_to = "Missing"
-    ) |>
-    filter(Missing == 0) |>
-    pull(Variable)
+setDT(dataset_measurements)
+# Mostra una taula amb les variables que no tenen valors perduts (vectoritzat)
+missing_values_none <- names(dataset_measurements)[vapply(
+    dataset_measurements,
+    function(x) sum(is.na(x)) == 0,
+    logical(1)
+)]
 missing_values_none
 ```
 
 ```{r missing-values-count-plot, echo=FALSE, eval = FALSE}
+setDT(dataset_measurements)
 # En la següent gràfica i taula es mostra el recompte de valors no disponibles
 # per variable. Anteriorment, ja s'ha vist el percentatge de valors perduts
 # $>0$.
-dataset_na_measurements <- dataset_measurements |>
-    select(-all_of(missing_values_none))
-missing_values_df <- dataset_na_measurements |>
-    summarise(across(everything(), ~ sum(is.na(.)))) |>
-    tidyr::pivot_longer(
-        cols = everything(),
-        names_to = "Variable",
-        values_to = "Missing_Values"
-    ) |>
-    filter(Missing_Values > 0) |>
-    arrange(desc(Missing_Values))
+dataset_na_measurements <- dataset_measurements[, !..missing_values_none, with = FALSE]
+missing_values_df <- data.frame(
+    Variable = names(dataset_na_measurements),
+    Missing_Values = vapply(dataset_na_measurements, function(x) sum(is.na(x)), integer(1))
+)
+missing_values_df <- missing_values_df[missing_values_df$Missing_Values > 0, ]
+missing_values_df <- missing_values_df[order(-missing_values_df$Missing_Values), ]
+rownames(missing_values_df) <- NULL
+
 # Gràfic de barres
 ggplot(
     missing_values_df,
@@ -746,18 +675,14 @@ kable(
 ```
 
 ```{r, echo=FALSE, fig.height=3}
-dataset_measurements_cor <- dataset_measurements |>
-    select(
-        `Altitud (m)`,
-        Longitud,
-        Latitud,
-        `PPT mm`,
-        `TM °C`,
-        `HRM %`,
-        `TN °C`,
-        `TX °C`,
-        `RS W/m2`
-    )
+setDT(dataset_measurements)
+# Selecciona columnes per a la matriu de correlació (vectoritzat)
+cols_cor <- c(
+    "Altitud (m)", "Longitud", "Latitud", "PPT mm",
+    "TM °C", "HRM %", "TN °C", "TX °C", "RS W/m2"
+)
+dataset_measurements_cor <- dataset_measurements[, ..cols_cor]
+
 # Matriu de correlació de totes les variables
 correlation_matrix <- cor(
     dataset_measurements_cor,
@@ -799,26 +724,28 @@ create_summary_func <- function(
   dataset = dataset_measurements, variable_name,
   missing = TRUE, minimum = 0, threshold = 17000
 ) {
-    if (missing) {
-        return(
-            dataset |>
-                group_by(`Codi estació`) |>
-                summarise(Missing = sum(
-                    is.na(!!sym(variable_name))
-                ), .groups = "drop") |>
-                filter(Missing > minimum, Missing < threshold) |>
-                arrange(desc(Missing))
-        )
+    setDT(dataset)
+    # Detecta el nom de la columna d'estació
+    station_col <- if ("Codi estació" %in% names(dataset)) {
+        "Codi estació"
+    } else {
+        "Estació [Codi]"
     }
-    return(
-        dataset |>
-            group_by(`Codi estació`) |>
-            summarise(Missing = sum(
-                is.na(!!sym(variable_name))
-            ), .groups = "drop") |>
-            filter(Missing >= threshold) |>
-            arrange(desc(Missing))
-    )
+
+    if (missing) {
+        result <- dataset[, .(Missing = sum(is.na(get(variable_name)))),
+            by = station_col
+        ][
+            Missing > minimum & Missing < threshold
+        ][order(-Missing)]
+        return(result)
+    }
+    result <- dataset[, .(Missing = sum(is.na(get(variable_name)))),
+        by = station_col
+    ][
+        Missing >= threshold
+    ][order(-Missing)]
+    return(result)
 }
 
 # Funció per mostrar els valors perduts
@@ -826,15 +753,25 @@ plot_missing_sc_func <- function(
   missing_summary = NULL, dataset = dataset_measurements, variable_name,
   threshold = 17000, log_scale = FALSE
 ) {
+    # Detecta el nom de la columna d'estació
+    station_col <- if ("Codi estació" %in% names(dataset)) {
+        "Codi estació"
+    } else {
+        "Estació [Codi]"
+    }
     if (is.null(missing_summary)) {
         missing_summary <- create_summary_func(
-            dataset, variable_name, threshold
+            dataset = dataset,
+            variable_name = variable_name,
+            missing = TRUE,
+            minimum = 0,
+            threshold = threshold
         )
     }
     if (log_scale) {
         ggplot(
             missing_summary,
-            aes(x = reorder(`Codi estació`, -Missing), y = Missing)
+            aes(x = reorder(.data[[station_col]], -Missing), y = Missing)
         ) +
             geom_bar(stat = "identity", fill = "steelblue") +
             scale_y_log10() +
@@ -844,7 +781,7 @@ plot_missing_sc_func <- function(
                     variable_name,
                     "(escala logarítmica)"
                 ),
-                x = "Codi estació",
+                x = station_col,
                 y = "# NA (escala logarítmica)"
             ) +
             theme_minimal() +
@@ -857,7 +794,7 @@ plot_missing_sc_func <- function(
     } else {
         ggplot(
             missing_summary,
-            aes(x = reorder(`Codi estació`, -Missing), y = Missing)
+            aes(x = reorder(.data[[station_col]], -Missing), y = Missing)
         ) +
             geom_bar(stat = "identity", fill = "steelblue4") +
             labs(
@@ -865,7 +802,7 @@ plot_missing_sc_func <- function(
                     "Núm. de valors NA de la variable",
                     variable_name
                 ),
-                x = "Codi estació",
+                x = station_col,
                 y = "# valors no disponibles"
             ) +
             theme_minimal() +
@@ -880,8 +817,22 @@ plot_missing_sc_func <- function(
 
 # Funció per crear gràfiques de valors perduts
 plot_missing_func <- function(dataset, station_code, variable_name) {
-    station_data <- dataset |>
-        filter(`Codi estació` == station_code, is.na(!!sym(variable_name)))
+    setDT(dataset)
+
+    # Detecta el nom de les columnes
+    station_col <- if ("Codi estació" %in% names(dataset)) {
+        "Codi estació"
+    } else {
+        "Estació [Codi]"
+    }
+
+    datetime_col <- if ("Data i hora" %in% names(dataset)) {
+        "Data i hora"
+    } else {
+        NULL # Si no existeix, usarem date i Període TU
+    }
+
+    station_data <- dataset[get(station_col) == station_code & is.na(get(variable_name))]
 
     n_empty <- nrow(station_data)
 
@@ -889,12 +840,21 @@ plot_missing_func <- function(dataset, station_code, variable_name) {
         return(NULL)
     }
 
-    daily_missing <- station_data |>
-        mutate(date = as.Date(`Data i hora`)) |>
-        group_by(date) |>
-        summarise(Missing_per_day = n(), .groups = "drop") |>
-        filter(Missing_per_day > 0) |>
-        arrange(desc(Missing_per_day))
+    # Usa data.table per agrupar per data
+    if (!is.null(datetime_col)) {
+        daily_missing <- station_data[, .(Missing_per_day = .N),
+            by = .(date = as.Date(get(datetime_col)))
+        ][
+            Missing_per_day > 0
+        ][order(-Missing_per_day)]
+    } else {
+        # Usa date directament si Data i hora no existeix
+        daily_missing <- station_data[, .(Missing_per_day = .N),
+            by = .(date = as.Date(date, format = "%d.%m.%Y"))
+        ][
+            Missing_per_day > 0
+        ][order(-Missing_per_day)]
+    }
 
     ggplot(daily_missing, aes(x = date, y = Missing_per_day)) +
         geom_bar(stat = "identity", fill = "coral3") +
@@ -1030,15 +990,18 @@ s'ha comprovat que els valors perduts coincideixen amb períodes sense
 precipitació.
 
 ```{r, echo=FALSE, eval=TRUE, attr.source='.numberLines'}
-# Assignem els valors perduts de la variable PPT mm a zero
-missing_stations <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing = sum(is.na(`PPT mm`)), .groups = "drop") |>
-    filter(Missing < 17000) |>
-    pull(`Codi estació`)
-na_rows <- is.na(dataset_measurements$`PPT mm`) &
-    dataset_measurements$`Codi estació` %in% missing_stations
-dataset_measurements$`PPT mm`[na_rows] <- 0
+setDT(dataset_measurements)
+# Assignem els valors perduts de la variable PPT mm a zero (vectoritzat)
+missing_stations <- dataset_measurements[
+    , .(Missing = sum(is.na(`PPT mm`))),
+    by = `Codi estació`
+][Missing < 17000, `Codi estació`]
+
+# Imputa zero als valors perduts
+dataset_measurements[
+    `Codi estació` %in% missing_stations & is.na(`PPT mm`),
+    `PPT mm` := 0
+]
 ```
 
 ### Valors perduts de la variable `TM ºC`
@@ -1128,25 +1091,24 @@ ggplot(
 ```
 
 ```{r, attr.source='.numberLines', echo=FALSE}
-# Imputació dels valors restants amb la biblioteca forecast
-for (station in missing_tm$`Codi estació`) {
-    station_data <- dataset_measurements |>
-        filter(`Codi estació` == station) |>
-        arrange(`Data i hora`) |>
-        pull(`TM °C`)
-    n_not_na <- sum(!is.na(station_data))
-    if (n_not_na < 2 || length(station_data) == 0) {
-        next
-    }
-    ts_data <- ts(
-        station_data,
-        frequency = 48 # mostres per dia (cada 30 minuts)
-    )
-    imputed_data <- na.interp(ts_data)
-    dataset_measurements$`TM °C`[
-        dataset_measurements$`Codi estació` == station
-    ] <- as.numeric(imputed_data)
-}
+# Imputació dels valors restants amb la biblioteca forecast (vectoritzat)
+setDT(dataset_measurements)
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+# Aplica imputació per grup d'estació
+dataset_measurements[`Codi estació` %in% missing_tm$`Codi estació`,
+    `TM °C` := {
+        station_data <- `TM °C`
+        n_not_na <- sum(!is.na(station_data))
+        if (n_not_na >= 2 && length(station_data) > 0) {
+            ts_data <- ts(station_data, frequency = 48)
+            as.numeric(na.interp(ts_data))
+        } else {
+            as.numeric(station_data)
+        }
+    },
+    by = `Codi estació`
+]
 ```
 
 ### Valors perduts de la variable `HRM %`
@@ -1236,25 +1198,24 @@ ggplot(
 ```
 
 ```{r, attr.source='.numberLines', echo=FALSE}
-# Imputació dels valors restants amb la biblioteca forecast
-for (station in missing_hrm$`Codi estació`) {
-    station_data <- dataset_measurements |>
-        filter(`Codi estació` == station) |>
-        arrange(`Data i hora`) |>
-        pull(`HRM %`)
-    n_not_na <- sum(!is.na(station_data))
-    if (n_not_na < 2 || length(station_data) == 0) {
-        next
-    }
-    ts_data <- ts(
-        station_data,
-        frequency = 48 # mostres per dia (cada 30 minuts)
-    )
-    imputed_data <- na.interp(ts_data)
-    dataset_measurements$`HRM %`[
-        dataset_measurements$`Codi estació` == station
-    ] <- as.numeric(imputed_data)
-}
+# Imputació dels valors restants amb la biblioteca forecast (vectoritzat)
+setDT(dataset_measurements)
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+# Aplica imputació per grup d'estació
+dataset_measurements[`Codi estació` %in% missing_hrm$`Codi estació`,
+    `HRM %` := {
+        station_data <- `HRM %`
+        n_not_na <- sum(!is.na(station_data))
+        if (n_not_na >= 2 && length(station_data) > 0) {
+            ts_data <- ts(station_data, frequency = 48)
+            as.numeric(na.interp(ts_data))
+        } else {
+            as.numeric(station_data)
+        }
+    },
+    by = `Codi estació`
+]
 ```
 
 ### Valors perduts de la variable `GN cm`
@@ -1346,29 +1307,29 @@ ggplot(
 ```
 
 ```{r imputed-snow, attr.source='.numberLines', echo=FALSE}
-missing_stations_gn <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(Missing = sum(is.na(`GN cm`)), .groups = "drop") |>
-    filter(Missing < 17000 & Missing > 0) |>
-    pull(`Codi estació`)
-for (station in missing_stations_gn) {
-    station_data <- dataset_measurements |>
-        filter(`Codi estació` == station) |>
-        arrange(`Data i hora`) |>
-        pull(`GN cm`)
-    n_not_na <- sum(!is.na(station_data))
-    if (n_not_na < 2 || length(station_data) == 0) {
-        next
-    }
-    ts_data <- ts(
-        station_data,
-        frequency = 48 # mostres per dia (cada 30 minuts)
-    )
-    imputed_data <- na.interp(ts_data, lambda = NULL)
-    dataset_measurements$`GN cm`[
-        dataset_measurements$`Codi estació` == station
-    ] <- as.numeric(imputed_data)
-}
+setDT(dataset_measurements)
+
+# Troba estacions amb valors perduts (vectoritzat amb data.table)
+missing_stations_gn <- dataset_measurements[, .(Missing = sum(is.na(`GN cm`))),
+    by = `Codi estació`
+][Missing < 17000 & Missing > 0, `Codi estació`]
+
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+# Aplica imputació per grup d'estació
+dataset_measurements[`Codi estació` %in% missing_stations_gn,
+    `GN cm` := {
+        station_data <- `GN cm`
+        n_not_na <- sum(!is.na(station_data))
+        if (n_not_na >= 2 && length(station_data) > 0) {
+            ts_data <- ts(station_data, frequency = 48)
+            as.numeric(na.interp(ts_data, lambda = NULL))
+        } else {
+            as.numeric(station_data)
+        }
+    },
+    by = `Codi estació`
+]
 ```
 
 ### Valors perduts de la variable `PM hPa`
@@ -1411,25 +1372,21 @@ veïnes més properes geogràficament, ja que la pressió atmosfèrica tendeix a
 ser similar en ubicacions properes.
 
 ```{r, attr.source='.numberLines', echo=FALSE}
-# 1) Resum de les estacions
-dataset_stations <- dataset_measurements |>
-    group_by(`Codi estació`) |>
-    summarise(
-        Longitud = first(Longitud),
-        Latitud = first(Latitud),
-        Missing = sum(is.na(`PM hPa`)),
-        .groups = "drop"
-    )
-# Estacions amb NA
-stations_with_na <- dataset_stations |>
-    filter(Missing > 0)
-# Estacions sense NA
-stations_complete <- dataset_stations |>
-    filter(Missing == 0)
+setDT(dataset_measurements)
+# 1) Resum de les estacions (vectoritzat amb data.table)
+dataset_stations <- dataset_measurements[, .(
+    Longitud = first(Longitud),
+    Latitud = first(Latitud),
+    Missing = sum(is.na(`PM hPa`))
+), by = `Codi estació`]
+
+# Estacions amb NA i sense NA
+stations_with_na <- dataset_stations[Missing > 0]
+stations_complete <- dataset_stations[Missing == 0]
 
 # 2) Matriu de distàncies (vectoritzada, sense bucles)
 dist_matrix <- as.matrix(dist(
-    dataset_stations[, c("Longitud", "Latitud")],
+    dataset_stations[, .(Longitud, Latitud)],
     method = "euclidean"
 ))
 rownames(dist_matrix) <- dataset_stations$`Codi estació`
@@ -1438,47 +1395,49 @@ colnames(dist_matrix) <- dataset_stations$`Codi estació`
 # 3) Obtenir les 3 estacions més properes per a cada estació amb NA
 nearest_list <- lapply(stations_with_na$`Codi estació`, function(st) {
     d <- dist_matrix[st, stations_complete$`Codi estació`]
-    sort(names(d))[order(d)][1:3]
+    names(d)[order(d)][1:3]
 })
 names(nearest_list) <- stations_with_na$`Codi estació`
-# Convertim a taula
-nearest_df <- tibble(
-    `Codi estació` = names(nearest_list),
-    nearest = nearest_list
-) |>
-    unnest(nearest)
 
-# 4) Imputació sense bucles: join + mean agrupat
-# Dataset de mesures de les estacions veïnes
-neighbors_data <- dataset_measurements |>
-    inner_join(nearest_df, by = "Codi estació") |>
-    rename(
-        target_station = `Codi estació`,
-        neighbor_station = nearest
+# Convertim a data.table
+nearest_dt <- rbindlist(lapply(names(nearest_list), function(st) {
+    data.table(
+        `Codi estació` = st,
+        nearest = nearest_list[[st]]
     )
-# Afegim les mesures de les estacions veïnes
-neighbors_values <- neighbors_data |>
-    inner_join(
-        dataset_measurements |>
-            select(`Codi estació`, `Data i hora`, `PM hPa`) |>
-            rename(
-                neighbor_station = `Codi estació`,
-                PM_neighbor = `PM hPa`
-            ),
-        by = c("neighbor_station", "Data i hora")
-    )
-# Calculem la mitjana per timestamp i estació objectiu
-imputed_values <- neighbors_values |>
-    group_by(target_station, `Data i hora`) |>
-    summarise(PM_imputed = mean(PM_neighbor, na.rm = TRUE), .groups = "drop")
+}))
 
-# 5) Inserim les imputacions al dataset original
-dataset_measurements <- dataset_measurements |>
-    left_join(imputed_values,
-        by = c("Codi estació" = "target_station", "Data i hora")
-    ) |>
-    mutate(`PM hPa` = if_else(is.na(`PM hPa`), PM_imputed, `PM hPa`)) |>
-    select(-PM_imputed)
+# 4) Imputació sense bucles: join + mean agrupat amb data.table
+# Selecciona dades necessàries
+pm_data <- dataset_measurements[, .(`Codi estació`, `Data i hora`, `PM hPa`)]
+
+# Join per obtenir les estacions veïnes
+neighbors_values <- nearest_dt[pm_data, on = "Codi estació", allow.cartesian = TRUE]
+setnames(
+    neighbors_values, c("Codi estació", "PM hPa"),
+    c("target_station", "PM_target")
+)
+
+# Join per obtenir valors dels veïns
+neighbors_values <- merge(
+    neighbors_values,
+    pm_data,
+    by.x = c("nearest", "Data i hora"),
+    by.y = c("Codi estació", "Data i hora"),
+    all.x = TRUE
+)
+setnames(neighbors_values, "PM hPa", "PM_neighbor")
+
+# Calcula la mitjana per timestamp i estació objectiu
+imputed_values <- neighbors_values[, .(
+    PM_imputed = mean(PM_neighbor, na.rm = TRUE)
+), by = .(target_station, `Data i hora`)]
+
+# 5) Insereix les imputacions al dataset original
+dataset_measurements[imputed_values,
+    `PM hPa` := fcoalesce(`PM hPa`, PM_imputed),
+    on = c("Codi estació" = "target_station", "Data i hora")
+]
 ```
 
 ```{r, echo=FALSE, eval=TRUE, fig.height=2}
@@ -1575,28 +1534,25 @@ p1 <- ggplot(
 ```
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
-for (station_code in missing_vvm$`Codi estació`) {
-    station_data_vvm <- dataset_measurements |>
-        filter(`Codi estació` == station_code) |>
-        arrange(`Data i hora`) |>
-        pull(`VVM (10 m) km/h`)
-    n_na_vvm <- sum(is.na(station_data_vvm))
-    if (n_na_vvm > 500) {
-        next
-    }
-    n_not_na_vvm <- sum(!is.na(station_data_vvm))
-    if (n_not_na_vvm < 2 || length(station_data_vvm) == 0) {
-        next
-    }
-    ts_data_vvm <- ts(
-        station_data_vvm,
-        frequency = 48 # mostres per dia (cada 30 minuts)
-    )
-    imputed_data_vvm <- na.interp(ts_data_vvm)
-    dataset_measurements$`VVM (10 m) km/h`[
-        dataset_measurements$`Codi estació` == station_code
-    ] <- as.numeric(imputed_data_vvm)
-}
+# Vectoritzat amb data.table
+setDT(dataset_measurements)
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+dataset_measurements[`Codi estació` %in% missing_vvm$`Codi estació`,
+    `VVM (10 m) km/h` := {
+        station_data_vvm <- `VVM (10 m) km/h`
+        n_na_vvm <- sum(is.na(station_data_vvm))
+        n_not_na_vvm <- sum(!is.na(station_data_vvm))
+
+        if (n_na_vvm <= 500 && n_not_na_vvm >= 2 && length(station_data_vvm) > 0) {
+            ts_data_vvm <- ts(station_data_vvm, frequency = 48)
+            as.numeric(na.interp(ts_data_vvm))
+        } else {
+            as.numeric(station_data_vvm)
+        }
+    },
+    by = `Codi estació`
+]
 ```
 
 ```{r, echo=FALSE, fig.height=3, eval=TRUE}
@@ -1693,28 +1649,25 @@ p1 <- ggplot(
 ```
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
-for (station_code in missing_vvm$`Codi estació`) {
-    station_data_vvx <- dataset_measurements |>
-        filter(`Codi estació` == station_code) |>
-        arrange(`Data i hora`) |>
-        pull(`VVX (10 m) km/h`)
-    n_na_vvx <- sum(is.na(station_data_vvx))
-    if (n_na_vvx > 500) {
-        next
-    }
-    n_not_na_vvx <- sum(!is.na(station_data_vvx))
-    if (n_not_na_vvx < 2 || length(station_data_vvx) == 0) {
-        next
-    }
-    ts_data_vvx <- ts(
-        station_data_vvx,
-        frequency = 48 # mostres per dia (cada 30 minuts)
-    )
-    imputed_data_vvx <- na.interp(ts_data_vvx)
-    dataset_measurements$`VVX (10 m) km/h`[
-        dataset_measurements$`Codi estació` == station_code
-    ] <- as.numeric(imputed_data_vvx)
-}
+# Vectoritzat amb data.table
+setDT(dataset_measurements)
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+dataset_measurements[`Codi estació` %in% missing_vvm$`Codi estació`,
+    `VVX (10 m) km/h` := {
+        station_data_vvx <- `VVX (10 m) km/h`
+        n_na_vvx <- sum(is.na(station_data_vvx))
+        n_not_na_vvx <- sum(!is.na(station_data_vvx))
+
+        if (n_na_vvx <= 500 && n_not_na_vvx >= 2 && length(station_data_vvx) > 0) {
+            ts_data_vvx <- ts(station_data_vvx, frequency = 48)
+            as.numeric(na.interp(ts_data_vvx))
+        } else {
+            as.numeric(station_data_vvx)
+        }
+    },
+    by = `Codi estació`
+]
 ```
 
 ```{r, echo=FALSE, fig.height=3, eval=TRUE}
@@ -1811,28 +1764,25 @@ p1 <- ggplot(
 ```
 
 ```{r, echo=FALSE, attr.source='.numberLines'}
-for (station_code in missing_rs$`Codi estació`) {
-    station_data <- dataset_measurements |>
-        filter(`Codi estació` == station_code) |>
-        arrange(`Data i hora`) |>
-        pull(`RS W/m2`)
-    n_na <- sum(is.na(station_data))
-    if (n_na > 1000) {
-        next
-    }
-    n_not_na <- sum(!is.na(station_data))
-    if (n_not_na < 2 || length(station_data) == 0) {
-        next
-    }
-    ts_data <- ts(
-        station_data,
-        frequency = 48 # mostres per dia (cada 30 minuts)
-    )
-    imputed_data <- na.interp(ts_data)
-    dataset_measurements$`RS W/m2`[
-        dataset_measurements$`Codi estació` == station_code
-    ] <- as.numeric(imputed_data)
-}
+# Vectoritzat amb data.table
+setDT(dataset_measurements)
+setorder(dataset_measurements, `Codi estació`, `Data i hora`)
+
+dataset_measurements[`Codi estació` %in% missing_rs$`Codi estació`,
+    `RS W/m2` := {
+        station_data <- `RS W/m2`
+        n_na <- sum(is.na(station_data))
+        n_not_na <- sum(!is.na(station_data))
+
+        if (n_na <= 1000 && n_not_na >= 2 && length(station_data) > 0) {
+            ts_data <- ts(station_data, frequency = 48)
+            as.numeric(na.interp(ts_data))
+        } else {
+            as.numeric(station_data)
+        }
+    },
+    by = `Codi estació`
+]
 ```
 
 ```{r, echo=FALSE, fig.height=3, eval=TRUE}
@@ -2304,12 +2254,12 @@ variables_continues <- c(
     "VVX (10 m) km/h"
 )
 # Fem subset ometent valors NA
-df_pca <- dataset_numeric[, c(variables_continues, "TM °C")]
+df_pca <- dataset_numeric[, c(variables_continues, "TM °C"), with = FALSE]
 df_pca <- na.omit(df_pca)
 
 # Apliquem PCA
 pca_resultat <- prcomp(
-    df_pca[, variables_continues],
+    as.matrix(df_pca[, variables_continues, with = FALSE]),
     center = TRUE, scale. = TRUE
 )
 # Mostrem la importància dels components
