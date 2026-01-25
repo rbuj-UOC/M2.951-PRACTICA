@@ -30,3 +30,18 @@ dependencies:
   - r-tidyverse
   - r-vcd
   - r-xgboost
+  - r-bbotk
+  - r-checkmate
+  - r-lgr
+  - r-mirai
+  - r-mlbench
+  - r-mlr3
+  - r-mlr3measures
+  - r-mlr3misc
+  - r-mlr3pipelines
+  - r-mlr3tuning
+  - r-mlr3learners
+  - r-nanonext
+  - r-PRROC
+  - r-palmerpenguins
+  - r-paradox
