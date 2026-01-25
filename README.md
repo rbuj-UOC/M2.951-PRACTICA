@@ -196,7 +196,7 @@ conda create --prefix=./.conda
 conda activate ./.conda
 conda install pip pandas selenium r-base=4.5.2 r-car r-caret r-corrplot \
     r-factoextra r-ggplot2 r-dplyr r-kableextra r-knitr r-languageserver \
-    r-magick r-moments r-rann r-rmarkdown r-sf r-tidyverse \
+    r-magick r-moments r-rann r-rmarkdown r-sf r-tidyverse r-future r-future.apply \
     r-deoptimr r-laeken r-ranger r-robustbase r-sp r-vcd r-xgboost \
     r-bbotk r-checkmate r-lgr r-mirai r-mlbench r-mlr3 r-mlr3measures r-mlr3misc \
     r-mlr3pipelines r-mlr3tuning r-mlr3learners r-nanonext r-PRROC \

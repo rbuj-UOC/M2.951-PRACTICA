@@ -13,6 +13,8 @@ dependencies:
   - r-corrplot
   - r-dplyr
   - r-factoextra
+  - r-future
+  - r-future.apply
   - r-ggplot2
   - r-gridextra
   - r-kableextra

@@ -48,7 +48,13 @@ suppressPackageStartupMessages({
     library(stats)
     library(VIM)
     library(zoo)
+    library(future)
+    library(future.apply)
 })
+
+# Configuració de paral·lelisme segura per a R Markdown
+# Usa "multisession" (compatible amb macOS i RStudio/knitr)
+plan(multisession, workers = max(1, future::availableCores() - 1))
 ```
 
 ```{r dataset-path-check, include=FALSE}
@@ -1392,20 +1398,20 @@ dist_matrix <- as.matrix(dist(
 rownames(dist_matrix) <- dataset_stations$`Codi estació`
 colnames(dist_matrix) <- dataset_stations$`Codi estació`
 
-# 3) Obtenir les 3 estacions més properes per a cada estació amb NA
-nearest_list <- lapply(stations_with_na$`Codi estació`, function(st) {
+# 3) Obtenir les 3 estacions més properes per a cada estació amb NA (paral·lel)
+nearest_list <- future_lapply(stations_with_na$`Codi estació`, function(st) {
     d <- dist_matrix[st, stations_complete$`Codi estació`]
     names(d)[order(d)][1:3]
-})
+}, future.seed = TRUE)
 names(nearest_list) <- stations_with_na$`Codi estació`
 
-# Convertim a data.table
-nearest_dt <- rbindlist(lapply(names(nearest_list), function(st) {
+# Convertim a data.table (paral·lel)
+nearest_dt <- rbindlist(future_lapply(names(nearest_list), function(st) {
     data.table(
         `Codi estació` = st,
         nearest = nearest_list[[st]]
     )
-}))
+}, future.seed = TRUE))
 
 # 4) Imputació sense bucles: join + mean agrupat amb data.table
 # Selecciona dades necessàries
@@ -2425,12 +2431,11 @@ Apliquem un algoritme de K-means als dos primers components principals (PC1 i PC
 # Extreure els dos primers components principals
 pca_scores <- as.data.frame(pca_resultat$x[, 1:2])
 
-# Determinar el nombre òptim de clusters amb el mètode del colze
-inertia <- numeric(10)
-for (k in 1:10) {
-    kmeans_temp <- kmeans(pca_scores, centers = k, nstart = 20)
-    inertia[k] <- kmeans_temp$tot.withinss
-}
+# Determinar el nombre òptim de clusters amb el mètode del colze (paral·lel)
+set.seed(42)
+inertia <- unlist(future_lapply(1:10, function(k) {
+    kmeans(pca_scores, centers = k, nstart = 20)$tot.withinss
+}, future.seed = TRUE), use.names = FALSE)
 
 # Gràfic del mètode del colze
 plot(1:10, inertia,
@@ -2667,4 +2672,9 @@ kable(dades_contribucions,
     align = "l",
     booktabs = TRUE
 )
+```
+
+```{r teardown, include=FALSE}
+# Torna al mode seqüencial en finalitzar el document
+plan(sequential)
 ```
